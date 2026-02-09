@@ -32,7 +32,7 @@ function AppContent() {
   return (
     <PlayerProvider onStationPlay={addRecent}>
       <PremiumProvider>
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-full bg-background" style={{ paddingTop: 'env(safe-area-inset-top, 24px)' }}>
           <div className="flex-1 flex flex-col overflow-hidden">
             {activeTab === "home" && <HomePage recent={recent} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onGenreClick={handleGenreClick} onSettingsClick={handleSettingsClick} />}
             {activeTab === "search" && <SearchPage isFavorite={isFavorite} onToggleFavorite={toggleFavorite} initialGenre={selectedGenre} />}

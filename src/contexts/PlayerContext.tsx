@@ -27,12 +27,36 @@ export function usePlayer() {
 
 export function PlayerProvider({ children, onStationPlay }: { children: React.ReactNode; onStationPlay?: (station: RadioStation) => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const isPlayingRef = useRef(false);
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
     isPlaying: false,
     volume: 0.8,
     isFullScreen: false,
   });
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    isPlayingRef.current = state.isPlaying;
+  }, [state.isPlaying]);
+
+  const requestWakeLock = useCallback(async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      } catch {
+        // WakeLock request failed (e.g. low battery)
+      }
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(() => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const audio = new Audio();
@@ -44,9 +68,20 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       toast({ title: "Erreur de lecture", description: "Impossible de lire ce flux. Essayez une autre station.", variant: "destructive" });
     });
 
+    // Visibility change handler — resume audio if browser paused it
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isPlayingRef.current) {
+        audio.play().catch(() => {});
+        requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       audio.pause();
       audio.src = "";
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      releaseWakeLock();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -60,18 +95,22 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     });
     setState(s => ({ ...s, currentStation: station, isPlaying: true }));
     onStationPlay?.(station);
-  }, [onStationPlay]);
+    requestWakeLock();
+    console.log("[RadioSphere] Audio ready");
+  }, [onStationPlay, requestWakeLock]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !state.currentStation) return;
     if (state.isPlaying) {
       audio.pause();
+      releaseWakeLock();
     } else {
       audio.play().catch(() => {});
+      requestWakeLock();
     }
     setState(s => ({ ...s, isPlaying: !s.isPlaying }));
-  }, [state.isPlaying, state.currentStation]);
+  }, [state.isPlaying, state.currentStation, releaseWakeLock, requestWakeLock]);
 
   const setVolume = useCallback((v: number) => {
     if (audioRef.current) audioRef.current.volume = v;
