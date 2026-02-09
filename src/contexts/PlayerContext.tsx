@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useRef, useCallback, useEff
 import { RadioStation } from "@/types/radio";
 import { toast } from "@/hooks/use-toast";
 
+// Global audio instance — survives React lifecycle, never destroyed by re-renders
+const globalAudio = new Audio();
+(globalAudio as any).playsInline = true;
+globalAudio.preload = "auto";
+
 interface PlayerState {
   currentStation: RadioStation | null;
   isPlaying: boolean;
@@ -26,7 +31,7 @@ export function usePlayer() {
 }
 
 export function PlayerProvider({ children, onStationPlay }: { children: React.ReactNode; onStationPlay?: (station: RadioStation) => void }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(globalAudio);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const isPlayingRef = useRef(false);
   const notifPermissionAsked = useRef(false);
@@ -111,55 +116,60 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
   }, [requestWakeLock, releaseWakeLock]);
 
+  // Request notification permission at startup (needed for Android background audio)
   useEffect(() => {
-    const audio = new Audio();
-    audio.volume = state.volume;
-    (audio as any).playsInline = true;
-    audio.preload = "auto";
-    audioRef.current = audio;
+    if (notifPermissionAsked.current) return;
+    notifPermissionAsked.current = true;
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().then(p => {
+        console.log("[RadioSphere] Notification permission:", p);
+      });
+    }
+  }, []);
 
-    audio.addEventListener("error", () => {
+  useEffect(() => {
+    const audio = audioRef.current;
+    audio.volume = state.volume;
+
+    const handleError = () => {
       setState(s => ({ ...s, isPlaying: false }));
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
       toast({ title: "Erreur de lecture", description: "Impossible de lire ce flux. Essayez une autre station.", variant: "destructive" });
-    });
+    };
+    audio.addEventListener("error", handleError);
 
-    // Visibility change handler — resume audio if browser paused it
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isPlayingRef.current) {
+    // Anti-freeze: never let the WebView pause our audio
+    const keepAlive = () => {
+      if (isPlayingRef.current) {
         audio.play().catch(() => {});
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         requestWakeLock();
       }
     };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', keepAlive);
+    window.addEventListener('blur', keepAlive);
+    window.addEventListener('focus', keepAlive);
 
     return () => {
-      audio.pause();
-      audio.src = "";
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      audio.removeEventListener("error", handleError);
+      document.removeEventListener('visibilitychange', keepAlive);
+      window.removeEventListener('blur', keepAlive);
+      window.removeEventListener('focus', keepAlive);
       releaseWakeLock();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const requestNotificationPermission = useCallback(async () => {
-    if (notifPermissionAsked.current) return;
-    notifPermissionAsked.current = true;
-    if ("Notification" in window && Notification.permission === "default") {
-      const p = await Notification.requestPermission();
-      console.log("[RadioSphere] Notification permission:", p);
-    }
-  }, []);
-
   const play = useCallback((station: RadioStation) => {
     const audio = audioRef.current;
-    if (!audio) return;
 
-    // Request notification permission on first play (needed for Android background audio)
-    requestNotificationPermission();
+    // Vibration test — confirms native API access in APK
+    if ('vibrate' in navigator) navigator.vibrate(10);
 
     audio.src = station.streamUrl;
-    audio.play().catch(() => {
+    audio.play().then(() => {
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+    }).catch(() => {
       toast({ title: "Erreur", description: "Flux indisponible", variant: "destructive" });
     });
     setState(s => ({ ...s, currentStation: station, isPlaying: true }));
@@ -167,16 +177,19 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     updateMediaSession(station, true);
     requestWakeLock();
     console.log("[RadioSphere] Audio ready");
-  }, [onStationPlay, requestWakeLock, updateMediaSession, requestNotificationPermission]);
+  }, [onStationPlay, requestWakeLock, updateMediaSession]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio || !state.currentStation) return;
+    if (!state.currentStation) return;
     if (state.isPlaying) {
       audio.pause();
       releaseWakeLock();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else {
-      audio.play().catch(() => {});
+      audio.play().then(() => {
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+      }).catch(() => {});
       requestWakeLock();
     }
     const newPlaying = !state.isPlaying;
