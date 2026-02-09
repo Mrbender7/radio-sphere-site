@@ -7,6 +7,22 @@ const globalAudio = new Audio();
 (globalAudio as any).playsInline = true;
 globalAudio.preload = "auto";
 
+// Silent 1-second WAV as base64 data URI (~1KB) — keeps Android WebView process alive
+const SILENCE_DATA_URI = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+const silentAudio = new Audio();
+silentAudio.loop = true;
+silentAudio.volume = 0.01;
+silentAudio.src = SILENCE_DATA_URI;
+
+function startSilentLoop() {
+  silentAudio.play().catch(() => {});
+}
+
+function stopSilentLoop() {
+  silentAudio.pause();
+  silentAudio.currentTime = 0;
+}
+
 interface PlayerState {
   currentStation: RadioStation | null;
   isPlaying: boolean;
@@ -35,6 +51,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const isPlayingRef = useRef(false);
   const notifPermissionAsked = useRef(false);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
     isPlaying: false,
@@ -64,6 +81,27 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     }
   }, []);
 
+  // Start heartbeat — recovers from unexpected pauses every 10s
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatRef.current) return;
+    heartbeatRef.current = setInterval(() => {
+      const audio = audioRef.current;
+      if (isPlayingRef.current && audio.paused) {
+        console.log("[RadioSphere] Heartbeat: recovering paused audio");
+        audio.play().catch(() => {});
+        startSilentLoop();
+        requestWakeLock();
+      }
+    }, 10000);
+  }, [requestWakeLock]);
+
+  const stopHeartbeat = useCallback(() => {
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+    }
+  }, []);
+
   // Update Media Session metadata
   const updateMediaSession = useCallback((station: RadioStation, playing: boolean) => {
     if (!('mediaSession' in navigator)) return;
@@ -82,7 +120,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
   }, []);
 
-  // Register Media Session action handlers
+  // Register Media Session action handlers (including no-op seek handlers)
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
 
@@ -90,28 +128,38 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       const audio = audioRef.current;
       if (!audio || !audio.src) return;
       audio.play().catch(() => {});
+      startSilentLoop();
       setState(s => ({ ...s, isPlaying: true }));
       requestWakeLock();
+      startHeartbeat();
     };
 
     const handlePause = () => {
       const audio = audioRef.current;
       if (!audio) return;
       audio.pause();
+      stopSilentLoop();
       setState(s => ({ ...s, isPlaying: false }));
       releaseWakeLock();
+      stopHeartbeat();
     };
+
+    const noop = () => {};
 
     navigator.mediaSession.setActionHandler('play', handlePlay);
     navigator.mediaSession.setActionHandler('pause', handlePause);
     navigator.mediaSession.setActionHandler('stop', handlePause);
+    navigator.mediaSession.setActionHandler('seekbackward', noop);
+    navigator.mediaSession.setActionHandler('seekforward', noop);
 
     return () => {
       navigator.mediaSession.setActionHandler('play', null);
       navigator.mediaSession.setActionHandler('pause', null);
       navigator.mediaSession.setActionHandler('stop', null);
+      navigator.mediaSession.setActionHandler('seekbackward', null);
+      navigator.mediaSession.setActionHandler('seekforward', null);
     };
-  }, [requestWakeLock, releaseWakeLock]);
+  }, [requestWakeLock, releaseWakeLock, startHeartbeat, stopHeartbeat]);
 
   // Request notification permission at startup (needed for Android background audio)
   useEffect(() => {
@@ -130,17 +178,20 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
     const handleError = () => {
       setState(s => ({ ...s, isPlaying: false }));
+      stopSilentLoop();
+      stopHeartbeat();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
       toast({ title: "Erreur de lecture", description: "Impossible de lire ce flux. Essayez une autre station.", variant: "destructive" });
     };
     audio.addEventListener("error", handleError);
 
-    // Anti-freeze: never let the WebView pause our audio
+    // Enhanced keep-alive: restart audio + silent loop + WakeLock on visibility changes
     const keepAlive = () => {
       if (isPlayingRef.current) {
         audio.play().catch(() => {});
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+        startSilentLoop();
         requestWakeLock();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
       }
     };
     document.addEventListener('visibilitychange', keepAlive);
@@ -152,6 +203,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       document.removeEventListener('visibilitychange', keepAlive);
       window.removeEventListener('blur', keepAlive);
       window.removeEventListener('focus', keepAlive);
+      stopHeartbeat();
       releaseWakeLock();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,25 +211,22 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
   const play = useCallback((station: RadioStation) => {
     const audio = audioRef.current;
-
-    // 1. On nettoie l'état précédent
     audio.pause();
 
-    // 2. On prépare les métadonnées (SANS HTTP pour éviter le blocage Mixed Content)
     const secureLogo = station.logo?.replace('http://', 'https://');
     updateMediaSession({ ...station, logo: secureLogo }, true);
 
-    // 3. On définit la source
     if ('vibrate' in navigator) navigator.vibrate(10);
     audio.src = station.streamUrl;
-    audio.load(); // On force le chargement initial
+    audio.load();
 
-    // 4. On attend que le buffer soit prêt AVANT de tenter le play()
     const startPlayback = () => {
       audio.play()
         .then(() => {
           if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
           setState(s => ({ ...s, isPlaying: true }));
+          startSilentLoop();
+          startHeartbeat();
         })
         .catch((e) => {
           console.error("Lecture différée échouée", e);
@@ -189,25 +238,29 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     setState(s => ({ ...s, currentStation: station }));
     onStationPlay?.(station);
     requestWakeLock();
-  }, [onStationPlay, requestWakeLock, updateMediaSession]);
+  }, [onStationPlay, requestWakeLock, updateMediaSession, startHeartbeat]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!state.currentStation) return;
     if (state.isPlaying) {
       audio.pause();
+      stopSilentLoop();
+      stopHeartbeat();
       releaseWakeLock();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else {
       audio.play().then(() => {
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
       }).catch(() => {});
+      startSilentLoop();
+      startHeartbeat();
       requestWakeLock();
     }
     const newPlaying = !state.isPlaying;
     setState(s => ({ ...s, isPlaying: newPlaying }));
     updateMediaSession(state.currentStation, newPlaying);
-  }, [state.isPlaying, state.currentStation, releaseWakeLock, requestWakeLock, updateMediaSession]);
+  }, [state.isPlaying, state.currentStation, releaseWakeLock, requestWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat]);
 
   const setVolume = useCallback((v: number) => {
     if (audioRef.current) audioRef.current.volume = v;
