@@ -106,7 +106,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
           <SelectTrigger className="bg-accent border-0 text-foreground">
             <SelectValue placeholder={t("search.selectCountry")} />
           </SelectTrigger>
-          <SelectContent className="z-50 bg-popover border border-border shadow-xl max-h-[300px]">
+          <SelectContent className="z-[100] bg-popover border border-border shadow-xl max-h-[300px]" position="popper" sideOffset={4}>
             {countryList.map((c: { label: string; value: string }) => (
               <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
             ))}
