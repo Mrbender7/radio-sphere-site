@@ -102,7 +102,6 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
       </div>
 
       <div className="mb-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{t("search.country")}</p>
         <Select value={country} onValueChange={v => setCountry(v === country ? "" : v)}>
           <SelectTrigger className="bg-accent border-0 text-foreground">
             <SelectValue placeholder={t("search.selectCountry")} />
