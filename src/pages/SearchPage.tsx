@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { radioBrowserProvider } from "@/services/RadioService";
+import { radioBrowserProvider, getCountries, CountryInfo } from "@/services/RadioService";
 import { StationCard } from "@/components/StationCard";
 import { RadioStation } from "@/types/radio";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { Search, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const COUNTRIES_MAP = [
+const FALLBACK_COUNTRIES = [
   { label: "France 🇫🇷", value: "France" },
   { label: "Belgique 🇧🇪", value: "Belgium" },
   { label: "Suisse 🇨🇭", value: "Switzerland" },
@@ -20,6 +20,12 @@ const COUNTRIES_MAP = [
   { label: "Italie 🇮🇹", value: "Italy" },
   { label: "Royaume-Uni 🇬🇧", value: "The United Kingdom Of Great Britain And Northern Ireland" },
 ];
+
+function countryCodeToFlag(iso: string): string {
+  if (!iso || iso.length !== 2) return "";
+  const codePoints = iso.toUpperCase().split("").map(c => 0x1F1E6 + c.charCodeAt(0) - 65);
+  return String.fromCodePoint(...codePoints);
+}
 
 const GENRES = ["pop", "rock", "jazz", "classical", "electronic", "news", "ambient", "hiphop"];
 const LANGUAGES = ["french", "english", "spanish", "german", "portuguese", "arabic", "japanese"];
@@ -40,6 +46,20 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
     if (initialGenre) setGenre(initialGenre);
   }, [initialGenre]);
 
+  const { data: apiCountries } = useQuery({
+    queryKey: ["countries"],
+    queryFn: getCountries,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const countryList = useMemo(() => {
+    if (!apiCountries || apiCountries.length === 0) return FALLBACK_COUNTRIES;
+    return apiCountries.map((c: CountryInfo) => ({
+      label: `${c.name} ${countryCodeToFlag(c.iso_3166_1)}`,
+      value: c.name,
+    }));
+  }, [apiCountries]);
+
   const hasFilters = !!(query || country || genre || language);
 
   const { data: results, isLoading } = useQuery({
@@ -58,7 +78,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const clearFilters = () => { setQuery(""); setCountry(""); setGenre(""); setLanguage(""); };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pb-4">
+    <div className="flex-1 overflow-y-auto px-4 pb-32">
       <h1 className="text-2xl font-bold mt-6 mb-4">Recherche</h1>
 
       {/* Search bar with X button */}
@@ -84,8 +104,8 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
           <SelectTrigger className="bg-accent border-0 text-foreground">
             <SelectValue placeholder="Choisir un pays" />
           </SelectTrigger>
-          <SelectContent className="bg-popover border border-border">
-            {COUNTRIES_MAP.map(c => (
+          <SelectContent className="z-50 bg-popover border border-border shadow-xl max-h-[300px]">
+            {countryList.map((c: { label: string; value: string }) => (
               <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
             ))}
           </SelectContent>

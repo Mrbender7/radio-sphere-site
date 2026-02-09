@@ -1,10 +1,10 @@
-import { Home, Search, Library, Crown } from "lucide-react";
+import { Home, Search, Heart, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { id: "home", label: "Accueil", icon: Home },
   { id: "search", label: "Recherche", icon: Search },
-  { id: "library", label: "Bibliothèque", icon: Library },
+  { id: "library", label: "Favoris", icon: Heart },
   { id: "premium", label: "Premium", icon: Crown },
 ] as const;
 

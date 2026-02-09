@@ -1,10 +1,14 @@
 import { usePlayer } from "@/contexts/PlayerContext";
-import { Play, Pause, Radio } from "lucide-react";
+import { useFavoritesContext } from "@/contexts/FavoritesContext";
+import { Play, Pause, Radio, Heart } from "lucide-react";
 
 export function MiniPlayer() {
   const { currentStation, isPlaying, togglePlay, openFullScreen } = usePlayer();
+  const { isFavorite, toggleFavorite } = useFavoritesContext();
 
   if (!currentStation) return null;
+
+  const fav = isFavorite(currentStation.id);
 
   return (
     <div
@@ -23,8 +27,14 @@ export function MiniPlayer() {
         <p className="text-xs text-muted-foreground truncate">{currentStation.country}</p>
       </div>
       <button
+        onClick={e => { e.stopPropagation(); toggleFavorite(currentStation); }}
+        className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+      >
+        <Heart className={`w-4 h-4 ${fav ? "fill-primary text-primary" : ""}`} />
+      </button>
+      <button
         onClick={e => { e.stopPropagation(); togglePlay(); }}
-        className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground"
+        className="w-9 h-9 rounded-full bg-gradient-to-b from-primary to-primary/80 border-t border-white/20 flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/40 active:shadow-sm active:translate-y-0.5 transition-all"
       >
         {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
       </button>

@@ -11,7 +11,7 @@ interface LibraryPageProps {
 export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: LibraryPageProps) {
   return (
     <div className="flex-1 overflow-y-auto px-4 pb-4">
-      <h1 className="text-2xl font-bold mt-6 mb-4">Bibliothèque</h1>
+      <h1 className="text-2xl font-bold mt-6 mb-4">Favoris</h1>
 
       {favorites.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">

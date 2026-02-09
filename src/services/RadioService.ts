@@ -39,6 +39,20 @@ async function fetchWithMirrors(path: string, params?: Record<string, string>): 
   throw new Error("All Radio Browser mirrors failed");
 }
 
+export interface CountryInfo {
+  name: string;
+  iso_3166_1: string;
+  stationcount: number;
+}
+
+export async function getCountries(): Promise<CountryInfo[]> {
+  const data = await fetchWithMirrors("countries", { order: "name", reverse: "false" });
+  return data
+    .filter((c: any) => c.name && c.iso_3166_1 && c.stationcount > 0)
+    .map((c: any) => ({ name: c.name, iso_3166_1: c.iso_3166_1, stationcount: c.stationcount }))
+    .sort((a: CountryInfo, b: CountryInfo) => a.name.localeCompare(b.name));
+}
+
 export const radioBrowserProvider: RadioProvider = {
   async searchStations(params: SearchParams): Promise<RadioStation[]> {
     const query: Record<string, string> = {

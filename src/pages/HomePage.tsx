@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioBrowserProvider } from "@/services/RadioService";
 import { StationCard } from "@/components/StationCard";
@@ -5,6 +6,28 @@ import { RadioStation } from "@/types/radio";
 import { Loader2 } from "lucide-react";
 
 const GENRES = ["pop", "rock", "jazz", "classical", "electronic", "hiphop", "news", "ambient"];
+
+const LANG_MAP: Record<string, string> = {
+  fr: "french",
+  es: "spanish",
+  de: "german",
+  pt: "portuguese",
+  it: "italian",
+  ar: "arabic",
+  ja: "japanese",
+  nl: "dutch",
+  pl: "polish",
+  ru: "russian",
+};
+
+function detectLanguage(): string | undefined {
+  try {
+    const lang = navigator.language?.toLowerCase().slice(0, 2);
+    return lang ? LANG_MAP[lang] : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 interface HomePageProps {
   recent: RadioStation[];
@@ -14,9 +37,14 @@ interface HomePageProps {
 }
 
 export function HomePage({ recent, isFavorite, onToggleFavorite, onGenreClick }: HomePageProps) {
+  const detectedLang = useMemo(detectLanguage, []);
+
   const { data: topStations, isLoading } = useQuery({
-    queryKey: ["topStations"],
-    queryFn: () => radioBrowserProvider.getTopStations(20),
+    queryKey: ["topStations", detectedLang],
+    queryFn: () =>
+      detectedLang
+        ? radioBrowserProvider.searchStations({ language: detectedLang, limit: 20 })
+        : radioBrowserProvider.getTopStations(20),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -36,7 +64,9 @@ export function HomePage({ recent, isFavorite, onToggleFavorite, onGenreClick }:
       )}
 
       <section className="mb-6">
-        <h2 className="text-lg font-semibold mb-3 text-foreground">Stations populaires</h2>
+        <h2 className="text-lg font-semibold mb-3 text-foreground">
+          {detectedLang ? "Stations populaires locales" : "Stations populaires"}
+        </h2>
         {isLoading ? (
           <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : (
@@ -74,10 +104,10 @@ const GENRE_COLORS: Record<string, string> = {
 function GenreCard({ genre, onClick }: { genre: string; onClick: () => void }) {
   return (
     <div
-      className={`rounded-xl p-4 h-20 flex items-end bg-gradient-to-br ${GENRE_COLORS[genre] || "from-gray-700 to-gray-500"} cursor-pointer active:scale-95 transition-transform`}
+      className={`rounded-xl p-4 h-20 flex items-end bg-gradient-to-br ${GENRE_COLORS[genre] || "from-gray-700 to-gray-500"} cursor-pointer active:scale-95 transition-all shadow-lg border-t border-white/10 hover:shadow-xl hover:-translate-y-0.5`}
       onClick={onClick}
     >
-      <span className="text-sm font-bold text-white capitalize">{genre}</span>
+      <span className="text-sm font-bold text-white capitalize drop-shadow-md">{genre}</span>
     </div>
   );
 }

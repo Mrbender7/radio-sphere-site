@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { PremiumProvider } from "@/contexts/PremiumContext";
-import { useFavorites, useRecentStations } from "@/hooks/useFavorites";
+import { FavoritesProvider, useFavoritesContext } from "@/contexts/FavoritesContext";
 import { BottomNav, TabId } from "@/components/BottomNav";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { FullScreenPlayer } from "@/components/FullScreenPlayer";
@@ -10,11 +10,10 @@ import { SearchPage } from "@/pages/SearchPage";
 import { LibraryPage } from "@/pages/LibraryPage";
 import { PremiumPage } from "@/pages/PremiumPage";
 
-const Index = () => {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [selectedGenre, setSelectedGenre] = useState<string | undefined>();
-  const { favorites, toggleFavorite, isFavorite } = useFavorites();
-  const { recent, addRecent } = useRecentStations();
+  const { favorites, toggleFavorite, isFavorite, recent, addRecent } = useFavoritesContext();
 
   const handleGenreClick = useCallback((genre: string) => {
     setSelectedGenre(genre);
@@ -43,6 +42,12 @@ const Index = () => {
       </PremiumProvider>
     </PlayerProvider>
   );
-};
+}
+
+const Index = () => (
+  <FavoritesProvider>
+    <AppContent />
+  </FavoritesProvider>
+);
 
 export default Index;

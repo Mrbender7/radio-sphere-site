@@ -1,11 +1,15 @@
 import { usePlayer } from "@/contexts/PlayerContext";
-import { Play, Pause, ChevronDown, Radio, Volume2 } from "lucide-react";
+import { useFavoritesContext } from "@/contexts/FavoritesContext";
+import { Play, Pause, ChevronDown, Radio, Volume2, Heart } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 export function FullScreenPlayer() {
   const { currentStation, isPlaying, togglePlay, volume, setVolume, isFullScreen, closeFullScreen } = usePlayer();
+  const { isFavorite, toggleFavorite } = useFavoritesContext();
 
   if (!isFullScreen || !currentStation) return null;
+
+  const fav = isFavorite(currentStation.id);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in slide-in-from-bottom duration-300">
@@ -31,16 +35,24 @@ export function FullScreenPlayer() {
 
       {/* Info & Controls */}
       <div className="px-8 pb-8 space-y-6">
-        <div>
-          <h2 className="text-xl font-bold text-foreground truncate">{currentStation.name}</h2>
-          <p className="text-sm text-muted-foreground">{currentStation.country} {currentStation.tags.length > 0 && `• ${currentStation.tags[0]}`}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-foreground truncate">{currentStation.name}</h2>
+            <p className="text-sm text-muted-foreground">{currentStation.country} {currentStation.tags.length > 0 && `• ${currentStation.tags[0]}`}</p>
+          </div>
+          <button
+            onClick={() => toggleFavorite(currentStation)}
+            className="flex-shrink-0 p-2 rounded-full hover:bg-accent transition-colors"
+          >
+            <Heart className={`w-6 h-6 ${fav ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+          </button>
         </div>
 
         {/* Play button */}
         <div className="flex justify-center">
           <button
             onClick={togglePlay}
-            className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/30"
+            className="w-16 h-16 rounded-full bg-gradient-to-b from-primary to-primary/80 border-t border-white/20 flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/40 active:shadow-sm active:translate-y-0.5 transition-all"
           >
             {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
           </button>
