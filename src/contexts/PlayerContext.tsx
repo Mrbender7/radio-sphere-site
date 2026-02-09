@@ -145,16 +145,9 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const requestNotificationPermission = useCallback(async () => {
     if (notifPermissionAsked.current) return;
     notifPermissionAsked.current = true;
-    try {
-      // Try Capacitor LocalNotifications if available (dynamic import)
-      const mod = await import("@capacitor/local-notifications");
-      const { display } = await mod.LocalNotifications.requestPermissions();
-      console.log("[RadioSphere] Notification permission:", display);
-    } catch {
-      // Not running in Capacitor or module not installed — try web Notification API
-      if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission().then(p => console.log("[RadioSphere] Web notification permission:", p));
-      }
+    if ("Notification" in window && Notification.permission === "default") {
+      const p = await Notification.requestPermission();
+      console.log("[RadioSphere] Notification permission:", p);
     }
   }, []);
 
