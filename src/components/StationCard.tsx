@@ -25,7 +25,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact }: 
       >
         <div className="w-12 h-12 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
           {station.logo ? (
-            <img src={station.logo} alt={station.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src={station.logo.replace('http://', 'https://')} alt={station.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           ) : (
             <Radio className="w-5 h-5 text-muted-foreground" />
           )}
@@ -58,7 +58,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact }: 
     >
       <div className="relative w-28 h-28 rounded-xl bg-accent mb-2 overflow-hidden shadow-lg">
         {station.logo ? (
-          <img src={station.logo} alt={station.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <img src={station.logo.replace('http://', 'https://')} alt={station.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Radio className="w-10 h-10 text-muted-foreground" />

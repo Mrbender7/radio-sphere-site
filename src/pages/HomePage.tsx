@@ -4,6 +4,7 @@ import { radioBrowserProvider } from "@/services/RadioService";
 import { StationCard } from "@/components/StationCard";
 import { RadioStation } from "@/types/radio";
 import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/contexts/LanguageContext";
 import radioSphereLogo from "@/assets/radio-sphere-logo.png";
 
@@ -68,7 +69,15 @@ export function HomePage({ recent, isFavorite, onToggleFavorite, onGenreClick }:
           {detectedLang ? t("home.localPopular") : t("home.popularStations")}
         </h2>
         {isLoading ? (
-          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center w-36 flex-shrink-0 p-3">
+                <Skeleton className="w-28 h-28 rounded-xl mb-2" />
+                <Skeleton className="h-3 w-20 mb-1" />
+                <Skeleton className="h-2 w-14" />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="flex gap-2 overflow-x-auto pb-2">
             {topStations?.map(s => (

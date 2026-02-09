@@ -28,7 +28,7 @@ export function FullScreenPlayer() {
       <div className="flex-1 flex items-center justify-center px-10">
         <div className="w-full max-w-[300px] aspect-square rounded-2xl bg-accent shadow-2xl flex items-center justify-center overflow-hidden">
           {currentStation.logo ? (
-            <img src={currentStation.logo} alt={currentStation.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src={currentStation.logo.replace('http://', 'https://')} alt={currentStation.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           ) : (
             <Radio className="w-24 h-24 text-primary/40" />
           )}
