@@ -1,57 +1,58 @@
 
 
-# Application de Streaming Radio — "RadioFlow"
+# Mise a jour UX — Recherche, Accueil interactif et Premium
 
-## Vue d'ensemble
-Application mobile-first de streaming radio avec un design premium dark mode inspiré de Spotify, prête pour conversion Android via Capacitor.
+## 1. Recherche par pays avec Select/Dropdown + bouton Reset
+
+**SearchPage.tsx** : Remplacer les chips "Pays" par un composant `Select` (shadcn/ui) avec un mapping francais/drapeau vers nom anglais API.
+
+Liste des pays :
+- France, Belgique, Suisse, Canada, Allemagne, USA, Espagne, Italie, Royaume-Uni
+
+Le Select affichera par exemple "France (drapeau FR)" mais enverra `"France"` a l'API. Pour les USA, il enverra `"The United States Of America"`.
+
+Le bouton "Reinitialiser" existant reste, et on ajoute un bouton croix (X) dans la barre de recherche elle-meme pour vider le texte rapidement.
+
+## 2. Cartes de genre cliquables sur la page d'accueil
+
+**HomePage.tsx** : Ajouter un callback `onGenreClick` en prop. Au clic sur une carte genre, appeler ce callback avec le tag correspondant.
+
+**Index.tsx** : Quand `onGenreClick` est appele, basculer sur l'onglet "search" et passer le genre selectionne a `SearchPage`.
+
+**SearchPage.tsx** : Accepter une prop optionnelle `initialGenre` qui pre-remplit le filtre genre au montage (avec un `useEffect` pour synchroniser).
+
+## 3. Etat Premium mock
+
+Creer un contexte `PremiumContext.tsx` avec un simple state `isPremium` (defaut `false`) et un toggle. Le provider sera place dans `Index.tsx`. La page Premium utilisera ce contexte pour afficher "Vous etes Premium" ou les boutons d'achat. Cela permettra plus tard de conditionner l'affichage de pubs.
 
 ---
 
-## 1. Design System & Thème
-- Thème **dark mode par défaut** avec palette sombre (tons de gris/noir avec accents colorés type vert ou violet)
-- Suppression des scrollbars natives, utilisation de zones de scroll internes
-- Interface plein écran type application native (pas de "look website")
+## Details techniques
 
-## 2. Navigation & Layout
-- **Barre de navigation fixe en bas** avec 4 onglets : Accueil, Recherche, Bibliothèque, Premium
-- **Mini Player persistant** au-dessus de la barre de navigation quand une radio joue (artwork, nom, bouton play/pause)
-- **Player plein écran** accessible en cliquant sur le Mini Player (artwork large, contrôles, infos de la station)
-- Zone de contenu scrollable entre le header et le mini player/navbar
+### Fichiers modifies
 
-## 3. Page Accueil
-- Section "Écoutées récemment" (basée sur localStorage)
-- Section "Stations populaires" (depuis Radio Browser API)
-- Section "Par genre" avec des cartes visuelles pour explorer les genres musicaux
-- Cards de radio avec logo, nom et pays
+1. **`src/pages/SearchPage.tsx`**
+   - Importer `Select, SelectTrigger, SelectContent, SelectItem, SelectValue` depuis shadcn/ui
+   - Definir un tableau `COUNTRIES_MAP` avec `{ label: "France (drapeau FR)", value: "France" }`, etc.
+   - Remplacer la section filtre "Pays" (chips) par un `Select` avec placeholder "Choisir un pays"
+   - Ajouter un bouton X dans l'input de recherche pour vider le texte
+   - Ajouter prop `initialGenre?: string` et un `useEffect` pour le synchroniser avec l'etat `genre`
 
-## 4. Page Recherche
-- **Barre de recherche** textuelle en haut
-- **Filtres visuels en chips/pillules** : Pays, Genre musical, Langue
-- Résultats affichés en liste avec possibilité de lancer la lecture directement
-- Les filtres sont combinables
+2. **`src/pages/HomePage.tsx`**
+   - Ajouter prop `onGenreClick: (genre: string) => void`
+   - Passer `onClick` sur chaque `GenreCard` qui appelle `onGenreClick(genre)`
 
-## 5. Page Bibliothèque (Favoris)
-- Liste des radios favorites sauvegardées en **localStorage**
-- Possibilité d'ajouter/retirer des favoris depuis n'importe quelle vue (icône cœur)
-- Message d'état vide si aucun favori
+3. **`src/pages/Index.tsx`**
+   - Ajouter state `selectedGenre` 
+   - Handler `handleGenreClick` : set genre + switch tab to "search"
+   - Passer `selectedGenre` a SearchPage et `onGenreClick` a HomePage
+   - Reset `selectedGenre` quand on quitte l'onglet search
 
-## 6. Page Premium
-- Présentation visuelle des avantages premium (sans pub, haute qualité audio, accès exclusif)
-- Faux boutons d'achat (mensuel/annuel) non fonctionnels pour l'instant
-- Design attractif type page marketing in-app
+4. **`src/contexts/PremiumContext.tsx`** (nouveau)
+   - Contexte avec `isPremium: boolean` et `togglePremium: () => void`
+   - Stockage dans `localStorage`
 
-## 7. Service Radio (Architecture)
-- **RadioService.ts** avec interface `RadioProvider` extensible
-- Implémentation **Radio Browser API** avec gestion des miroirs (de1, fr1, at1) — bascule automatique si un serveur échoue
-- Données normalisées : nom, URL du flux, logo, pays, tags/genre
-- Intégration via **TanStack React Query** pour le cache et la gestion d'état
-
-## 8. Lecteur Audio
-- Gestion audio HTML5 robuste (MP3 et AAC)
-- Gestion des erreurs de flux avec notifications **Toast** discrètes
-- Contexte React global pour l'état du player (station en cours, play/pause, volume)
-
-## 9. Préparation Capacitor
-- Configuration de Capacitor pour export Android
-- Structure et meta tags optimisés pour le mobile natif
+5. **`src/pages/PremiumPage.tsx`**
+   - Utiliser `PremiumContext` pour afficher un badge "Premium actif" si `isPremium` est true
+   - Les boutons d'achat appelleront `togglePremium()` (mock)
 
