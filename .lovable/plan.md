@@ -1,44 +1,79 @@
 
 
-# Correction critique pour le Background Audio dans l'APK Capacitor
+# Optimisations Android APK : Mixed Content, Bluetooth, Performance et WebView
 
-## Probleme
-L'audio coupe dans l'APK car la WebView Android gele l'objet Audio quand l'app passe en arriere-plan. Le navigateur Firefox fonctionne car il gere nativement le Media Session, mais la WebView Capacitor necessite des ajustements specifiques.
+## Vue d'ensemble
 
-## Modifications prevues
+Ce plan couvre 4 axes d'amelioration pour la stabilite de l'APK Capacitor sur Android. Certaines modifications se font cote code web (Lovable), d'autres necessitent des fichiers natifs Android qui ne sont pas editables dans Lovable mais pour lesquels je fournirai les instructions exactes.
 
-### 1. Audio global (hors cycle de vie React)
-Deplacer la creation de l'objet `Audio` en dehors du composant `PlayerProvider`, au niveau du module. Cela garantit qu'il ne sera jamais detruit par un re-render ou un demontage du composant.
+---
 
-```typescript
-// Cree une seule fois au niveau du module
-const globalAudio = new Audio();
-(globalAudio as any).playsInline = true;
-globalAudio.preload = "auto";
+## 1. Mixed Content -- Autoriser le contenu HTTP dans la WebView
+
+**Probleme** : La WebView Capacitor tourne en HTTPS mais certains logos de stations sont servis en HTTP, ce qui les bloque.
+
+**Solution cote code (Lovable)** :
+- Dans `StationCard.tsx` : forcer la conversion `http://` vers `https://` sur toutes les URLs de logos avant le rendu des balises `<img>`.
+- Dans `MiniPlayer.tsx` et `FullScreenPlayer.tsx` : meme traitement sur `currentStation.logo`.
+- Cela couvre le cote front-end. Le `PlayerContext.tsx` fait deja cette conversion pour le MediaSession.
+
+**Solution cote natif (instructions manuelles)** :
+- L'option `allowMixedContent` n'existe pas dans `capacitor.config.json`. Il faut modifier le fichier natif `android/app/src/main/java/.../MainActivity.java` pour ajouter `webView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW)`. Je fournirai les instructions exactes a copier apres la generation de l'APK.
+
+---
+
+## 2. Permissions Bluetooth (API 31+)
+
+**Probleme** : Sur Android 12+, `BLUETOOTH_CONNECT` est requis pour l'audio via casques Bluetooth.
+
+**Solution** : Ce changement est **100% natif** (fichier `AndroidManifest.xml`). Il ne peut pas etre fait dans Lovable.
+
+**Instructions manuelles** : Apres `npx cap add android`, ajouter dans `android/app/src/main/AndroidManifest.xml` :
+```xml
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 ```
 
-### 2. MediaSession playbackState explicite apres play()
-Apres chaque appel `audio.play()`, forcer explicitement `navigator.mediaSession.playbackState = 'playing'` pour que la WebView Android detecte l'app comme un lecteur media actif.
+La demande de permission runtime sera geree par le systeme Android automatiquement quand l'utilisateur connectera un appareil Bluetooth.
 
-### 3. Hack anti-freeze : ne jamais pauser lors de visibilitychange/blur
-Modifier le gestionnaire `visibilitychange` pour ne pas seulement reprendre quand l'app redevient visible, mais aussi empecher toute pause automatique quand elle passe en arriere-plan. Ajouter egalement un gestionnaire `blur` pour le meme effet.
+---
 
-### 4. Vibration de test au clic Play
-Ajouter `navigator.vibrate(10)` dans la fonction `play()` pour verifier que les APIs natives sont accessibles dans l'APK.
+## 3. Optimisation des performances (reduction du jank)
 
-### 5. Demande de permissions au demarrage
-Deplacer la demande de permission de notification au montage du `PlayerProvider` (et non au premier play) pour qu'elle apparaisse des le lancement de l'app. Cela permet a Android de savoir que l'app a besoin d'afficher des notifications (prerequis pour le background audio).
+**Probleme** : Les logs "Davey!" indiquent des blocages du thread principal lors du rendu initial.
 
-## Details techniques
+**Solutions cote code (Lovable)** :
+- **Lazy loading des images** : Ajouter `loading="lazy"` sur toutes les balises `<img>` dans `StationCard.tsx`, `MiniPlayer.tsx`, et `FullScreenPlayer.tsx`.
+- **Placeholder skeleton** : Afficher des skeletons pendant le chargement des stations au lieu d'un simple spinner, pour eviter le layout shift.
+- **Stale time** : Le `staleTime` de 5 minutes est deja en place dans `HomePage.tsx`, ce qui est correct.
 
-**Fichier modifie** : `src/contexts/PlayerContext.tsx`
+Fichiers modifies :
+- `src/components/StationCard.tsx` -- ajout `loading="lazy"` sur les `<img>`
+- `src/components/MiniPlayer.tsx` -- ajout `loading="lazy"`
+- `src/components/FullScreenPlayer.tsx` -- ajout `loading="lazy"`
+- `src/pages/HomePage.tsx` -- remplacer le spinner par des skeleton cards
 
-Changements concrets :
-- L'objet `Audio` est cree comme constante de module (`const globalAudio = new Audio()`) au lieu d'etre dans un `useEffect`
-- `audioRef` pointe vers cet objet global
-- Le gestionnaire `visibilitychange` re-appelle `audio.play()` dans tous les cas quand `isPlayingRef.current` est vrai (pas de pause automatique)
-- Un gestionnaire `blur` est ajoute avec la meme logique
-- `navigator.mediaSession.playbackState = 'playing'` est appele explicitement apres chaque `audio.play().then()`
-- `navigator.vibrate(10)` est ajoute dans `play()` pour le test natif
-- `requestNotificationPermission()` est appele dans un `useEffect` au montage (demarrage de l'app)
+---
+
+## 4. Configuration WebView / CapacitorCookies / CapacitorHttp
+
+**Probleme** : Warnings "Seed missing" et methodes de stockage deprecees.
+
+**Solution** : Ces warnings proviennent du runtime Android natif (Chromium WebView) et ne sont **pas controlables depuis le code web**. Ils sont inoffensifs et n'affectent pas le fonctionnement de l'app. Les plugins `CapacitorCookies` et `CapacitorHttp` ne sont pas utilises dans cette app (les appels reseau passent par `fetch` standard), donc aucune action n'est necessaire.
+
+---
+
+## Resume des modifications Lovable
+
+| Fichier | Modification |
+|---|---|
+| `src/components/StationCard.tsx` | Forcer HTTPS sur logos + `loading="lazy"` |
+| `src/components/MiniPlayer.tsx` | Forcer HTTPS sur logo + `loading="lazy"` |
+| `src/components/FullScreenPlayer.tsx` | Forcer HTTPS sur logo + `loading="lazy"` |
+| `src/pages/HomePage.tsx` | Skeleton placeholders au lieu du spinner |
+
+## Instructions natives (post-build, hors Lovable)
+
+1. **Mixed Content** : Modifier `MainActivity.java` pour `setMixedContentMode`
+2. **Bluetooth** : Ajouter `BLUETOOTH_CONNECT` dans `AndroidManifest.xml`
+3. **WebView warnings** : Aucune action requise (warnings inoffensifs)
 
