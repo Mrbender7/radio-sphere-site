@@ -44,8 +44,8 @@ export function HomePage({ recent, isFavorite, onToggleFavorite, onGenreClick }:
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="bg-background px-4 pt-6 pb-4">
-        <div className="flex items-center gap-2">
-          <img src={radioSphereLogo} alt="Radio Sphere" className="w-14 h-14 rounded-xl mix-blend-screen drop-shadow-[0_0_6px_hsl(141,73%,42%)]" />
+        <div className="flex items-center gap-4">
+          <img src={radioSphereLogo} alt="Radio Sphere" className="w-14 h-14 rounded-xl mix-blend-screen drop-shadow-[0_0_10px_hsla(250,80%,60%,0.6)]" />
           <h1 className="text-4xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent drop-shadow-[0_0_12px_hsla(250,80%,60%,0.4)]">Radio Sphere</h1>
         </div>
       </div>
