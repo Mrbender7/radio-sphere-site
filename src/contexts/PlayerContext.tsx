@@ -68,7 +68,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const updateMediaSession = useCallback((station: RadioStation, playing: boolean) => {
     if (!('mediaSession' in navigator)) return;
 
-    const artworkUrl = station.logo || 'https://placehold.co/512x512/000000/FFFFFF/png?text=Radio+Sphere';
+    const artworkUrl = station.logo ? station.logo.replace('http://', 'https://') : 'https://placehold.co/512x512.png';
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title: station.name,
