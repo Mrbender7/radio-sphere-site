@@ -1,61 +1,37 @@
 
-# Safe Area Header + Audio Background Persistence
 
-## 1. Safe Area padding (Android/iOS status bar)
+## Modifications prevues
 
-Ajouter un `padding-top` sur le conteneur principal de chaque page pour respecter la barre d'etat systeme.
+### 1. Header fixe sur la page d'accueil
 
-**`src/index.css`** : Ajouter une variable CSS et un style global sur `#root` ou le body :
-```css
-body {
-  padding-top: env(safe-area-inset-top, 24px);
-}
-```
+Actuellement, le titre "Radio Sphere" avec le logo defilent avec le reste du contenu. Le header sera extrait et place au-dessus de la zone scrollable, avec un fond opaque (`bg-background`) pour que le contenu passe en dessous sans transparence.
 
-Alternativement, appliquer le padding directement sur les headers des pages. Approche choisie : **ajouter le padding sur le conteneur principal dans `Index.tsx`** (le div `flex flex-col h-full`) pour que toutes les pages en beneficient automatiquement.
+### 2. Suppression du bouton engrenage (Settings)
 
-**Fichier modifie : `src/pages/Index.tsx`**
-- Ajouter `pt-[env(safe-area-inset-top,24px)]` ou un style inline `paddingTop: 'env(safe-area-inset-top, 24px)'` sur le div racine.
+Le bouton Settings (icone engrenage) a droite du titre sera supprime puisqu'un onglet "Reglages" existe deja dans la barre de navigation. La prop `onSettingsClick` sera retiree de `HomePage` et de `Index.tsx`.
 
-**Fichier modifie : `src/index.css`**
-- Ajouter `viewport-fit=cover` dans le meta viewport de `index.html` pour activer les safe areas.
+### 3. Avertissement donnees mobiles dans les Reglages
 
-**Fichier modifie : `index.html`**
-- Mettre a jour la balise meta viewport : `<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">`
+Un encart d'avertissement sera ajoute dans `SettingsPage` sous la section langue, avec une icone et un texte informant que l'ecoute de radio consomme des donnees mobiles. Les traductions FR/EN seront ajoutees dans `translations.ts`.
 
-## 2. Audio en arriere-plan (Web Policy)
+---
 
-Le navigateur peut mettre en pause l'audio quand l'onglet perd le focus. On va :
+### Details techniques
 
-**Fichier modifie : `src/contexts/PlayerContext.tsx`**
+**`src/pages/HomePage.tsx`**
+- Restructurer le JSX : le conteneur principal passe de `overflow-y-auto` a `flex flex-col overflow-hidden`
+- Le header (logo + titre) devient une div fixe avec `bg-background px-4 pt-6 pb-4`
+- Le contenu scrollable (recently played, popular, genres) va dans une div enfant avec `flex-1 overflow-y-auto px-4 pb-4`
+- Supprimer l'import `Settings` de lucide-react, retirer le bouton engrenage et la prop `onSettingsClick`
 
-### 2a. Empecher la pause au blur
-- Ecouter `visibilitychange` sur le document. Si l'audio etait en lecture et que la page perd le focus, ne rien faire (ne pas interrompre). Si le navigateur a mis en pause automatiquement, relancer `audio.play()`.
+**`src/pages/Index.tsx`**
+- Retirer le passage de `onSettingsClick` et le callback `handleSettingsClick`
 
-### 2b. WakeLock API
-- Lors du `play()`, demander un WakeLock via `navigator.wakeLock.request('screen')` si disponible.
-- Relacher le WakeLock lors du `pause` ou du cleanup.
-- Re-acquerir le WakeLock sur `visibilitychange` quand la page redevient visible et que l'audio joue.
+**`src/pages/SettingsPage.tsx`**
+- Ajouter un bloc avertissement apres la section langue avec une icone `Wifi` de lucide-react
+- Texte d'avertissement sur la consommation de donnees mobiles
 
-### 2c. Console log AudioContext
-- Ajouter un `console.log("[RadioSphere] Audio ready")` apres la premiere interaction utilisateur (dans la fonction `play`).
-
-### Code prevu dans PlayerContext.tsx :
-
-```text
-Ajouts :
-- useRef pour wakeLockRef (WakeLockSentinel | null)
-- useEffect pour visibilitychange listener :
-  - si document.visibilityState === 'visible' et isPlaying : audio.play(), re-acquerir wakeLock
-- Dans play() : requestWakeLock(), console.log
-- Dans togglePlay() pause : releaseWakeLock()
-- Dans cleanup : releaseWakeLock(), remove visibilitychange listener
-```
-
-## Resume des fichiers
-
-| Fichier | Changement |
-|---------|-----------|
-| `index.html` | viewport-fit=cover |
-| `src/pages/Index.tsx` | padding-top safe-area sur le conteneur racine |
-| `src/contexts/PlayerContext.tsx` | visibilitychange handler, WakeLock, console.log audio |
+**`src/i18n/translations.ts`**
+- Ajouter les cles `settings.dataWarning` et `settings.dataWarningDesc` en FR et EN
+  - FR : "Utilisation des donnees" / "L'ecoute de stations de radio utilise votre connexion internet et peut consommer des donnees mobiles. Nous recommandons une connexion Wi-Fi pour une utilisation prolongee."
+  - EN : "Data usage" / "Listening to radio stations uses your internet connection and may consume mobile data. We recommend using Wi-Fi for extended listening."
