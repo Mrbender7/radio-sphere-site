@@ -22,16 +22,16 @@ export function ExitConfirmDialog({ open, onOpenChange }: ExitConfirmDialogProps
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t("exit.title") || "Fermer l'application?"}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("exit.description") || "Appuyez une fois de plus pour quitter RadioSphere."}
+      <AlertDialogContent className="max-w-[min(90vw,340px)] rounded-2xl p-5 gap-3">
+        <AlertDialogHeader className="space-y-1.5">
+          <AlertDialogTitle className="text-base text-center">{t("exit.title")}</AlertDialogTitle>
+          <AlertDialogDescription className="text-sm text-center">
+            {t("exit.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex gap-3">
-          <AlertDialogCancel>{t("common.cancel") || "Annuler"}</AlertDialogCancel>
-          <AlertDialogAction onClick={handleExit}>{t("exit.confirm") || "Quitter"}</AlertDialogAction>
+        <div className="flex justify-center gap-3 pt-1">
+          <AlertDialogCancel className="mt-0 flex-1">{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={handleExit} className="flex-1">{t("exit.confirm")}</AlertDialogAction>
         </div>
       </AlertDialogContent>
     </AlertDialog>
