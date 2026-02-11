@@ -37,7 +37,7 @@ export function FullScreenPlayer() {
       </div>
 
        {/* Info & Controls */}
-       <div className="px-8 pb-8 space-y-6">
+       <div className="px-6 pb-[max(env(safe-area-inset-bottom,16px),1rem)] space-y-4">
          <div className="flex items-start justify-between gap-3">
            <div className="min-w-0">
              <h2 className="text-3xl sm:text-4xl font-heading font-bold leading-tight bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{currentStation.name}</h2>
