@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { RadioStation } from "@/types/radio";
 import { toast } from "@/hooks/use-toast";
+import { reportStationClick } from "@/services/RadioService";
 
 // --- Android Foreground Service helpers (Capacitor only) ---
 async function startNativeForegroundService(station: RadioStation, isPaused = false) {
@@ -366,6 +367,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     audio.addEventListener('canplay', clearTimeoutOnCanplay);
 
     onStationPlay?.(station);
+    reportStationClick(station.id);
     requestWakeLock();
   }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat]);
 
