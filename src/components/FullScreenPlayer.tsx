@@ -1,11 +1,11 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { Play, Pause, ChevronDown, Radio, Volume2, Heart } from "lucide-react";
+import { Play, Pause, ChevronDown, Radio, Volume2, Heart, Loader2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 export function FullScreenPlayer() {
-  const { currentStation, isPlaying, togglePlay, volume, setVolume, isFullScreen, closeFullScreen } = usePlayer();
+  const { currentStation, isPlaying, isBuffering, togglePlay, volume, setVolume, isFullScreen, closeFullScreen } = usePlayer();
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const { t } = useTranslation();
 
@@ -56,7 +56,7 @@ export function FullScreenPlayer() {
             onClick={togglePlay}
             className="w-16 h-16 rounded-full bg-gradient-to-b from-primary to-primary/80 border-t border-white/20 flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/40 active:shadow-sm active:translate-y-0.5 transition-all"
           >
-            {isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+            {isBuffering ? <Loader2 className="w-7 h-7 animate-spin" /> : isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
           </button>
         </div>
 

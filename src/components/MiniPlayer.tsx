@@ -1,10 +1,10 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useRef, useEffect, useState } from "react";
-import { Play, Pause, Radio, Heart } from "lucide-react";
+import { Play, Pause, Radio, Heart, Loader2 } from "lucide-react";
 
 export function MiniPlayer() {
-  const { currentStation, isPlaying, togglePlay, openFullScreen } = usePlayer();
+  const { currentStation, isPlaying, isBuffering, togglePlay, openFullScreen } = usePlayer();
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -60,7 +60,7 @@ export function MiniPlayer() {
         onClick={e => { e.stopPropagation(); togglePlay(); }}
         className="w-11 h-11 rounded-full bg-gradient-to-b from-primary to-primary/80 border-t border-white/20 flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/40 active:shadow-sm active:translate-y-0.5 transition-all"
       >
-        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+        {isBuffering ? <Loader2 className="w-5 h-5 animate-spin" /> : isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
       </button>
     </div>
   );

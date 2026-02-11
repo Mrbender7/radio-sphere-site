@@ -1,46 +1,23 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { radioBrowserProvider } from "@/services/RadioService";
-import { StationCard } from "@/components/StationCard";
 import { RadioStation } from "@/types/radio";
-import { Loader2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { StationCard } from "@/components/StationCard";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { useWeeklyDiscoveries } from "@/hooks/useWeeklyDiscoveries";
+import { Heart, Sparkles } from "lucide-react";
 import radioSphereLogo from "@/assets/radio-sphere-logo.png";
 
 const GENRES = ["70s", "80s", "90s", "ambient", "chillout", "classical", "electronic", "hiphop", "jazz", "news", "pop", "r&b", "rock", "soul"];
 
-const LANG_MAP: Record<string, string> = {
-  fr: "french", es: "spanish", de: "german", pt: "portuguese",
-  it: "italian", ar: "arabic", ja: "japanese", nl: "dutch", pl: "polish", ru: "russian",
-};
-
-function detectLanguage(): string | undefined {
-  try {
-    const lang = navigator.language?.toLowerCase().slice(0, 2);
-    return lang ? LANG_MAP[lang] : undefined;
-  } catch { return undefined; }
-}
-
 interface HomePageProps {
   recent: RadioStation[];
+  favorites: RadioStation[];
   isFavorite: (id: string) => boolean;
   onToggleFavorite: (station: RadioStation) => void;
   onGenreClick: (genre: string) => void;
 }
 
-export function HomePage({ recent, isFavorite, onToggleFavorite, onGenreClick }: HomePageProps) {
-  const detectedLang = useMemo(detectLanguage, []);
+export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGenreClick }: HomePageProps) {
   const { t } = useTranslation();
-
-  const { data: topStations, isLoading } = useQuery({
-    queryKey: ["topStations", detectedLang],
-    queryFn: () =>
-      detectedLang
-        ? radioBrowserProvider.searchStations({ language: detectedLang, limit: 20 })
-        : radioBrowserProvider.getTopStations(20),
-    staleTime: 5 * 60 * 1000,
-  });
+  const discoveries = useWeeklyDiscoveries(favorites);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -64,28 +41,37 @@ export function HomePage({ recent, isFavorite, onToggleFavorite, onGenreClick }:
         </section>
       )}
 
+      {/* Favorites section */}
       <section className="mb-6">
-        <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
-          {detectedLang ? t("home.localPopular") : t("home.popularStations")}
+        <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
+          <Heart className="w-4 h-4" />
+          {t("home.yourFavorites")}
         </h2>
-        {isLoading ? (
+        {favorites.length > 0 ? (
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center w-36 flex-shrink-0 p-3">
-                <Skeleton className="w-28 h-28 rounded-xl mb-2" />
-                <Skeleton className="h-3 w-20 mb-1" />
-                <Skeleton className="h-2 w-14" />
-              </div>
+            {favorites.slice(0, 10).map(s => (
+              <StationCard key={s.id} station={s} isFavorite={true} onToggleFavorite={onToggleFavorite} />
             ))}
           </div>
         ) : (
+          <p className="text-sm text-muted-foreground">{t("home.noFavorites")}</p>
+        )}
+      </section>
+
+      {/* Weekly discoveries */}
+      {discoveries.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(280,80%,60%)] to-[hsl(340,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            {t("home.weeklyDiscoveries")}
+          </h2>
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {topStations?.map(s => (
+            {discoveries.map(s => (
               <StationCard key={s.id} station={s} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       <section className="mb-6">
         <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.exploreByGenre")}</h2>

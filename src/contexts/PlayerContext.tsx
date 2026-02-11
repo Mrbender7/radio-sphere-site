@@ -74,6 +74,7 @@ function stopSilentLoop() {
 interface PlayerState {
   currentStation: RadioStation | null;
   isPlaying: boolean;
+  isBuffering: boolean;
   volume: number;
   isFullScreen: boolean;
 }
@@ -103,6 +104,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
     isPlaying: false,
+    isBuffering: false,
     volume: 0.8,
     isFullScreen: false,
   });
@@ -310,6 +312,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
 
     // 3. Prepare new playback
+    setState(s => ({ ...s, currentStation: station, isBuffering: true }));
     const secureLogo = station.logo?.replace('http://', 'https://');
     updateMediaSession({ ...station, logo: secureLogo }, true);
 
@@ -321,7 +324,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       audio.play()
         .then(() => {
           if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-          setState(s => ({ ...s, isPlaying: true }));
+          setState(s => ({ ...s, isPlaying: true, isBuffering: false }));
           startSilentLoop();
           startHeartbeat();
           startNativeForegroundService(station, false);
@@ -334,7 +337,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
           stopHeartbeat();
           releaseWakeLock();
           if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
-          setState(s => ({ ...s, isPlaying: false }));
+          setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
           toast({ title: "Erreur de lecture", description: "Impossible de lire ce flux. Essayez une autre station.", variant: "destructive" });
         });
       audio.removeEventListener('canplay', startPlayback);
@@ -350,7 +353,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         audio.removeAttribute('src');
         stopNativeForegroundService();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
-        setState(s => ({ ...s, isPlaying: false }));
+        setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
         toast({ title: "Délai dépassé", description: "Le flux ne répond pas. Essayez une autre station.", variant: "destructive" });
       }
     }, 15000);
@@ -362,7 +365,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
     audio.addEventListener('canplay', clearTimeoutOnCanplay);
 
-    setState(s => ({ ...s, currentStation: station }));
     onStationPlay?.(station);
     requestWakeLock();
   }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat]);

@@ -15,6 +15,9 @@ const translations: Record<Language, Record<string, string>> = {
     "home.popularStations": "Stations populaires",
     "home.localPopular": "Stations populaires",
     "home.exploreByGenre": "Explorer par genre",
+    "home.yourFavorites": "Vos favoris",
+    "home.weeklyDiscoveries": "Découvertes de la semaine",
+    "home.noFavorites": "Ajoutez des favoris pour les retrouver ici",
 
     // Search
     "search.title": "Recherche",
@@ -83,6 +86,9 @@ const translations: Record<Language, Record<string, string>> = {
     "home.popularStations": "Popular stations",
     "home.localPopular": "Popular stations",
     "home.exploreByGenre": "Explore by genre",
+    "home.yourFavorites": "Your favorites",
+    "home.weeklyDiscoveries": "Weekly discoveries",
+    "home.noFavorites": "Add favorites to see them here",
 
     // Search
     "search.title": "Search",
