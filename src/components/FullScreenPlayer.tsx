@@ -1,8 +1,9 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { Play, Pause, ChevronDown, Radio, Volume2, Heart, Loader2 } from "lucide-react";
+import { Play, Pause, ChevronDown, Volume2, Heart, Loader2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import stationPlaceholder from "@/assets/station-placeholder.png";
 
 export function FullScreenPlayer() {
   const { currentStation, isPlaying, isBuffering, togglePlay, volume, setVolume, isFullScreen, closeFullScreen } = usePlayer();
@@ -28,9 +29,9 @@ export function FullScreenPlayer() {
       <div className="flex-1 flex items-center justify-center px-10">
         <div className="w-full max-w-[300px] aspect-square rounded-2xl bg-accent shadow-2xl flex items-center justify-center overflow-hidden">
           {currentStation.logo ? (
-            <img src={currentStation.logo.replace('http://', 'https://')} alt={currentStation.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src={currentStation.logo.replace('http://', 'https://')} alt={currentStation.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = stationPlaceholder; }} />
           ) : (
-            <Radio className="w-24 h-24 text-primary/40" />
+            <img src={stationPlaceholder} alt={currentStation.name} className="w-full h-full object-cover" />
           )}
         </div>
       </div>

@@ -1,13 +1,27 @@
 import { RadioStation } from "@/types/radio";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { Heart, Play, Radio } from "lucide-react";
+import { Heart, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
+import stationPlaceholder from "@/assets/station-placeholder.png";
 
 interface StationCardProps {
   station: RadioStation;
   isFavorite: boolean;
   onToggleFavorite: (station: RadioStation) => void;
   compact?: boolean;
+}
+
+function StationLogo({ src, alt, className }: { src?: string; alt: string; className?: string }) {
+  const secureSrc = src?.replace('http://', 'https://');
+  return (
+    <img
+      src={secureSrc || stationPlaceholder}
+      alt={alt}
+      loading="lazy"
+      className={cn("w-full h-full object-cover", className)}
+      onError={e => { (e.target as HTMLImageElement).src = stationPlaceholder; }}
+    />
+  );
 }
 
 export function StationCard({ station, isFavorite, onToggleFavorite, compact }: StationCardProps) {
@@ -24,11 +38,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact }: 
         )}
       >
         <div className="w-12 h-12 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
-          {station.logo ? (
-            <img src={station.logo.replace('http://', 'https://')} alt={station.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          ) : (
-            <Radio className="w-5 h-5 text-muted-foreground" />
-          )}
+          <StationLogo src={station.logo} alt={station.name} />
         </div>
         <div className="flex-1 min-w-0 text-left">
           <p className={cn("text-sm font-medium truncate", isActive && "text-primary")}>{station.name}</p>
@@ -57,13 +67,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact }: 
       className="group relative flex flex-col items-center w-36 flex-shrink-0 p-3 rounded-xl hover:bg-accent transition-colors"
     >
       <div className="relative w-28 h-28 rounded-xl bg-accent mb-2 overflow-hidden shadow-lg">
-        {station.logo ? (
-          <img src={station.logo.replace('http://', 'https://')} alt={station.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Radio className="w-10 h-10 text-muted-foreground" />
-          </div>
-        )}
+        <StationLogo src={station.logo} alt={station.name} />
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <Play className="w-8 h-8 text-white" />
         </div>

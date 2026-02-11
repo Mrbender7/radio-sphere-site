@@ -1,7 +1,8 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useRef, useEffect, useState } from "react";
-import { Play, Pause, Radio, Heart, Loader2 } from "lucide-react";
+import { Play, Pause, Heart, Loader2 } from "lucide-react";
+import stationPlaceholder from "@/assets/station-placeholder.png";
 
 export function MiniPlayer() {
   const { currentStation, isPlaying, isBuffering, togglePlay, openFullScreen } = usePlayer();
@@ -32,9 +33,9 @@ export function MiniPlayer() {
     >
       <div className="w-10 h-10 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
         {currentStation.logo ? (
-          <img src={currentStation.logo.replace('http://', 'https://')} alt={currentStation.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <img src={currentStation.logo.replace('http://', 'https://')} alt={currentStation.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = stationPlaceholder; }} />
         ) : (
-          <Radio className="w-5 h-5 text-primary" />
+          <img src={stationPlaceholder} alt={currentStation.name} className="w-full h-full object-cover" />
         )}
       </div>
       <div className="flex-1 min-w-0">
