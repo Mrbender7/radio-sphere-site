@@ -1,10 +1,26 @@
 import { RadioStation, RadioProvider, SearchParams } from "@/types/radio";
 
-const MIRRORS = [
+const FALLBACK_MIRRORS = [
   "https://de1.api.radio-browser.info",
   "https://fr1.api.radio-browser.info",
   "https://at1.api.radio-browser.info",
+  "https://nl1.api.radio-browser.info",
+  "https://fi1.api.radio-browser.info",
 ];
+
+const USER_AGENT = "RadioSphere/1.0";
+
+// Cache the working mirror for the session to avoid retrying dead ones
+let cachedWorkingMirror: string | null = null;
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 function normalizeStation(raw: any): RadioStation {
   return {
@@ -24,19 +40,38 @@ function normalizeStation(raw: any): RadioStation {
 
 async function fetchWithMirrors(path: string, params?: Record<string, string>): Promise<any[]> {
   const query = params ? "?" + new URLSearchParams(params).toString() : "";
-  
-  for (const mirror of MIRRORS) {
+
+  // Try cached working mirror first, then shuffled fallbacks
+  const mirrors = cachedWorkingMirror
+    ? [cachedWorkingMirror, ...shuffleArray(FALLBACK_MIRRORS.filter(m => m !== cachedWorkingMirror))]
+    : shuffleArray(FALLBACK_MIRRORS);
+
+  for (const mirror of mirrors) {
     try {
       const res = await fetch(`${mirror}/json/${path}${query}`, {
-        headers: { "User-Agent": "RadioFlow/1.0" },
+        headers: { "User-Agent": USER_AGENT },
       });
       if (!res.ok) continue;
+      cachedWorkingMirror = mirror;
       return await res.json();
     } catch {
       continue;
     }
   }
   throw new Error("All Radio Browser mirrors failed");
+}
+
+/** Notify Radio Browser that a station was clicked (community contribution) */
+export async function reportStationClick(stationuuid: string): Promise<void> {
+  if (!stationuuid) return;
+  try {
+    const mirror = cachedWorkingMirror || FALLBACK_MIRRORS[0];
+    await fetch(`${mirror}/json/url/${stationuuid}`, {
+      headers: { "User-Agent": USER_AGENT },
+    });
+  } catch {
+    // Best-effort, don't block playback
+  }
 }
 
 export interface CountryInfo {
@@ -63,6 +98,7 @@ export const radioBrowserProvider: RadioProvider = {
       hidebroken: "true",
     };
     if (params.name) query.name = params.name;
+    // Keep using country name — the API supports both, and our UI uses display names
     if (params.country) query.country = params.country;
     if (params.tag) query.tag = params.tag;
     if (params.language) query.language = params.language;
