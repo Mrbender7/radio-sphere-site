@@ -1,5 +1,6 @@
 import { RadioStation } from "@/types/radio";
 import { StationCard } from "@/components/StationCard";
+import { ScrollableRow } from "@/components/ScrollableRow";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useWeeklyDiscoveries } from "@/hooks/useWeeklyDiscoveries";
 import { Heart, Sparkles, RefreshCw } from "lucide-react";
@@ -33,11 +34,11 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
       {recent.length > 0 && (
         <section className="mb-6">
           <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.recentlyPlayed")}</h2>
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <ScrollableRow>
             {recent.slice(0, 10).map(s => (
               <StationCard key={s.id} station={s} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
             ))}
-          </div>
+          </ScrollableRow>
         </section>
       )}
 
@@ -48,11 +49,11 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
           {t("home.yourFavorites")}
         </h2>
         {favorites.length > 0 ? (
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <ScrollableRow>
             {favorites.slice(0, 10).map(s => (
               <StationCard key={s.id} station={s} isFavorite={true} onToggleFavorite={onToggleFavorite} />
             ))}
-          </div>
+          </ScrollableRow>
         ) : (
           <p className="text-sm text-muted-foreground">{t("home.noFavorites")}</p>
         )}
@@ -75,11 +76,11 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
             </button>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <ScrollableRow>
             {discoveries.map(s => (
               <StationCard key={s.id} station={s} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
             ))}
-          </div>
+          </ScrollableRow>
         </section>
       )}
 
