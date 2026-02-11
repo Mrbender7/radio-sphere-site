@@ -56,8 +56,16 @@ const translations: Record<Language, Record<string, string>> = {
     "player.nowPlaying": "En cours de lecture",
     "player.streamError": "Erreur de lecture",
     "player.streamErrorDesc": "Impossible de lire ce flux. Essayez une autre station.",
-    "player.error": "Erreur",
-    "player.streamUnavailable": "Flux indisponible",
+     "player.error": "Error",
+    "player.streamUnavailable": "Stream unavailable",
+
+    // Exit
+    "exit.title": "Exit the app?",
+    "exit.description": "Press back one more time to exit RadioSphere.",
+    "exit.confirm": "Exit",
+
+    // Common
+    "common.cancel": "Cancel",
 
     // Settings
     "settings.title": "Réglages",
@@ -129,6 +137,14 @@ const translations: Record<Language, Record<string, string>> = {
     "player.streamErrorDesc": "Unable to play this stream. Try another station.",
     "player.error": "Error",
     "player.streamUnavailable": "Stream unavailable",
+
+    // Exit
+    "exit.title": "Close app?",
+    "exit.description": "Press back one more time to exit RadioSphere.",
+    "exit.confirm": "Exit",
+
+    // Common
+    "common.cancel": "Cancel",
 
     // Settings
     "settings.title": "Settings",
