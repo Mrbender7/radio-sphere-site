@@ -64,11 +64,11 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact }: 
   return (
     <button
       onClick={() => play(station)}
-      className="group relative flex flex-col items-center w-36 flex-shrink-0 p-3 rounded-xl hover:bg-accent transition-colors"
+      className="group relative flex flex-col items-center w-36 flex-shrink-0 p-3 rounded-xl transition-colors [@media(hover:hover)]:hover:bg-accent"
     >
       <div className="relative w-28 h-28 rounded-xl bg-accent mb-2 overflow-hidden shadow-lg">
         <StationLogo src={station.logo} alt={station.name} />
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/40 opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
           <Play className="w-8 h-8 text-white" />
         </div>
       </div>
