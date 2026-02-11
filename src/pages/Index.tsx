@@ -9,7 +9,7 @@ import { FullScreenPlayer } from "@/components/FullScreenPlayer";
 import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { LibraryPage } from "@/pages/LibraryPage";
-import { PremiumPage } from "@/pages/PremiumPage";
+
 import { SettingsPage } from "@/pages/SettingsPage";
 
 function AppContent() {

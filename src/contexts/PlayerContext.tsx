@@ -289,10 +289,27 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const play = useCallback((station: RadioStation) => {
-    const audio = audioRef.current;
-    audio.pause();
+  const play = useCallback(async (station: RadioStation) => {
+    // 1. Validate URL
+    if (!station.streamUrl) {
+      console.error('[RadioSphere] Cannot play station with no stream URL.');
+      toast({ title: "Flux indisponible", description: "Cette station n'a pas d'URL de flux.", variant: "destructive" });
+      return;
+    }
 
+    const audio = audioRef.current;
+
+    // 2. Clean up previous playback
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load(); // Reset internal state
+    stopSilentLoop();
+    stopHeartbeat();
+    releaseWakeLock();
+    stopNativeForegroundService();
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+
+    // 3. Prepare new playback
     const secureLogo = station.logo?.replace('http://', 'https://');
     updateMediaSession({ ...station, logo: secureLogo }, true);
 
@@ -310,16 +327,45 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
           startNativeForegroundService(station, false);
         })
         .catch((e) => {
-          console.error("Lecture différée échouée", e);
+          console.error("[RadioSphere] Playback failed", e);
+          // 4. Robust error handling
+          stopNativeForegroundService();
+          stopSilentLoop();
+          stopHeartbeat();
+          releaseWakeLock();
+          if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+          setState(s => ({ ...s, isPlaying: false }));
+          toast({ title: "Erreur de lecture", description: "Impossible de lire ce flux. Essayez une autre station.", variant: "destructive" });
         });
       audio.removeEventListener('canplay', startPlayback);
     };
     audio.addEventListener('canplay', startPlayback);
 
+    // Timeout: if canplay never fires within 15s, abort
+    const timeout = setTimeout(() => {
+      audio.removeEventListener('canplay', startPlayback);
+      if (audio.readyState < 3) {
+        console.warn("[RadioSphere] Stream timeout — no canplay after 15s");
+        audio.pause();
+        audio.removeAttribute('src');
+        stopNativeForegroundService();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+        setState(s => ({ ...s, isPlaying: false }));
+        toast({ title: "Délai dépassé", description: "Le flux ne répond pas. Essayez une autre station.", variant: "destructive" });
+      }
+    }, 15000);
+
+    // Clear timeout once canplay fires
+    const clearTimeoutOnCanplay = () => {
+      clearTimeout(timeout);
+      audio.removeEventListener('canplay', clearTimeoutOnCanplay);
+    };
+    audio.addEventListener('canplay', clearTimeoutOnCanplay);
+
     setState(s => ({ ...s, currentStation: station }));
     onStationPlay?.(station);
     requestWakeLock();
-  }, [onStationPlay, requestWakeLock, updateMediaSession, startHeartbeat]);
+  }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
