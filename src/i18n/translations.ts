@@ -62,12 +62,12 @@ const translations: Record<Language, Record<string, string>> = {
     "player.streamUnavailable": "Stream unavailable",
 
     // Exit
-    "exit.title": "Exit the app?",
-    "exit.description": "Press back one more time to exit RadioSphere.",
-    "exit.confirm": "Exit",
+    "exit.title": "Fermer l'application ?",
+    "exit.description": "Appuyez une fois de plus pour quitter RadioSphere.",
+    "exit.confirm": "Quitter",
 
     // Common
-    "common.cancel": "Cancel",
+    "common.cancel": "Annuler",
 
     // Settings
     "settings.title": "Réglages",
