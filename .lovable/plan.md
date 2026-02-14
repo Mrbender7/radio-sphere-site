@@ -1,83 +1,192 @@
 
 
-# Fix : Boutons Play/Pause sur la notification + Icone personnalisee + Ecran de verrouillage
+# Audit complet Android + Corrections + Workflow
 
-## Problemes identifies
+## Resultat de l'audit
 
-1. **Pas de boutons play/pause** sur la notification : le plugin `@capawesome-team/capacitor-android-foreground-service` supporte une propriete `buttons` pour afficher des boutons sur Android SDK 24+
-2. **Icone par defaut** : `smallIcon` reference un drawable Android. Il faut fournir l'icone correcte dans le projet natif
-3. **Ecran de verrouillage** : le MediaSession API est deja configure avec metadata et artwork. Avec le foreground service `mediaPlayback` actif, Android devrait afficher les controles sur le lock screen. Il faut s'assurer que le `playbackState` est toujours synchronise
+### Ce qui fonctionne bien
+- Moteur audio HTML5 avec heartbeat, silent loop, WakeLock -- solide
+- Foreground Service avec `silent: true` -- OK
+- Media Session API (play/pause depuis la notification) -- OK
+- Gestion des favoris, recents, recherche -- OK
+- Favicons et icones PWA -- OK
+- Overlay station active (sans hover) -- OK
 
-## Changements cote Lovable
+### Problemes detectes
 
-### Fichier : `src/contexts/PlayerContext.tsx`
+**1. Bouton Retour : logique incorrecte sur les onglets non-home**
 
-**1. Ajouter des boutons a la notification du foreground service**
-
-Le plugin supporte `buttons: NotificationButton[]` sur Android SDK 24+. On ajoutera un bouton "Pause" quand la lecture est active et "Play" quand elle est en pause.
-
-```typescript
-await ForegroundService.startForegroundService({
-  id: 1,
-  title: station.name,
-  body: station.country || 'Radio Sphere',
-  smallIcon: 'ic_notification',
-  serviceType: 2,
-  buttons: [
-    { title: 'Pause', id: 1 }
-  ],
-} as any);
+Actuellement dans `Index.tsx` :
+```
+useBackButton({
+  onBack: closeFullScreen,    // <-- probleme
+  onDoubleBackHome: () => setShowExitDialog(true),
+  isHome: activeTab === "home",
+  isFullScreen,
+});
 ```
 
-**2. Ecouter les clics sur les boutons**
+Dans `useBackButton.ts`, quand `isFullScreen = false` et `isHome = false`, le code appelle `onBack()` qui fait `closeFullScreen()` -- ce qui ne fait rien. Le bouton retour est donc inoperant sur les onglets Search, Library et Settings.
 
-Ajouter un listener `buttonClicked` dans le `useEffect` des MediaSession handlers pour synchroniser play/pause depuis la notification.
+**Correction** : `onBack` doit naviguer vers l'onglet Home quand le fullscreen player n'est pas ouvert.
 
-**3. Mettre a jour la notification quand l'etat change**
+**2. Fullscreen Player : le back ramene a home au lieu de rester sur l'onglet courant**
 
-Utiliser `ForegroundService.updateForegroundService()` pour changer le titre du bouton entre "Play" et "Pause" selon l'etat actuel.
+Quand le fullscreen player est ouvert depuis l'onglet Search et qu'on appuie sur back, le comportement actuel ferme le fullscreen -- c'est correct. Mais il faut s'assurer que l'onglet actif reste le meme (Search), pas Home.
 
-## Instructions pour le script PowerShell (icone personnalisee)
+Actuellement `onBack: closeFullScreen` -- c'est correct pour le fullscreen car `closeFullScreen` ne change pas l'onglet actif. OK.
 
-Pour utiliser le logo Radio Sphere comme icone de notification, il faut generer les drawables Android a partir de l'image. Ajouter dans ton script, apres `npx cap add android` :
+**3. Requestfullscreen sur premier clic (App.tsx lignes 28-36)**
+
+Le code tente de passer en plein ecran navigateur au premier clic. Sur Android Capacitor/WebView, cela peut provoquer des comportements inattendus (barre de navigation systeme cachee, gestes brises). Ce n'est pas necessaire car Capacitor gere deja le mode immersif via le manifest Android.
+
+**Correction** : Supprimer le `requestFullscreen` automatique.
+
+**4. References iOS inutiles (index.html)**
+
+`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon` -- inutiles pour une app exclusivement Android. Nettoyage optionnel mais recommande.
+
+**5. GenreCard : `hover:` classes inutiles sur Android**
+
+`hover:shadow-xl hover:-translate-y-0.5` sur les cartes de genre -- pas de hover sur mobile, mais inoffensif. Nettoyage optionnel.
+
+## Plan de corrections
+
+### Etape 1 : Corriger le bouton Retour (`useBackButton` + `Index.tsx`)
+
+Modifier `Index.tsx` pour passer la bonne logique :
+- `onBack` : si fullscreen ouvert -> fermer fullscreen ; sinon -> naviguer vers l'onglet Home
+- Le hook gere deja la priorite fullscreen > home > default
+
+Concretement, changer `onBack` dans `Index.tsx` :
+```typescript
+useBackButton({
+  onBack: () => {
+    if (isFullScreen) {
+      closeFullScreen();
+    } else {
+      setActiveTab("home");
+    }
+  },
+  onDoubleBackHome: () => setShowExitDialog(true),
+  isHome: activeTab === "home",
+  isFullScreen,
+});
+```
+
+Et simplifier `useBackButton.ts` pour que le hook ne duplique plus la logique fullscreen (le callback `onBack` s'en charge) :
+```typescript
+const handleBackPress = useCallback(() => {
+  if (isHome) {
+    // double-back logic...
+    return;
+  }
+  onBack();
+}, [isHome, onBack, onDoubleBackHome]);
+```
+
+### Etape 2 : Supprimer le requestFullscreen automatique (`App.tsx`)
+
+Retirer les lignes 27-36 qui tentent `document.documentElement.requestFullscreen()` au premier clic. Inutile et potentiellement problematique sur Capacitor Android.
+
+### Etape 3 : Nettoyer les references iOS (`index.html`)
+
+Supprimer `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, et `apple-touch-icon` du HTML.
+
+### Etape 4 : Supprimer les hover sur GenreCard (`HomePage.tsx`)
+
+Retirer `hover:shadow-xl hover:-translate-y-0.5` des cartes de genre.
+
+---
+
+## Workflow complet APK avec icone de notification
+
+Voici le workflow complet pour generer l'APK avec l'icone de notification fonctionnelle :
+
+### Prerequis
+- Android Studio installe
+- Le projet exporte sur GitHub et clone localement
+- Node.js installe
+
+### Etape 1 : Preparer l'icone de notification
+
+L'icone de notification Android **doit etre monochrome** (blanc sur transparent). Le "New Image Asset" d'Android Studio genere des icones adaptives (colorees, avec arriere-plan) -- celles-ci ne fonctionnent **PAS** pour les notifications.
+
+Pour creer l'icone de notification correctement :
+
+1. Ouvrir Android Studio
+2. **Ne pas utiliser** "Image Asset" classique (Adaptive/Legacy)
+3. Aller dans `File > New > Image Asset`
+4. Choisir **Icon Type: "Notification Icons"** (pas "Launcher Icons")
+5. Charger ton logo Radio Sphere
+6. Android Studio va automatiquement le convertir en silhouette blanche sur fond transparent
+7. Nommer l'icone : `ic_notification`
+8. Cliquer sur Finish
+
+Cela va generer les fichiers dans :
+```
+android/app/src/main/res/drawable-mdpi/ic_notification.png
+android/app/src/main/res/drawable-hdpi/ic_notification.png
+android/app/src/main/res/drawable-xhdpi/ic_notification.png
+android/app/src/main/res/drawable-xxhdpi/ic_notification.png
+```
+
+**Si "Notification Icons" n'apparait pas** dans le menu, creer manuellement :
+1. Prendre ton logo
+2. Le convertir en blanc pur (#FFFFFF) sur fond transparent dans un editeur d'image (GIMP, Photoshop, etc.)
+3. Exporter en PNG aux tailles : 24x24, 36x36, 48x48, 72x72
+4. Placer dans les dossiers `drawable-*` ci-dessus
+
+### Etape 2 : Build et deploiement
 
 ```powershell
-# Telecharger et installer l'icone de notification
-# L'icone doit etre monochrome (blanc sur transparent) pour les notifications Android
-$sizes = @{
-    "mdpi" = 24
-    "hdpi" = 36
-    "xhdpi" = 48
-    "xxhdpi" = 72
-    "xxxhdpi" = 96
-}
-foreach ($density in $sizes.Keys) {
-    $dir = "android/app/src/main/res/drawable-$density"
-    if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force }
-    # Copier l'icone launcher comme fallback (idealement utiliser une version monochrome)
-    Copy-Item "android/app/src/main/res/mipmap-$density/ic_launcher_foreground.png" "$dir/ic_notification.png" -ErrorAction SilentlyContinue
-}
+# 1. Pull les dernieres modifications
+git pull
+
+# 2. Installer les dependances
+npm install
+
+# 3. Build web
+npm run build
+
+# 4. Synchroniser avec Capacitor
+npx cap sync android
+
+# 5. IMPORTANT : Copier l'icone de notification (si creee manuellement)
+#    Verifier que ic_notification.png existe dans les dossiers drawable-*
+
+# 6. Ouvrir dans Android Studio
+npx cap open android
+
+# 7. Dans Android Studio :
+#    - Build > Build Bundle(s) / APK(s) > Build APK(s)
+#    - Ou Run sur un appareil/emulateur
 ```
 
-Note : pour une icone de notification parfaite sur Android, il faudrait une image **monochrome blanche sur fond transparent** (c'est une contrainte Android). L'icone launcher en fallback fonctionnera mais pourrait apparaitre comme un carre blanc sur certains appareils. Pour un rendu optimal, genere un asset monochrome dans Android Studio (clic droit sur `res` > New > Image Asset > type "Notification").
+### Etape 3 : Verifications post-build
 
-## Ecran de verrouillage
+- Lancer une station radio
+- Verifier que la notification apparait **sans son**
+- Verifier que l'icone dans la barre de notification est bien la silhouette blanche
+- Appuyer sur back dans le fullscreen player -> doit revenir a l'onglet precedent
+- Appuyer sur back sur un onglet non-home -> doit revenir a Home
+- Double-clic back sur Home -> dialogue de confirmation de sortie
 
-L'ecran de verrouillage utilise automatiquement les donnees du `MediaSession` API quand :
-- Un foreground service de type `mediaPlayback` est actif (deja fait)
-- `navigator.mediaSession.metadata` contient artwork en HTTPS (deja fait)
-- `navigator.mediaSession.playbackState` est "playing" (deja fait)
-- Les handlers `play` et `pause` sont enregistres (deja fait)
+### Point important : Canal de notification silencieux
 
-Cela devrait deja fonctionner. Si ce n'est pas le cas, c'est probablement parce que la notification du plugin "ecrase" visuellement celle du MediaSession. La solution est de s'assurer que les deux coexistent correctement, ce qui est le cas avec `serviceType: 2` (mediaPlayback).
+Si malgre `silent: true` la notification fait du bruit, ajouter dans `MainActivity.java` (dans `onCreate`, apres `super.onCreate`) :
 
-## Resume
-
-| Fichier | Modification |
-|---|---|
-| `src/contexts/PlayerContext.tsx` | Ajout `buttons` au foreground service, listener `buttonClicked`, et `updateForegroundService` pour toggle |
-
-| Script PowerShell | Modification |
-|---|---|
-| Section post-`cap add` | Copier les drawables `ic_notification.png` dans chaque densite |
+```java
+if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+    android.app.NotificationChannel channel = new android.app.NotificationChannel(
+        "foreground_service",
+        "Radio Playback",
+        android.app.NotificationManager.IMPORTANCE_LOW
+    );
+    channel.setSound(null, null);
+    channel.enableVibration(false);
+    android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
+    if (nm != null) nm.createNotificationChannel(channel);
+}
+```
 
