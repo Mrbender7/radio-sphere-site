@@ -1,192 +1,83 @@
 
 
-# Audit complet Android + Corrections + Workflow
+# Corrections Android : Son notification, Bouton retour, Ecran de verrouillage
 
-## Resultat de l'audit
+## 3 problemes identifies et leurs causes
 
-### Ce qui fonctionne bien
-- Moteur audio HTML5 avec heartbeat, silent loop, WakeLock -- solide
-- Foreground Service avec `silent: true` -- OK
-- Media Session API (play/pause depuis la notification) -- OK
-- Gestion des favoris, recents, recherche -- OK
-- Favicons et icones PWA -- OK
-- Overlay station active (sans hover) -- OK
+### 1. Son de notification persistant
+**Cause** : Le plugin capawesome utilise par defaut son propre canal de notification (pas celui cree dans MainActivity.java). Le canal "foreground_service" cree en Java n'est jamais utilise par le plugin car le code JS ne passe pas `notificationChannelId`.
 
-### Problemes detectes
+**Solution** : Utiliser l'API JS du plugin pour creer le canal silencieux directement, puis passer `notificationChannelId` a chaque appel `startForegroundService`. Cela garantit que le plugin utilise bien le bon canal.
 
-**1. Bouton Retour : logique incorrecte sur les onglets non-home**
+```typescript
+// Creer le canal silencieux au demarrage via le plugin lui-meme
+ForegroundService.createNotificationChannel({
+  id: 'radio_silent',
+  name: 'Radio Playback',
+  importance: 2, // LOW
+});
 
-Actuellement dans `Index.tsx` :
-```
-useBackButton({
-  onBack: closeFullScreen,    // <-- probleme
-  onDoubleBackHome: () => setShowExitDialog(true),
-  isHome: activeTab === "home",
-  isFullScreen,
+// Puis a chaque start :
+ForegroundService.startForegroundService({
+  ...
+  notificationChannelId: 'radio_silent',
 });
 ```
 
-Dans `useBackButton.ts`, quand `isFullScreen = false` et `isHome = false`, le code appelle `onBack()` qui fait `closeFullScreen()` -- ce qui ne fait rien. Le bouton retour est donc inoperant sur les onglets Search, Library et Settings.
+### 2. Bouton retour ferme l'app depuis tous les ecrans
+**Cause** : Le hook `useBackButton` utilise l'evenement `popstate` du navigateur, qui ne fonctionne pas correctement dans une WebView Capacitor Android. Le bouton retour hardware Android ne declenche pas toujours `popstate` de maniere fiable, et quand il le fait, il peut provoquer une navigation reelle (sortie de l'app) avant que le handler puisse l'intercepter.
 
-**Correction** : `onBack` doit naviguer vers l'onglet Home quand le fullscreen player n'est pas ouvert.
+**Solution** : Utiliser le plugin `@capacitor/app` qui fournit un evenement `backButton` natif specifique a Android. Quand on ecoute cet evenement, le comportement par defaut du bouton retour est desactive, ce qui donne un controle total.
 
-**2. Fullscreen Player : le back ramene a home au lieu de rester sur l'onglet courant**
-
-Quand le fullscreen player est ouvert depuis l'onglet Search et qu'on appuie sur back, le comportement actuel ferme le fullscreen -- c'est correct. Mais il faut s'assurer que l'onglet actif reste le meme (Search), pas Home.
-
-Actuellement `onBack: closeFullScreen` -- c'est correct pour le fullscreen car `closeFullScreen` ne change pas l'onglet actif. OK.
-
-**3. Requestfullscreen sur premier clic (App.tsx lignes 28-36)**
-
-Le code tente de passer en plein ecran navigateur au premier clic. Sur Android Capacitor/WebView, cela peut provoquer des comportements inattendus (barre de navigation systeme cachee, gestes brises). Ce n'est pas necessaire car Capacitor gere deja le mode immersif via le manifest Android.
-
-**Correction** : Supprimer le `requestFullscreen` automatique.
-
-**4. References iOS inutiles (index.html)**
-
-`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon` -- inutiles pour une app exclusivement Android. Nettoyage optionnel mais recommande.
-
-**5. GenreCard : `hover:` classes inutiles sur Android**
-
-`hover:shadow-xl hover:-translate-y-0.5` sur les cartes de genre -- pas de hover sur mobile, mais inoffensif. Nettoyage optionnel.
-
-## Plan de corrections
-
-### Etape 1 : Corriger le bouton Retour (`useBackButton` + `Index.tsx`)
-
-Modifier `Index.tsx` pour passer la bonne logique :
-- `onBack` : si fullscreen ouvert -> fermer fullscreen ; sinon -> naviguer vers l'onglet Home
-- Le hook gere deja la priorite fullscreen > home > default
-
-Concretement, changer `onBack` dans `Index.tsx` :
 ```typescript
-useBackButton({
-  onBack: () => {
-    if (isFullScreen) {
-      closeFullScreen();
-    } else {
-      setActiveTab("home");
-    }
-  },
-  onDoubleBackHome: () => setShowExitDialog(true),
-  isHome: activeTab === "home",
-  isFullScreen,
+import { App } from '@capacitor/app';
+
+App.addListener('backButton', () => {
+  // Logique custom : fullscreen -> fermer, onglet -> home, home -> double-tap exit
 });
 ```
 
-Et simplifier `useBackButton.ts` pour que le hook ne duplique plus la logique fullscreen (le callback `onBack` s'en charge) :
-```typescript
-const handleBackPress = useCallback(() => {
-  if (isHome) {
-    // double-back logic...
-    return;
-  }
-  onBack();
-}, [isHome, onBack, onDoubleBackHome]);
-```
+Le hook gardera aussi le fallback `popstate` pour le web/preview.
 
-### Etape 2 : Supprimer le requestFullscreen automatique (`App.tsx`)
+### 3. Pas de controles sur l'ecran de verrouillage
+**Cause** : La Media Session API dans une WebView Android ne propage pas les controles vers l'ecran de verrouillage systeme. C'est une limitation connue de WebView. Le seul moyen d'afficher des controles sur l'ecran de verrouillage est via la notification du foreground service, qui elle s'affiche bien sur le lock screen.
 
-Retirer les lignes 27-36 qui tentent `document.documentElement.requestFullscreen()` au premier clic. Inutile et potentiellement problematique sur Capacitor Android.
+**Solution** : La notification du foreground service devrait deja apparaitre sur l'ecran de verrouillage si le canal a une importance suffisante (LOW minimum, pas MIN). Le probleme actuel est que le canal n'est pas correctement utilise (probleme 1). Une fois le canal corrige avec `IMPORTANCE_LOW` et `notificationChannelId` correctement passe, la notification avec le bouton Play/Pause apparaitra sur le lock screen.
 
-### Etape 3 : Nettoyer les references iOS (`index.html`)
-
-Supprimer `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, et `apple-touch-icon` du HTML.
-
-### Etape 4 : Supprimer les hover sur GenreCard (`HomePage.tsx`)
-
-Retirer `hover:shadow-xl hover:-translate-y-0.5` des cartes de genre.
+De plus, augmenter les infos dans la notification (ajouter le logo de la station via la propriete `largeIcon` si le plugin le supporte).
 
 ---
 
-## Workflow complet APK avec icone de notification
+## Plan technique
 
-Voici le workflow complet pour generer l'APK avec l'icone de notification fonctionnelle :
+### Fichier 1 : `src/contexts/PlayerContext.tsx`
 
-### Prerequis
-- Android Studio installe
-- Le projet exporte sur GitHub et clone localement
-- Node.js installe
+**Modifications :**
 
-### Etape 1 : Preparer l'icone de notification
+- Ajouter une fonction `ensureNotificationChannel()` qui cree le canal silencieux via `ForegroundService.createNotificationChannel()` au lieu de le faire en Java
+- Passer `notificationChannelId: 'radio_silent'` dans tous les appels `startForegroundService`
+- Appeler `ensureNotificationChannel()` une fois au montage du provider
 
-L'icone de notification Android **doit etre monochrome** (blanc sur transparent). Le "New Image Asset" d'Android Studio genere des icones adaptives (colorees, avec arriere-plan) -- celles-ci ne fonctionnent **PAS** pour les notifications.
+### Fichier 2 : `src/hooks/useBackButton.ts`
 
-Pour creer l'icone de notification correctement :
+**Modifications :**
 
-1. Ouvrir Android Studio
-2. **Ne pas utiliser** "Image Asset" classique (Adaptive/Legacy)
-3. Aller dans `File > New > Image Asset`
-4. Choisir **Icon Type: "Notification Icons"** (pas "Launcher Icons")
-5. Charger ton logo Radio Sphere
-6. Android Studio va automatiquement le convertir en silhouette blanche sur fond transparent
-7. Nommer l'icone : `ic_notification`
-8. Cliquer sur Finish
+- Importer dynamiquement `@capacitor/app` (App plugin)
+- Utiliser `App.addListener('backButton', ...)` comme handler principal sur Android
+- Garder le fallback `popstate` pour le web
+- La logique interne reste la meme : fullscreen > retour home > double-tap exit
 
-Cela va generer les fichiers dans :
-```
-android/app/src/main/res/drawable-mdpi/ic_notification.png
-android/app/src/main/res/drawable-hdpi/ic_notification.png
-android/app/src/main/res/drawable-xhdpi/ic_notification.png
-android/app/src/main/res/drawable-xxhdpi/ic_notification.png
-```
+### Fichier 3 : `radiosphere_v2_2_2.ps1`
 
-**Si "Notification Icons" n'apparait pas** dans le menu, creer manuellement :
-1. Prendre ton logo
-2. Le convertir en blanc pur (#FFFFFF) sur fond transparent dans un editeur d'image (GIMP, Photoshop, etc.)
-3. Exporter en PNG aux tailles : 24x24, 36x36, 48x48, 72x72
-4. Placer dans les dossiers `drawable-*` ci-dessus
+**Modifications :**
 
-### Etape 2 : Build et deploiement
+- Supprimer le patch Java `onCreate` pour le canal de notification (desormais gere cote JS)
+- Garder le patch `onResume` pour WebView settings (mixed content + autoplay)
+- Le canal etant cree par le plugin JS, plus besoin du code Java
 
-```powershell
-# 1. Pull les dernieres modifications
-git pull
+### Fichier 4 : `package.json` (dependance)
 
-# 2. Installer les dependances
-npm install
+**Ajout :**
 
-# 3. Build web
-npm run build
-
-# 4. Synchroniser avec Capacitor
-npx cap sync android
-
-# 5. IMPORTANT : Copier l'icone de notification (si creee manuellement)
-#    Verifier que ic_notification.png existe dans les dossiers drawable-*
-
-# 6. Ouvrir dans Android Studio
-npx cap open android
-
-# 7. Dans Android Studio :
-#    - Build > Build Bundle(s) / APK(s) > Build APK(s)
-#    - Ou Run sur un appareil/emulateur
-```
-
-### Etape 3 : Verifications post-build
-
-- Lancer une station radio
-- Verifier que la notification apparait **sans son**
-- Verifier que l'icone dans la barre de notification est bien la silhouette blanche
-- Appuyer sur back dans le fullscreen player -> doit revenir a l'onglet precedent
-- Appuyer sur back sur un onglet non-home -> doit revenir a Home
-- Double-clic back sur Home -> dialogue de confirmation de sortie
-
-### Point important : Canal de notification silencieux
-
-Si malgre `silent: true` la notification fait du bruit, ajouter dans `MainActivity.java` (dans `onCreate`, apres `super.onCreate`) :
-
-```java
-if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-    android.app.NotificationChannel channel = new android.app.NotificationChannel(
-        "foreground_service",
-        "Radio Playback",
-        android.app.NotificationManager.IMPORTANCE_LOW
-    );
-    channel.setSound(null, null);
-    channel.enableVibration(false);
-    android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
-    if (nm != null) nm.createNotificationChannel(channel);
-}
-```
+- `@capacitor/app` est necessaire pour le listener `backButton`. Il doit etre ajoute aux dependances et au script PowerShell.
 
