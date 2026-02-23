@@ -5,7 +5,7 @@ import { StationCard } from "@/components/StationCard";
 import { RadioStation } from "@/types/radio";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, X, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Search, Loader2, X, ChevronDown, ChevronUp, Check, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 
@@ -45,6 +45,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [sortBy, setSortBy] = useState<"votes" | "name" | "clickcount">("votes");
   const { t } = useTranslation();
   const PAGE_SIZE = 40;
 
@@ -74,10 +75,12 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
     setExtraResults([]);
     setOffset(0);
     setHasMore(false);
-  }, [query, country, genres, languages]);
+  }, [query, country, genres, languages, sortBy]);
+
+  const sortReverse = sortBy === "name" ? "false" : "true";
 
   const { data: results, isLoading } = useQuery({
-    queryKey: ["search", query, country, genres, languages],
+    queryKey: ["search", query, country, genres, languages, sortBy],
     queryFn: async () => {
       const data = await radioBrowserProvider.searchStations({
         name: query || undefined,
@@ -86,6 +89,8 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         language: languages.length ? languages.join(",") : undefined,
         limit: PAGE_SIZE,
         offset: 0,
+        order: sortBy,
+        reverse: sortReverse,
       });
       return data;
     },
@@ -119,6 +124,8 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         language: languages.length ? languages.join(",") : undefined,
         limit: PAGE_SIZE,
         offset,
+        order: sortBy,
+        reverse: sortReverse,
       });
       setExtraResults(prev => {
         const ids = new Set(prev.map(s => s.id));
@@ -215,6 +222,23 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
       )}
       {allResults.length > 0 && (
         <div className="space-y-1">
+          <div className="flex items-center gap-1.5 mb-2">
+            <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+            {(["votes", "name", "clickcount"] as const).map(key => (
+              <button
+                key={key}
+                onClick={() => setSortBy(key)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
+                  sortBy === key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-accent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t(key === "votes" ? "search.sortPopularity" : key === "name" ? "search.sortAZ" : "search.sortClicks")}
+              </button>
+            ))}
+          </div>
           {allResults.map(s => (
             <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
           ))}

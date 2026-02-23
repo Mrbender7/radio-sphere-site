@@ -32,6 +32,9 @@ const translations: Record<Language, Record<string, string>> = {
     "search.language": "Langue",
     "search.loadMore": "Plus de stations",
     "search.loadingMore": "Chargement...",
+    "search.sortPopularity": "Popularité",
+    "search.sortAZ": "A-Z",
+    "search.sortClicks": "Clicks",
 
     // Favorites
     "favorites.title": "Favoris",
@@ -113,6 +116,9 @@ const translations: Record<Language, Record<string, string>> = {
     "search.language": "Language",
     "search.loadMore": "More stations",
     "search.loadingMore": "Loading...",
+    "search.sortPopularity": "Popularity",
+    "search.sortAZ": "A-Z",
+    "search.sortClicks": "Clicks",
 
     // Favorites
     "favorites.title": "Favorites",

@@ -26,4 +26,6 @@ export interface SearchParams {
   language?: string;
   limit?: number;
   offset?: number;
+  order?: string;
+  reverse?: string;
 }

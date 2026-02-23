@@ -93,8 +93,8 @@ export const radioBrowserProvider: RadioProvider = {
     const query: Record<string, string> = {
       limit: String(params.limit || 30),
       offset: String(params.offset || 0),
-      order: "votes",
-      reverse: "true",
+      order: params.order || "votes",
+      reverse: params.reverse ?? "true",
       hidebroken: "true",
     };
     if (params.name) query.name = params.name;
