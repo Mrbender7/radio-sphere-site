@@ -4,7 +4,8 @@ import { StationCard } from "@/components/StationCard";
 import { ScrollableRow } from "@/components/ScrollableRow";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useWeeklyDiscoveries } from "@/hooks/useWeeklyDiscoveries";
-import { Heart, Sparkles, RefreshCw, ChevronRight, Disc, Disc3, Music2, Radio, Headphones, Waves, Coffee, Piano, Cpu, Mic2, Newspaper, Star, Guitar, Flame, type LucideIcon } from "lucide-react";
+import { Heart, Sparkles, RefreshCw, ChevronRight } from "lucide-react";
+import { Icon } from "@iconify/react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 const GENRES = ["70s", "80s", "90s", "ambient", "chillout", "classical", "electronic", "hiphop", "jazz", "news", "pop", "r&b", "rock", "soul"];
@@ -134,31 +135,31 @@ const GENRE_COLORS: Record<string, string> = {
   soul: "from-orange-700 to-amber-400",
 };
 
-const GENRE_ICONS: Record<string, LucideIcon> = {
-  "70s": Disc,
-  "80s": Disc3,
-  "90s": Radio,
-  ambient: Waves,
-  chillout: Coffee,
-  classical: Piano,
-  electronic: Cpu,
-  hiphop: Mic2,
-  jazz: Music2,
-  news: Newspaper,
-  pop: Star,
-  "r&b": Mic2,
-  rock: Guitar,
-  soul: Flame,
+const GENRE_ICONS: Record<string, string> = {
+  "70s": "arcticons:vinyl",
+  "80s": "ph:cassette-tape",
+  "90s": "game-icons:boombox",
+  ambient: "fluent-emoji-high-contrast:headphone",
+  chillout: "uiw:coffee",
+  classical: "game-icons:grand-piano",
+  electronic: "streamline-flex:deepfake-technology-1",
+  hiphop: "pepicons-pencil:microphone-handheld",
+  jazz: "emojione-monotone:saxophone",
+  news: "emojione-monotone:newspaper",
+  pop: "streamline-cyber:glasses-4",
+  "r&b": "glyphs:microphone-1-bold",
+  rock: "streamline-ultimate:modern-music-electric-guitar",
+  soul: "f7:flame",
 };
 
 function GenreCard({ genre, onClick }: { genre: string; onClick: () => void }) {
-  const Icon = GENRE_ICONS[genre] || Music2;
+  const icon = GENRE_ICONS[genre] || "mdi:music";
   return (
     <div
       className={`rounded-xl p-4 h-20 flex items-end bg-gradient-to-br ${GENRE_COLORS[genre] || "from-gray-700 to-gray-500"} cursor-pointer active:scale-95 transition-all shadow-lg border-t border-white/10 relative overflow-hidden`}
       onClick={onClick}
     >
-      <Icon className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 text-white opacity-20 rotate-[-15deg]" />
+      <Icon icon={icon} className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 text-white opacity-20 rotate-[-15deg]" />
       <span className="text-sm font-heading font-bold text-white capitalize drop-shadow-md relative z-10">{genre}</span>
     </div>
   );
