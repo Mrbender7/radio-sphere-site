@@ -4,6 +4,7 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { Play, Pause, ChevronDown, Volume2, Heart, Loader2, ExternalLink, Share2 } from "lucide-react";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner";
 import stationPlaceholder from "@/assets/station-placeholder.png";
 
 export function FullScreenPlayer() {
@@ -16,17 +17,36 @@ export function FullScreenPlayer() {
   const fav = isFavorite(currentStation.id);
 
   const handleShare = async () => {
+    const text = currentStation.homepage
+      ? `${t("player.nowPlaying")}: ${currentStation.name} — ${currentStation.homepage}`
+      : `${t("player.nowPlaying")}: ${currentStation.name}`;
     const shareData = {
       title: currentStation.name,
-      text: `${t("player.nowPlaying")}: ${currentStation.name}`,
+      text,
       ...(currentStation.homepage ? { url: currentStation.homepage } : {}),
     };
     try {
       if (navigator.share) {
         await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Lien copié !");
       }
     } catch {
-      // User cancelled or share failed silently
+      try {
+        await navigator.clipboard.writeText(text);
+        toast.success("Lien copié !");
+      } catch { /* silent */ }
+    }
+  };
+
+  const handleOpenWebsite = async () => {
+    if (!currentStation.homepage) return;
+    try {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url: currentStation.homepage });
+    } catch {
+      window.open(currentStation.homepage, "_blank");
     }
   };
 
@@ -62,7 +82,7 @@ export function FullScreenPlayer() {
       )}
 
        {/* Info & Controls */}
-       <div className="px-6 pb-[max(env(safe-area-inset-bottom,16px),1rem)] space-y-4">
+       <div className="px-6 pb-[calc(max(env(safe-area-inset-bottom,16px),1rem)+2rem)] space-y-4">
          <div className="flex items-start justify-between gap-3">
            <div className="min-w-0">
              <h2 className="text-3xl sm:text-4xl font-heading font-bold leading-tight bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{currentStation.name}</h2>
@@ -134,7 +154,7 @@ export function FullScreenPlayer() {
           {/* Website link */}
           {currentStation.homepage && (
             <button
-              onClick={() => window.open(currentStation.homepage, '_blank')}
+             onClick={handleOpenWebsite}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-accent/50 text-sm font-medium text-foreground hover:bg-accent transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
