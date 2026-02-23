@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { RadioStation } from "@/types/radio";
 import { StationCard } from "@/components/StationCard";
 import { ScrollableRow } from "@/components/ScrollableRow";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useWeeklyDiscoveries } from "@/hooks/useWeeklyDiscoveries";
-import { Heart, Sparkles, RefreshCw } from "lucide-react";
+import { Heart, Sparkles, RefreshCw, ChevronRight } from "lucide-react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 const GENRES = ["70s", "80s", "90s", "ambient", "chillout", "classical", "electronic", "hiphop", "jazz", "news", "pop", "r&b", "rock", "soul"];
@@ -19,6 +20,9 @@ interface HomePageProps {
 export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGenreClick }: HomePageProps) {
   const { t } = useTranslation();
   const { discoveries, refresh, isRefreshing } = useWeeklyDiscoveries(favorites);
+  const [favLimit, setFavLimit] = useState(10);
+  const visibleFavs = favorites.slice(0, favLimit);
+  const hasMoreFavs = favorites.length > favLimit;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -53,9 +57,22 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
         </h2>
         {favorites.length > 0 ? (
           <ScrollableRow>
-            {favorites.slice(0, 10).map(s => (
+            {visibleFavs.map(s => (
               <StationCard key={s.id} station={s} isFavorite={true} onToggleFavorite={onToggleFavorite} />
             ))}
+            {hasMoreFavs && (
+              <button
+                onClick={() => setFavLimit(prev => prev + 10)}
+                className="flex flex-col items-center justify-center w-28 flex-shrink-0 p-3 rounded-xl hover:bg-accent transition-colors gap-1"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] flex items-center justify-center shadow-lg">
+                  <ChevronRight className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xs font-semibold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
+                  +{Math.min(10, favorites.length - favLimit)}
+                </span>
+              </button>
+            )}
           </ScrollableRow>
         ) : (
           <p className="text-sm text-muted-foreground">{t("home.noFavorites")}</p>

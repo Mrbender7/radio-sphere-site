@@ -14,7 +14,9 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<RadioStation[]>(() => loadFromStorage(FAVORITES_KEY, []));
+  const [favorites, setFavorites] = useState<RadioStation[]>(() =>
+    loadFromStorage<RadioStation[]>(FAVORITES_KEY, []).sort((a, b) => a.name.localeCompare(b.name))
+  );
 
   useEffect(() => {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
@@ -23,7 +25,8 @@ export function useFavorites() {
   const toggleFavorite = useCallback((station: RadioStation) => {
     setFavorites(prev => {
       const exists = prev.some(s => s.id === station.id);
-      return exists ? prev.filter(s => s.id !== station.id) : [...prev, station];
+      const next = exists ? prev.filter(s => s.id !== station.id) : [...prev, station];
+      return next.sort((a, b) => a.name.localeCompare(b.name));
     });
   }, []);
 
