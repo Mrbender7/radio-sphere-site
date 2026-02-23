@@ -50,7 +50,9 @@ export function MiniPlayer() {
             }
           </p>
         </div>
-        <p className="text-xs text-muted-foreground truncate">{currentStation.country}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {currentStation.tags.length > 0 ? currentStation.tags.slice(0, 2).join(' • ') : ''}
+        </p>
       </div>
       {isPlaying && (
         <AudioVisualizer size="medium" />
