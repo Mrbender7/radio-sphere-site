@@ -1,33 +1,46 @@
 
-# Fix du crash lors du changement rapide de station apres une erreur
+
+# Suppression du badge de notification sur l'icone de l'app
 
 ## Probleme
 
-Quand une station produit une "erreur de flux" et que l'utilisateur clique immediatement sur une autre station, l'app crash. La cause : les anciens event listeners (`canplay`, `error`) de la station precedente restent attaches a l'element audio global. Quand la nouvelle station declenche ces memes evenements, les anciens callbacks interferent et provoquent des erreurs non gerees.
+Le foreground service cree une notification qui genere un badge (compteur) sur l'icone de l'app Android, donnant l'impression qu'il y a des messages non lus.
 
-## Solution
+## Diagnostic
 
-Nettoyer systematiquement les anciens listeners avant d'en attacher de nouveaux dans la fonction `play()`, et envelopper l'ensemble dans un `try...catch` pour eviter tout crash non gere.
+Le plugin capawesome `createNotificationChannel` ne supporte pas l'option `showBadge`. Il faut donc creer le canal de notification **nativement** dans `MainActivity.java` avec `setShowBadge(false)` **avant** que le plugin JS ne le cree. Android ne recree pas un canal qui existe deja, donc le canal natif (sans badge) sera utilise.
 
-## Detail technique
+## Solution en 2 parties
 
-**Fichier** : `src/contexts/PlayerContext.tsx`
+### 1. Patch natif dans le script PowerShell (`radiosphere_v2_2_4.ps1`)
 
-### Modifications dans la fonction `play()` (ligne 296)
+Ajouter dans le patch `MainActivity.java` une methode `onCreate` qui cree le canal `radio_playback_v2` nativement avec `setShowBadge(false)` :
 
-1. **Stocker les references des listeners** dans des refs (`canplayRef`, `timeoutRef`) pour pouvoir les supprimer proprement lors du prochain appel a `play()`.
+```text
+onCreate() {
+  super.onCreate(savedInstanceState);
+  // Creer le canal avec showBadge = false
+  NotificationChannel channel = new NotificationChannel(
+    "radio_playback_v2",
+    "Radio Playback",
+    NotificationManager.IMPORTANCE_LOW
+  );
+  channel.setShowBadge(false);
+  channel.setDescription("Notification silencieuse pour la lecture radio");
+  notificationManager.createNotificationChannel(channel);
+}
+```
 
-2. **Nettoyer les anciens listeners au debut de `play()`** : avant de configurer la nouvelle station, retirer les eventuels `canplay` listeners orphelins et annuler le timeout precedent.
+### 2. Nouveau canal ID (`src/contexts/PlayerContext.tsx`)
 
-3. **Envelopper tout le corps de `play()` dans un `try...catch`** pour capturer toute erreur inattendue et afficher un toast au lieu de crasher.
+Changer le `NOTIFICATION_CHANNEL_ID` de `radio_playback_v2` a `radio_playback_v3` pour forcer Android a creer un nouveau canal avec les bons parametres (puisque l'ancien `v2` est deja en cache sans `showBadge(false)`).
 
-4. **Retirer le listener `error` global avant de le re-attacher** pour eviter les doublons apres plusieurs appels successifs.
+## Fichiers modifies
 
-Concretement :
+- `radiosphere_v2_2_4.ps1` : ajout du patch `onCreate` dans `MainActivity.java` pour creer le canal nativement sans badge
+- `src/contexts/PlayerContext.tsx` : changement de l'ID du canal en `radio_playback_v3`
 
-- Ajouter deux refs : `pendingCanplayRef` et `pendingTimeoutRef` pour stocker les references des listeners/timeouts actifs.
-- Au debut de `play()` : supprimer l'ancien canplay listener via la ref, et `clearTimeout` l'ancien timeout.
-- Apres avoir attache les nouveaux listeners, stocker leurs references dans les refs.
-- Entourer le tout d'un `try...catch` avec un toast d'erreur en fallback.
+## Note importante
 
-Un seul fichier modifie, aucune dependance ajoutee.
+Apres le build, il faudra desinstaller l'ancienne APK pour que l'ancien canal `v2` soit supprime.
+
