@@ -49,7 +49,9 @@ export function FullScreenPlayer() {
          <div className="flex items-start justify-between gap-3">
            <div className="min-w-0">
              <h2 className="text-3xl sm:text-4xl font-heading font-bold leading-tight bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{currentStation.name}</h2>
-             <p className="text-sm text-muted-foreground">{currentStation.country}</p>
+              <p className="text-sm text-muted-foreground">
+                {currentStation.tags.length > 0 ? currentStation.tags.slice(0, 2).join(' • ') : currentStation.country}
+              </p>
            </div>
            <button
              onClick={() => toggleFavorite(currentStation)}
@@ -86,7 +88,7 @@ export function FullScreenPlayer() {
             onValueChange={([v]) => setVolume(v / 100)}
             max={100}
             step={1}
-            className="flex-1 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-[hsl(220,90%,60%)] [&_[role=slider]]:to-[hsl(280,80%,60%)] [&_[role=slider]]:border-0 [&_[data-orientation=horizontal]>:first-child>div]:bg-gradient-to-r [&_[data-orientation=horizontal]>:first-child>div]:from-[hsl(220,90%,60%)] [&_[data-orientation=horizontal]>:first-child>div]:to-[hsl(280,80%,60%)]"
+            className="flex-1 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-[hsl(220,90%,60%)] [&_[role=slider]]:to-[hsl(280,80%,60%)] [&_[role=slider]]:border-0 [&_.absolute]:bg-gradient-to-r [&_.absolute]:from-[hsl(220,90%,60%)] [&_.absolute]:to-[hsl(280,80%,60%)]"
           />
         </div>
 

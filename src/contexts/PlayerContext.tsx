@@ -25,6 +25,11 @@ async function ensureNotificationChannel() {
   }
 }
 
+function getStationSubtitle(station: RadioStation): string {
+  if (station.tags && station.tags.length > 0) return station.tags.slice(0, 2).join(' • ');
+  return station.country || 'Radio Sphere';
+}
+
 // --- Android Foreground Service helpers (Capacitor only) ---
 async function startNativeForegroundService(station: RadioStation, isPaused = false) {
   try {
@@ -33,7 +38,7 @@ async function startNativeForegroundService(station: RadioStation, isPaused = fa
     await ForegroundService.startForegroundService({
       id: 1,
       title: station.name,
-      body: station.country || 'Radio Sphere',
+      body: getStationSubtitle(station),
       smallIcon: 'ic_notification',
       serviceType: 2,
       silent: true,
@@ -51,7 +56,7 @@ async function updateNativeForegroundService(station: RadioStation, isPaused: bo
     await (ForegroundService as any).updateForegroundService({
       id: 1,
       title: station.name,
-      body: station.country || 'Radio Sphere',
+      body: getStationSubtitle(station),
       smallIcon: 'ic_notification',
       notificationChannelId: NOTIFICATION_CHANNEL_ID,
     });
