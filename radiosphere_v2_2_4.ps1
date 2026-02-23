@@ -3,7 +3,7 @@ $RepoUrl = "https://github.com/Mrbender7/radiosphere"
 $ProjectFolder = "radiosphere"
 $UTF8NoBOM = New-Object System.Text.UTF8Encoding($False)
 
-Write-Host ">>> Lancement du Master Fix v2.2.4 - Media Session + Importance DEFAULT + No Buttons" -ForegroundColor Cyan
+Write-Host ">>> Lancement du Master Fix v2.2.4 - Media Session + No Badge + No Buttons" -ForegroundColor Cyan
 
 if (Test-Path $ProjectFolder) { Remove-Item -Recurse -Force $ProjectFolder }
 git clone $RepoUrl
@@ -102,10 +102,10 @@ dependencies {
     [System.IO.File]::WriteAllText((Join-Path (Get-Location).Path $GradleAppPath), $GradleContent, $UTF8NoBOM)
 }
 
-# 6. Patch MainActivity.java (WebView settings only)
+# 6. Patch MainActivity.java (WebView settings + Notification channel sans badge)
 $MainAct = Get-ChildItem -Path "android/app/src/main/java" -Filter "MainActivity.java" -Recurse | Select-Object -First 1
 if ($MainAct) {
-    Write-Host ">>> Patch Java (WebView settings only)..." -ForegroundColor Yellow
+    Write-Host ">>> Patch Java (WebView + NotificationChannel sans badge)..." -ForegroundColor Yellow
     
     $JavaPatch = @"
   @Override
@@ -153,7 +153,8 @@ Write-Host ""
 Write-Host "CHANGEMENTS v2.2.4 :" -ForegroundColor Yellow
 Write-Host "  - Boutons notification supprimes (iOS-only, inutiles sur Android)" -ForegroundColor White
 Write-Host "  - Listener buttonClicked supprime (code mort sur Android)" -ForegroundColor White
-Write-Host "  - Canal importance 3 (DEFAULT) pour visibilite lockscreen" -ForegroundColor White
+Write-Host "  - Canal radio_playback_v3 avec setShowBadge(false) (plus de badge)" -ForegroundColor White
+Write-Host "  - Canal cree nativement dans onCreate avant le plugin JS" -ForegroundColor White
 Write-Host "  - Media Session = seule source des controles play/pause" -ForegroundColor White
 Write-Host ""
 Write-Host "IMPORTANT : DESINSTALLER L'ANCIENNE APK AVANT D'INSTALLER !" -ForegroundColor Red
