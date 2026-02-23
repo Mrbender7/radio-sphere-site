@@ -26,7 +26,12 @@ export function BottomNav({ activeTab, onTabChange }: { activeTab: TabId; onTabC
           )}
         >
           <Icon className="w-5 h-5" />
-          <span className="text-[10px] font-medium">{t(labelKey)}</span>
+          <span className="text-[10px] font-medium relative">
+            {t(labelKey)}
+            {activeTab === id && (
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4/5 h-[2px] rounded-full bg-primary shadow-[0_0_6px_2px_hsl(var(--primary)/0.6),0_0_12px_4px_hsl(var(--primary)/0.3)]" />
+            )}
+          </span>
         </button>
       ))}
     </nav>
