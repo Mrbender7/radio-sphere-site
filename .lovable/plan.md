@@ -1,37 +1,56 @@
 
 
-# Corrections du Full Screen Player : Partage + Lien externe + Positionnement
+# Plan de modifications
 
-## Problemes identifies
+## 1. Ajouter 10 genres supplementaires dans SearchPage
 
-1. **Le bouton "Visiter le site" ouvre le site dans l'app** : Capacitor intercepte `window.open` et affiche la page dans la WebView interne au lieu du navigateur du telephone.
-2. **Le bouton "Visiter le site" est cache sous les boutons systeme** : Le padding en bas du player ne compense pas suffisamment la zone de navigation Android.
-3. **Le bouton de partage ne fonctionne pas** : `navigator.share` n'est pas toujours disponible dans la WebView Capacitor.
+**Fichier** : `src/pages/SearchPage.tsx`
 
-## Solution
+La liste `GENRES` (ligne 30) passe de 14 a 24 genres. Les genres obligatoires (60s, metal, country) sont inclus, plus 7 autres choisis pour couvrir un large spectre musical :
 
-### 1. Installer `@capacitor/browser` (nouvelle dependance)
+```
+"60s", "70s", "80s", "90s", "ambient", "chillout", "classical", "country",
+"electronic", "funk", "hiphop", "jazz", "latin", "metal", "news", "pop",
+"r&b", "reggae", "rock", "soul", "techno", "trance", "blues", "world"
+```
 
-Ce plugin officiel Capacitor permet d'ouvrir un lien dans le navigateur par defaut du telephone (pas dans l'app).
+Genres ajoutes : **60s, country, metal, funk, latin, reggae, techno, trance, blues, world**.
 
-### 2. Modifier `src/components/FullScreenPlayer.tsx`
+---
 
-**Lien externe** : Remplacer `window.open(url, '_blank')` par un appel a `Browser.open({ url })` du plugin `@capacitor/browser`. Avec un fallback sur `window.open` pour le mode web/preview.
+## 2. Corriger le chevauchement du bas du FullScreen Player avec la barre de navigation
 
-**Partage** : Ajouter un fallback quand `navigator.share` n'est pas disponible : copier le texte dans le presse-papiers via `navigator.clipboard.writeText()` et afficher un toast de confirmation via `sonner`.
+**Fichier** : `src/components/FullScreenPlayer.tsx`
 
-**Positionnement** : Augmenter le padding bottom du conteneur d'infos/controles pour que le bouton "Visiter le site" ne soit pas masque par les boutons de navigation du telephone. Passer de `pb-[max(env(safe-area-inset-bottom,16px),1rem)]` a un calcul plus genereux avec un minimum de 2rem additionnel.
+Le probleme visible sur les screenshots : la grille Codec/Bitrate/Langue est coupee par la barre de navigation Android.
 
-### 3. Fichiers modifies
+Le padding bottom actuel utilise `pb-[calc(max(env(safe-area-inset-bottom,16px),1rem)+2rem)]` sur le conteneur des controles (ligne 92). Ce padding est insuffisant.
 
-- `package.json` : ajout de `@capacitor/browser`
-- `src/components/FullScreenPlayer.tsx` : logique Browser.open, fallback partage, fix padding
+**Correction** : Augmenter le padding bottom a `pb-[calc(max(env(safe-area-inset-bottom,16px),1rem)+4rem)]` pour laisser assez d'espace au-dessus de la barre de navigation systeme. De plus, ajouter `overflow-y-auto` sur le conteneur principal pour permettre le defilement si le contenu depasse.
 
-### 4. Impact sur le build Android
+---
 
-Apres ces modifications, il faudra :
-1. `git pull`
-2. `npm install`
-3. `npx cap sync`
-4. Rebuild l'APK
+## 3. Griser la section Premium et ajouter un filigrane "Arrive bientot / Coming soon"
+
+**Fichier** : `src/pages/SettingsPage.tsx`
+
+Dans la `CollapsibleSection` Premium (lignes 100-140) :
+
+- Envelopper le contenu interieur dans un `div` avec `relative` et `pointer-events-none opacity-50` pour griser tout le contenu Premium (features, boutons, disclaimer).
+- Ajouter un overlay absolu par-dessus avec le texte "Arrive bientot" (FR) / "Coming soon" (EN) en filigrane, incline, avec une opacite moderee et un style visible.
+- Les boutons d'abonnement seront desactives visuellement grace au `pointer-events-none`.
+
+### Detail technique
+
+```text
+CollapsibleSection (Premium)
+  +-- div.relative
+  |     +-- div.opacity-50.pointer-events-none  (contenu existant grise)
+  |     +-- div.absolute.inset-0 (overlay filigrane "Arrive bientot / Coming soon")
+```
+
+**Fichier** : `src/i18n/translations.ts`
+
+Ajouter les cles de traduction :
+- `"premium.comingSoon"` : "Arrive bientot" (FR) / "Coming soon" (EN)
 
