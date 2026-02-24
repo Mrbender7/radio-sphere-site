@@ -142,19 +142,14 @@ if (Test-Path $ManifestPath) {
 }
 
 # ═══════════════════════════════════════════════════════════════════
-# 5. Gradle — Kotlin fix + ExoPlayer + Media Compat
+# 5. Gradle — ExoPlayer + Media Compat (NO Kotlin needed)
 # ═══════════════════════════════════════════════════════════════════
 $GradleAppPath = "android/app/build.gradle"
 if (Test-Path $GradleAppPath) {
-    Write-Host ">>> Gradle: Kotlin fix + ExoPlayer + Media Compat..." -ForegroundColor Yellow
+    Write-Host ">>> Gradle: ExoPlayer + Media Compat (Java only)..." -ForegroundColor Yellow
     $GradleContent = Get-Content $GradleAppPath -Raw
     $DepsBlock = @"
 dependencies {
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.22"))
-    constraints {
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22")
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22")
-    }
     // ExoPlayer for Android Auto native audio playback
     implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
@@ -166,9 +161,9 @@ dependencies {
 }
 
 # ═══════════════════════════════════════════════════════════════════
-# 6. Generation des fichiers natifs Android Auto (embarques)
+# 6. Generation des fichiers natifs Android Auto (JAVA — embarques)
 # ═══════════════════════════════════════════════════════════════════
-Write-Host ">>> Generation des fichiers natifs Android Auto..." -ForegroundColor Yellow
+Write-Host ">>> Generation des fichiers natifs Android Auto (Java)..." -ForegroundColor Yellow
 
 $JavaSrcBase = "android/app/src/main/java"
 $PackageDir = "$JavaSrcBase/com/radiosphere/app"
@@ -193,515 +188,567 @@ if ($MainActSearch) {
     }
 }
 
-# --- RadioBrowserService.kt (embarque, single-quoted here-string) ---
-Write-Host "    Generation RadioBrowserService.kt..." -ForegroundColor DarkGray
-$RadioBrowserServiceKt = @'
-package __PACKAGE__
+# --- RadioAutoPlugin.java (embarque, single-quoted here-string) ---
+Write-Host "    Generation RadioAutoPlugin.java..." -ForegroundColor DarkGray
+$RadioAutoPluginJava = @'
+package __PACKAGE__;
 
-import android.content.Intent
-import android.net.Uri
-import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
-import androidx.media.MediaBrowserServiceCompat
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import org.json.JSONArray
-import org.json.JSONObject
-import java.net.URL
+import android.content.Context;
+import android.content.SharedPreferences;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
 
-class RadioBrowserService : MediaBrowserServiceCompat() {
+@CapacitorPlugin(name = "RadioAutoPlugin")
+public class RadioAutoPlugin extends Plugin {
 
-    companion object {
-        private const val ROOT_ID = "root"
-        private const val FAVORITES_ID = "favorites"
-        private const val RECENTS_ID = "recents"
-        private const val GENRES_ID = "genres"
-        private const val SEARCH_ID = "search"
+    private static final String PREFS_NAME = "RadioAutoPrefs";
+    private static final String KEY_FAVORITES = "favorites_json";
+    private static final String KEY_RECENTS = "recents_json";
+    private static final String KEY_PLAYBACK_STATE = "playback_state_json";
 
-        private const val GENRE_PREFIX = "genre:"
-        private const val STATION_PREFIX = "station:"
-
-        private const val PREFS_NAME = "RadioAutoPrefs"
-        private const val KEY_FAVORITES = "favorites_json"
-        private const val KEY_RECENTS = "recents_json"
-
-        private val GENRES = listOf(
-            "60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical",
-            "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal",
-            "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"
-        )
-
-        private val API_MIRRORS = listOf(
-            "https://de1.api.radio-browser.info",
-            "https://fr1.api.radio-browser.info",
-            "https://at1.api.radio-browser.info",
-            "https://nl1.api.radio-browser.info"
-        )
-
-        private const val DEFAULT_ARTWORK = "https://placehold.co/512x512/1a1a2e/e94560?text=RadioSphere"
+    private SharedPreferences getPrefs() {
+        return getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
-    private lateinit var mediaSession: MediaSessionCompat
-    private lateinit var player: ExoPlayer
-    private var currentStations: List<StationData> = emptyList()
-    private var currentIndex: Int = -1
+    @PluginMethod
+    public void syncFavorites(PluginCall call) {
+        String stations = call.getString("stations", "[]");
+        getPrefs().edit().putString(KEY_FAVORITES, stations).apply();
+        call.resolve();
+    }
 
-    data class StationData(
-        val id: String,
-        val name: String,
-        val streamUrl: String,
-        val logo: String,
-        val country: String,
-        val tags: String
-    )
+    @PluginMethod
+    public void syncRecents(PluginCall call) {
+        String stations = call.getString("stations", "[]");
+        getPrefs().edit().putString(KEY_RECENTS, stations).apply();
+        call.resolve();
+    }
 
-    override fun onCreate() {
-        super.onCreate()
-        player = ExoPlayer.Builder(this).build()
-        player.addListener(playerListener)
-        mediaSession = MediaSessionCompat(this, "RadioSphereAuto").apply {
-            setCallback(mediaSessionCallback)
-            isActive = true
+    @PluginMethod
+    public void notifyPlaybackState(PluginCall call) {
+        String stationId = call.getString("stationId", "");
+        String name = call.getString("name", "");
+        String logo = call.getString("logo", "");
+        String streamUrl = call.getString("streamUrl", "");
+        Boolean isPlaying = call.getBoolean("isPlaying", false);
+        String tags = call.getString("tags", "");
+        String country = call.getString("country", "");
+
+        String json = "{"
+            + "\"stationId\":\"" + stationId + "\","
+            + "\"name\":\"" + name.replace("\"", "\\\"") + "\","
+            + "\"logo\":\"" + logo + "\","
+            + "\"streamUrl\":\"" + streamUrl + "\","
+            + "\"isPlaying\":" + isPlaying + ","
+            + "\"tags\":\"" + tags.replace("\"", "\\\"") + "\","
+            + "\"country\":\"" + country.replace("\"", "\\\"") + "\""
+            + "}";
+
+        getPrefs().edit().putString(KEY_PLAYBACK_STATE, json).apply();
+        call.resolve();
+    }
+}
+'@
+$RadioAutoPluginJava = $RadioAutoPluginJava -replace '__PACKAGE__', $ActualPackage
+[System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioAutoPlugin.java"), $RadioAutoPluginJava, $UTF8NoBOM)
+Write-Host "    RadioAutoPlugin.java genere avec succes" -ForegroundColor Green
+
+# --- RadioBrowserService.java (embarque, single-quoted here-string) ---
+Write-Host "    Generation RadioBrowserService.java..." -ForegroundColor DarkGray
+$RadioBrowserServiceJava = @'
+package __PACKAGE__;
+
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.media.MediaBrowserServiceCompat;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.Player;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class RadioBrowserService extends MediaBrowserServiceCompat {
+
+    private static final String ROOT_ID = "root";
+    private static final String FAVORITES_ID = "favorites";
+    private static final String RECENTS_ID = "recents";
+    private static final String GENRES_ID = "genres";
+
+    private static final String GENRE_PREFIX = "genre:";
+    private static final String STATION_PREFIX = "station:";
+
+    private static final String PREFS_NAME = "RadioAutoPrefs";
+    private static final String KEY_FAVORITES = "favorites_json";
+    private static final String KEY_RECENTS = "recents_json";
+
+    private static final String[] GENRES = {
+        "60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical",
+        "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal",
+        "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"
+    };
+
+    private static final String[] API_MIRRORS = {
+        "https://de1.api.radio-browser.info",
+        "https://fr1.api.radio-browser.info",
+        "https://at1.api.radio-browser.info",
+        "https://nl1.api.radio-browser.info"
+    };
+
+    private static final String DEFAULT_ARTWORK = "https://placehold.co/512x512/1a1a2e/e94560?text=RadioSphere";
+
+    private MediaSessionCompat mediaSession;
+    private ExoPlayer player;
+    private List<StationData> currentStations = new ArrayList<>();
+    private int currentIndex = -1;
+
+    // --- Inner class for station data ---
+    private static class StationData {
+        final String id;
+        final String name;
+        final String streamUrl;
+        final String logo;
+        final String country;
+        final String tags;
+
+        StationData(String id, String name, String streamUrl, String logo, String country, String tags) {
+            this.id = id;
+            this.name = name;
+            this.streamUrl = streamUrl;
+            this.logo = logo;
+            this.country = country;
+            this.tags = tags;
         }
-        sessionToken = mediaSession.sessionToken
     }
 
-    override fun onDestroy() {
-        player.release()
-        mediaSession.release()
-        super.onDestroy()
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        player = new ExoPlayer.Builder(this).build();
+        player.addListener(playerListener);
+
+        mediaSession = new MediaSessionCompat(this, "RadioSphereAuto");
+        mediaSession.setCallback(mediaSessionCallback);
+        mediaSession.setActive(true);
+        setSessionToken(mediaSession.getSessionToken());
     }
 
-    override fun onGetRoot(
-        clientPackageName: String,
-        clientUid: Int,
-        rootHints: Bundle?
-    ): BrowserRoot {
-        return BrowserRoot(ROOT_ID, null)
+    @Override
+    public void onDestroy() {
+        player.release();
+        mediaSession.release();
+        super.onDestroy();
     }
 
-    override fun onLoadChildren(
-        parentId: String,
-        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
-    ) {
-        when (parentId) {
-            ROOT_ID -> {
-                val items = mutableListOf(
-                    buildBrowsableItem(FAVORITES_ID, "Favoris", "Vos stations preferees"),
-                    buildBrowsableItem(RECENTS_ID, "Recents", "Dernieres stations ecoutees"),
-                    buildBrowsableItem(GENRES_ID, "Genres", "Explorer par genre musical")
-                )
-                result.sendResult(items)
+    // ─── Browse Tree ────────────────────────────────────────────────────
+
+    @Nullable
+    @Override
+    public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
+        return new BrowserRoot(ROOT_ID, null);
+    }
+
+    @Override
+    public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+        switch (parentId) {
+            case ROOT_ID: {
+                List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
+                items.add(buildBrowsableItem(FAVORITES_ID, "Favoris", "Vos stations preferees"));
+                items.add(buildBrowsableItem(RECENTS_ID, "Recents", "Dernieres stations ecoutees"));
+                items.add(buildBrowsableItem(GENRES_ID, "Genres", "Explorer par genre musical"));
+                result.sendResult(items);
+                break;
             }
-            FAVORITES_ID -> {
-                val stations = loadStations(KEY_FAVORITES)
-                currentStations = stations
-                result.sendResult(stations.map { it.toMediaItem() }.toMutableList())
+            case FAVORITES_ID: {
+                List<StationData> stations = loadStations(KEY_FAVORITES);
+                currentStations = stations;
+                result.sendResult(toMediaItems(stations));
+                break;
             }
-            RECENTS_ID -> {
-                val stations = loadStations(KEY_RECENTS)
-                currentStations = stations
-                result.sendResult(stations.map { it.toMediaItem() }.toMutableList())
+            case RECENTS_ID: {
+                List<StationData> stations = loadStations(KEY_RECENTS);
+                currentStations = stations;
+                result.sendResult(toMediaItems(stations));
+                break;
             }
-            GENRES_ID -> {
-                val items = GENRES.map { genre ->
-                    buildBrowsableItem(
-                        "$GENRE_PREFIX$genre",
-                        genre.replaceFirstChar { it.uppercase() },
-                        "Stations $genre populaires"
-                    )
+            case GENRES_ID: {
+                List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
+                for (String genre : GENRES) {
+                    String title = genre.substring(0, 1).toUpperCase() + genre.substring(1);
+                    items.add(buildBrowsableItem(GENRE_PREFIX + genre, title, "Stations " + genre + " populaires"));
                 }
-                result.sendResult(items.toMutableList())
+                result.sendResult(items);
+                break;
             }
-            else -> {
+            default: {
                 if (parentId.startsWith(GENRE_PREFIX)) {
-                    val genre = parentId.removePrefix(GENRE_PREFIX)
-                    result.detach()
-                    Thread {
-                        val stations = fetchStationsByGenre(genre)
-                        currentStations = stations
-                        result.sendResult(stations.map { it.toMediaItem() }.toMutableList())
-                    }.start()
+                    String genre = parentId.substring(GENRE_PREFIX.length());
+                    result.detach();
+                    String finalGenre = genre;
+                    new Thread(() -> {
+                        List<StationData> stations = fetchStationsByGenre(finalGenre, 25);
+                        currentStations = stations;
+                        result.sendResult(toMediaItems(stations));
+                    }).start();
                 } else {
-                    result.sendResult(mutableListOf())
+                    result.sendResult(new ArrayList<>());
                 }
+                break;
             }
         }
     }
 
-    override fun onSearch(
-        query: String,
-        extras: Bundle?,
-        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
-    ) {
-        result.detach()
-        Thread {
-            val stations = searchStations(query)
-            currentStations = stations
-            result.sendResult(stations.map { it.toMediaItem() }.toMutableList())
-        }.start()
+    // ─── Voice Search ───────────────────────────────────────────────────
+
+    @Override
+    public void onSearch(@NonNull String query, Bundle extras, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+        result.detach();
+        new Thread(() -> {
+            List<StationData> stations = searchStations(query, 25);
+            currentStations = stations;
+            result.sendResult(toMediaItems(stations));
+        }).start();
     }
 
-    private val mediaSessionCallback = object : MediaSessionCompat.Callback() {
+    // ─── MediaSession Callbacks ─────────────────────────────────────────
 
-        override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-            if (mediaId == null) return
-            val stationId = mediaId.removePrefix(STATION_PREFIX)
-            val idx = currentStations.indexOfFirst { it.id == stationId }
-            if (idx >= 0) {
-                currentIndex = idx
-                playStation(currentStations[idx])
+    private final MediaSessionCompat.Callback mediaSessionCallback = new MediaSessionCompat.Callback() {
+
+        @Override
+        public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            if (mediaId == null) return;
+            String stationId = mediaId.startsWith(STATION_PREFIX) ? mediaId.substring(STATION_PREFIX.length()) : mediaId;
+            for (int i = 0; i < currentStations.size(); i++) {
+                if (currentStations.get(i).id.equals(stationId)) {
+                    currentIndex = i;
+                    playStation(currentStations.get(i));
+                    return;
+                }
             }
         }
 
-        override fun onPlay() {
-            player.play()
-            updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+        @Override
+        public void onPlay() {
+            player.play();
+            updatePlaybackState(PlaybackStateCompat.STATE_PLAYING);
         }
 
-        override fun onPause() {
-            player.pause()
-            updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
+        @Override
+        public void onPause() {
+            player.pause();
+            updatePlaybackState(PlaybackStateCompat.STATE_PAUSED);
         }
 
-        override fun onStop() {
-            player.stop()
-            updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
+        @Override
+        public void onStop() {
+            player.stop();
+            updatePlaybackState(PlaybackStateCompat.STATE_STOPPED);
         }
 
-        override fun onSkipToNext() {
-            if (currentStations.isEmpty()) return
-            currentIndex = (currentIndex + 1) % currentStations.size
-            playStation(currentStations[currentIndex])
+        @Override
+        public void onSkipToNext() {
+            if (currentStations.isEmpty()) return;
+            currentIndex = (currentIndex + 1) % currentStations.size();
+            playStation(currentStations.get(currentIndex));
         }
 
-        override fun onSkipToPrevious() {
-            if (currentStations.isEmpty()) return
-            currentIndex = if (currentIndex - 1 < 0) currentStations.size - 1 else currentIndex - 1
-            playStation(currentStations[currentIndex])
+        @Override
+        public void onSkipToPrevious() {
+            if (currentStations.isEmpty()) return;
+            currentIndex = currentIndex - 1 < 0 ? currentStations.size() - 1 : currentIndex - 1;
+            playStation(currentStations.get(currentIndex));
         }
 
-        override fun onPlayFromSearch(query: String?, extras: Bundle?) {
-            if (query.isNullOrBlank()) {
-                val favorites = loadStations(KEY_FAVORITES)
-                if (favorites.isNotEmpty()) {
-                    currentStations = favorites
-                    currentIndex = 0
-                    playStation(favorites[0])
+        @Override
+        public void onPlayFromSearch(String query, Bundle extras) {
+            if (query == null || query.trim().isEmpty()) {
+                List<StationData> favorites = loadStations(KEY_FAVORITES);
+                if (!favorites.isEmpty()) {
+                    currentStations = favorites;
+                    currentIndex = 0;
+                    playStation(favorites.get(0));
                 }
-                return
+                return;
             }
-            Thread {
-                val stations = searchStations(query)
-                if (stations.isNotEmpty()) {
-                    currentStations = stations
-                    currentIndex = 0
-                    playStation(stations[0])
+            String q = query;
+            new Thread(() -> {
+                List<StationData> stations = searchStations(q, 25);
+                if (!stations.isEmpty()) {
+                    currentStations = stations;
+                    currentIndex = 0;
+                    playStation(stations.get(0));
                 }
-            }.start()
+            }).start();
         }
-    }
+    };
 
-    private val playerListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            when (playbackState) {
-                Player.STATE_BUFFERING -> updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING)
-                Player.STATE_READY -> {
-                    if (player.isPlaying) {
-                        updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+    // ─── Player Listener ────────────────────────────────────────────────
+
+    private final Player.Listener playerListener = new Player.Listener() {
+        @Override
+        public void onPlaybackStateChanged(int playbackState) {
+            switch (playbackState) {
+                case Player.STATE_BUFFERING:
+                    updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING);
+                    break;
+                case Player.STATE_READY:
+                    if (player.isPlaying()) {
+                        updatePlaybackState(PlaybackStateCompat.STATE_PLAYING);
                     }
-                }
-                Player.STATE_ENDED, Player.STATE_IDLE -> {
-                    updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
-                }
+                    break;
+                case Player.STATE_ENDED:
+                case Player.STATE_IDLE:
+                    updatePlaybackState(PlaybackStateCompat.STATE_STOPPED);
+                    break;
             }
         }
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            updatePlaybackState(
-                if (isPlaying) PlaybackStateCompat.STATE_PLAYING
-                else PlaybackStateCompat.STATE_PAUSED
-            )
+        @Override
+        public void onIsPlayingChanged(boolean isPlaying) {
+            updatePlaybackState(isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED);
         }
-    }
+    };
 
-    private fun playStation(station: StationData) {
-        player.stop()
-        player.setMediaItem(MediaItem.fromUri(station.streamUrl))
-        player.prepare()
-        player.play()
+    // ─── Playback Helpers ───────────────────────────────────────────────
 
-        val artworkUri = if (station.logo.isNotBlank()) {
-            Uri.parse(station.logo.replace("http://", "https://"))
-        } else {
-            Uri.parse(DEFAULT_ARTWORK)
+    private void playStation(StationData station) {
+        player.stop();
+        player.setMediaItem(MediaItem.fromUri(station.streamUrl));
+        player.prepare();
+        player.play();
+
+        String artworkUrl = (station.logo != null && !station.logo.isEmpty())
+            ? station.logo.replace("http://", "https://")
+            : DEFAULT_ARTWORK;
+        Uri artworkUri = Uri.parse(artworkUrl);
+
+        String artist = "Radio Sphere";
+        if (station.tags != null && !station.tags.isEmpty()) {
+            String[] tagArr = station.tags.split(",");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < Math.min(2, tagArr.length); i++) {
+                if (i > 0) sb.append(" - ");
+                sb.append(tagArr[i].trim());
+            }
+            if (sb.length() > 0) artist = sb.toString();
         }
 
-        val metadata = MediaMetadataCompat.Builder()
+        String album = (station.country != null && !station.country.isEmpty()) ? station.country : "Live";
+
+        MediaMetadataCompat metadata = new MediaMetadataCompat.Builder()
             .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, station.id)
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, station.name)
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, station.tags.split(",").take(2).joinToString(" - ").ifBlank { "Radio Sphere" })
-            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, station.country.ifBlank { "Live" })
+            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
+            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
             .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, artworkUri.toString())
             .putString(MediaMetadataCompat.METADATA_KEY_ART_URI, artworkUri.toString())
             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, artworkUri.toString())
             .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, -1)
-            .build()
+            .build();
 
-        mediaSession.setMetadata(metadata)
-        updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING)
+        mediaSession.setMetadata(metadata);
+        updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING);
     }
 
-    private fun updatePlaybackState(state: Int) {
-        val actions = PlaybackStateCompat.ACTION_PLAY or
-                PlaybackStateCompat.ACTION_PAUSE or
-                PlaybackStateCompat.ACTION_STOP or
-                PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
-                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-                PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH or
-                PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+    private void updatePlaybackState(int state) {
+        long actions = PlaybackStateCompat.ACTION_PLAY
+            | PlaybackStateCompat.ACTION_PAUSE
+            | PlaybackStateCompat.ACTION_STOP
+            | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+            | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+            | PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+            | PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID;
 
-        val playbackState = PlaybackStateCompat.Builder()
+        PlaybackStateCompat playbackState = new PlaybackStateCompat.Builder()
             .setActions(actions)
             .setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
-            .build()
+            .build();
 
-        mediaSession.setPlaybackState(playbackState)
+        mediaSession.setPlaybackState(playbackState);
     }
 
-    private fun loadStations(key: String): List<StationData> {
-        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        val json = prefs.getString(key, "[]") ?: "[]"
-        return parseStationsJson(json)
+    // ─── Data Helpers ───────────────────────────────────────────────────
+
+    private List<StationData> loadStations(String key) {
+        String json = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(key, "[]");
+        return parseStationsJson(json);
     }
 
-    private fun parseStationsJson(json: String): List<StationData> {
-        return try {
-            val arr = JSONArray(json)
-            (0 until arr.length()).map { i ->
-                val obj = arr.getJSONObject(i)
-                StationData(
-                    id = obj.optString("id", ""),
-                    name = obj.optString("name", "Unknown"),
-                    streamUrl = obj.optString("streamUrl", ""),
-                    logo = obj.optString("logo", ""),
-                    country = obj.optString("country", ""),
-                    tags = obj.optString("tags", "")
-                )
-            }.filter { it.streamUrl.isNotBlank() }
-        } catch (e: Exception) {
-            emptyList()
+    private List<StationData> parseStationsJson(String json) {
+        List<StationData> list = new ArrayList<>();
+        try {
+            JSONArray arr = new JSONArray(json);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                String streamUrl = obj.optString("streamUrl", "");
+                if (!streamUrl.isEmpty()) {
+                    list.add(new StationData(
+                        obj.optString("id", ""),
+                        obj.optString("name", "Unknown"),
+                        streamUrl,
+                        obj.optString("logo", ""),
+                        obj.optString("country", ""),
+                        obj.optString("tags", "")
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            // ignore parse errors
         }
+        return list;
     }
 
-    private fun fetchStationsByGenre(genre: String, limit: Int = 25): List<StationData> {
-        for (mirror in API_MIRRORS) {
+    private List<StationData> fetchStationsByGenre(String genre, int limit) {
+        for (String mirror : API_MIRRORS) {
             try {
-                val url = "$mirror/json/stations/bytag/${Uri.encode(genre)}?limit=$limit&order=votes&reverse=true&hidebroken=true"
-                val response = URL(url).readText()
-                return parseApiResponse(response)
-            } catch (_: Exception) {
-                continue
+                String url = mirror + "/json/stations/bytag/" + Uri.encode(genre)
+                    + "?limit=" + limit + "&order=votes&reverse=true&hidebroken=true";
+                String response = httpGet(url);
+                return parseApiResponse(response);
+            } catch (Exception e) {
+                // try next mirror
             }
         }
-        return emptyList()
+        return new ArrayList<>();
     }
 
-    private fun searchStations(query: String, limit: Int = 25): List<StationData> {
-        for (mirror in API_MIRRORS) {
+    private List<StationData> searchStations(String query, int limit) {
+        for (String mirror : API_MIRRORS) {
             try {
-                val url = "$mirror/json/stations/search?name=${Uri.encode(query)}&limit=$limit&order=votes&reverse=true&hidebroken=true"
-                val response = URL(url).readText()
-                return parseApiResponse(response)
-            } catch (_: Exception) {
-                continue
+                String url = mirror + "/json/stations/search?name=" + Uri.encode(query)
+                    + "&limit=" + limit + "&order=votes&reverse=true&hidebroken=true";
+                String response = httpGet(url);
+                return parseApiResponse(response);
+            } catch (Exception e) {
+                // try next mirror
             }
         }
-        return emptyList()
+        return new ArrayList<>();
     }
 
-    private fun parseApiResponse(json: String): List<StationData> {
-        return try {
-            val arr = JSONArray(json)
-            (0 until arr.length()).map { i ->
-                val obj = arr.getJSONObject(i)
-                StationData(
-                    id = obj.optString("stationuuid", ""),
-                    name = obj.optString("name", "Unknown"),
-                    streamUrl = obj.optString("url_resolved", obj.optString("url", "")),
-                    logo = obj.optString("favicon", ""),
-                    country = obj.optString("country", ""),
-                    tags = obj.optString("tags", "")
-                )
-            }.filter { it.streamUrl.isNotBlank() }
-        } catch (_: Exception) {
-            emptyList()
+    private String httpGet(String urlStr) throws Exception {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlStr).openConnection();
+        conn.setRequestMethod("GET");
+        conn.setConnectTimeout(5000);
+        conn.setReadTimeout(5000);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line);
         }
+        reader.close();
+        conn.disconnect();
+        return sb.toString();
     }
 
-    private fun StationData.toMediaItem(): MediaBrowserCompat.MediaItem {
-        val artworkUri = if (logo.isNotBlank()) {
-            Uri.parse(logo.replace("http://", "https://"))
-        } else {
-            Uri.parse(DEFAULT_ARTWORK)
+    private List<StationData> parseApiResponse(String json) {
+        List<StationData> list = new ArrayList<>();
+        try {
+            JSONArray arr = new JSONArray(json);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                String streamUrl = obj.optString("url_resolved", obj.optString("url", ""));
+                if (!streamUrl.isEmpty()) {
+                    list.add(new StationData(
+                        obj.optString("stationuuid", ""),
+                        obj.optString("name", "Unknown"),
+                        streamUrl,
+                        obj.optString("favicon", ""),
+                        obj.optString("country", ""),
+                        obj.optString("tags", "")
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            // ignore parse errors
+        }
+        return list;
+    }
+
+    // ─── MediaItem Builders ─────────────────────────────────────────────
+
+    private List<MediaBrowserCompat.MediaItem> toMediaItems(List<StationData> stations) {
+        List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
+        for (StationData s : stations) {
+            items.add(stationToMediaItem(s));
+        }
+        return items;
+    }
+
+    private MediaBrowserCompat.MediaItem stationToMediaItem(StationData station) {
+        String artworkUrl = (station.logo != null && !station.logo.isEmpty())
+            ? station.logo.replace("http://", "https://")
+            : DEFAULT_ARTWORK;
+
+        String subtitle = "Radio Sphere";
+        if (station.tags != null && !station.tags.isEmpty()) {
+            String[] tagArr = station.tags.split(",");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < Math.min(2, tagArr.length); i++) {
+                if (i > 0) sb.append(" - ");
+                sb.append(tagArr[i].trim());
+            }
+            if (sb.length() > 0) subtitle = sb.toString();
+        }
+        if (subtitle.equals("Radio Sphere") && station.country != null && !station.country.isEmpty()) {
+            subtitle = station.country;
         }
 
-        val subtitle = tags.split(",").take(2).joinToString(" - ").ifBlank { country.ifBlank { "Radio Sphere" } }
-
-        val desc = MediaDescriptionCompat.Builder()
-            .setMediaId("$STATION_PREFIX$id")
-            .setTitle(name)
+        MediaDescriptionCompat desc = new MediaDescriptionCompat.Builder()
+            .setMediaId(STATION_PREFIX + station.id)
+            .setTitle(station.name)
             .setSubtitle(subtitle)
-            .setIconUri(artworkUri)
-            .build()
+            .setIconUri(Uri.parse(artworkUrl))
+            .build();
 
-        return MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
+        return new MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
     }
 
-    private fun buildBrowsableItem(
-        mediaId: String,
-        title: String,
-        subtitle: String
-    ): MediaBrowserCompat.MediaItem {
-        val desc = MediaDescriptionCompat.Builder()
+    private MediaBrowserCompat.MediaItem buildBrowsableItem(String mediaId, String title, String subtitle) {
+        MediaDescriptionCompat desc = new MediaDescriptionCompat.Builder()
             .setMediaId(mediaId)
             .setTitle(title)
             .setSubtitle(subtitle)
-            .build()
-        return MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE)
+            .build();
+        return new MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
     }
 }
 '@
-# Replace placeholder with actual package name
-$RadioBrowserServiceKt = $RadioBrowserServiceKt -replace '__PACKAGE__', $ActualPackage
-[System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioBrowserService.kt"), $RadioBrowserServiceKt, $UTF8NoBOM)
-Write-Host "    RadioBrowserService.kt genere avec succes" -ForegroundColor Green
+$RadioBrowserServiceJava = $RadioBrowserServiceJava -replace '__PACKAGE__', $ActualPackage
+[System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioBrowserService.java"), $RadioBrowserServiceJava, $UTF8NoBOM)
+Write-Host "    RadioBrowserService.java genere avec succes" -ForegroundColor Green
 
-# --- RadioAutoPlugin.kt (embarque, single-quoted here-string) ---
-Write-Host "    Generation RadioAutoPlugin.kt..." -ForegroundColor DarkGray
-$RadioAutoPluginKt = @'
-package __PACKAGE__
-
-import android.content.Context
-import android.content.SharedPreferences
-import com.getcapacitor.Plugin
-import com.getcapacitor.PluginCall
-import com.getcapacitor.PluginMethod
-import com.getcapacitor.annotation.CapacitorPlugin
-
-@CapacitorPlugin(name = "RadioAutoPlugin")
-class RadioAutoPlugin : Plugin() {
-
-    companion object {
-        private const val PREFS_NAME = "RadioAutoPrefs"
-        private const val KEY_FAVORITES = "favorites_json"
-        private const val KEY_RECENTS = "recents_json"
-        private const val KEY_PLAYBACK_STATE = "playback_state_json"
-    }
-
-    private fun getPrefs(): SharedPreferences {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    }
-
-    @PluginMethod
-    fun syncFavorites(call: PluginCall) {
-        val stations = call.getString("stations", "[]") ?: "[]"
-        getPrefs().edit().putString(KEY_FAVORITES, stations).apply()
-        call.resolve()
-    }
-
-    @PluginMethod
-    fun syncRecents(call: PluginCall) {
-        val stations = call.getString("stations", "[]") ?: "[]"
-        getPrefs().edit().putString(KEY_RECENTS, stations).apply()
-        call.resolve()
-    }
-
-    @PluginMethod
-    fun notifyPlaybackState(call: PluginCall) {
-        val stationId = call.getString("stationId", "") ?: ""
-        val name = call.getString("name", "") ?: ""
-        val logo = call.getString("logo", "") ?: ""
-        val streamUrl = call.getString("streamUrl", "") ?: ""
-        val isPlaying = call.getBoolean("isPlaying", false) ?: false
-        val tags = call.getString("tags", "") ?: ""
-        val country = call.getString("country", "") ?: ""
-
-        val json = """
-            {
-                "stationId": "$stationId",
-                "name": "${name.replace("\"", "\\\"")}",
-                "logo": "$logo",
-                "streamUrl": "$streamUrl",
-                "isPlaying": $isPlaying,
-                "tags": "${tags.replace("\"", "\\\"")}",
-                "country": "${country.replace("\"", "\\\"")}"
-            }
-        """.trimIndent()
-
-        getPrefs().edit().putString(KEY_PLAYBACK_STATE, json).apply()
-        call.resolve()
-    }
-}
-'@
-$RadioAutoPluginKt = $RadioAutoPluginKt -replace '__PACKAGE__', $ActualPackage
-[System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioAutoPlugin.kt"), $RadioAutoPluginKt, $UTF8NoBOM)
-Write-Host "    RadioAutoPlugin.kt genere avec succes" -ForegroundColor Green
-
-Write-Host "    Fichiers Android Auto generes avec succes!" -ForegroundColor Green
+Write-Host "    Fichiers Android Auto (Java) generes avec succes!" -ForegroundColor Green
 
 # ═══════════════════════════════════════════════════════════════════
-# 7. Patch MainActivity — WebView + NotificationChannel + RadioAutoPlugin
+# 7. Patch MainActivity.java — WebView + NotificationChannel + RadioAutoPlugin
 # ═══════════════════════════════════════════════════════════════════
-$MainAct = Get-ChildItem -Path "android/app/src/main/java" -Filter "MainActivity.*" -Recurse | Select-Object -First 1
+$MainAct = Get-ChildItem -Path "android/app/src/main/java" -Filter "MainActivity.java" -Recurse | Select-Object -First 1
 if ($MainAct) {
-    $IsKotlin = $MainAct.Extension -eq ".kt"
-    
-    if ($IsKotlin) {
-        Write-Host ">>> Patch Kotlin MainActivity (WebView + NotifChannel + RadioAutoPlugin)..." -ForegroundColor Yellow
-        $Kotlin = Get-Content $MainAct.FullName -Raw
-        
-        if ($Kotlin -notmatch 'RadioAutoPlugin') {
-            $Kotlin = $Kotlin -replace '(import .+BridgeActivity)', "`$1`nimport $ActualPackage.RadioAutoPlugin"
-        }
-        
-        $KotlinPatch = @"
-    override fun onCreate(savedInstanceState: android.os.Bundle?) {
-        registerPlugin(RadioAutoPlugin::class.java)
-        super.onCreate(savedInstanceState)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            val nm = getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-            val channel = android.app.NotificationChannel(
-                "radio_playback_v3", "Radio Playback", android.app.NotificationManager.IMPORTANCE_LOW)
-            channel.setShowBadge(false)
-            channel.description = "Notification silencieuse pour la lecture radio"
-            channel.enableVibration(false)
-            nm.createNotificationChannel(channel)
-        }
-        bridge?.webView?.settings?.apply {
-            mediaPlaybackRequiresUserGesture = false
-            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-        }
+    Write-Host ">>> Patch Java MainActivity (WebView + NotifChannel + RadioAutoPlugin)..." -ForegroundColor Yellow
+    $Java = Get-Content $MainAct.FullName -Raw
+
+    if ($Java -notmatch 'RadioAutoPlugin') {
+        $Java = $Java -replace '(import .+BridgeActivity;)', "`$1`nimport $ActualPackage.RadioAutoPlugin;"
     }
-"@
-        $Kotlin = $Kotlin -replace '(?s)\s*override fun onCreate\(savedInstanceState[^}]*\{[^}]*(\{[^}]*\}[^}]*)*\}', ''
-        $Kotlin = $Kotlin -replace '(class MainActivity\s*:\s*BridgeActivity\(\)\s*\{)', "`$1`n$KotlinPatch"
-        [System.IO.File]::WriteAllText($MainAct.FullName, $Kotlin, $UTF8NoBOM)
-        
-    } else {
-        Write-Host ">>> Patch Java MainActivity (WebView + NotifChannel + RadioAutoPlugin)..." -ForegroundColor Yellow
-        $Java = Get-Content $MainAct.FullName -Raw
 
-        if ($Java -notmatch 'RadioAutoPlugin') {
-            $Java = $Java -replace '(import .+BridgeActivity;)', "`$1`nimport $ActualPackage.RadioAutoPlugin;"
-        }
-
-        $OnCreatePatch = @"
+    $OnCreatePatch = @"
   @Override
   public void onCreate(android.os.Bundle savedInstanceState) {
     registerPlugin(RadioAutoPlugin.class);
@@ -727,13 +774,14 @@ if ($MainAct) {
     }
   }
 "@
-        $Java = $Java -replace '(?s)\s*@Override\s*public void onCreate\(android\.os\.Bundle[^}]*}\s*}\s*}', ''
-        $Java = $Java -replace '(?s)\s*@Override\s*public void onResume\(\).*?}\s*}', ''
-        if ($Java -notmatch "RadioAutoPlugin") {
-            $Java = $Java -replace 'public class MainActivity extends BridgeActivity \{', "public class MainActivity extends BridgeActivity {`n$OnCreatePatch"
-        }
-        [System.IO.File]::WriteAllText($MainAct.FullName, $Java, $UTF8NoBOM)
-    }
+    # Remove any existing onCreate/onResume overrides
+    $Java = $Java -replace '(?s)\s*@Override\s*public void onCreate\(android\.os\.Bundle[^}]*}\s*}\s*}', ''
+    $Java = $Java -replace '(?s)\s*@Override\s*public void onResume\(\).*?}\s*}', ''
+    # Insert after class declaration
+    $Java = $Java -replace '(public class MainActivity extends BridgeActivity \{)', "`$1`n$OnCreatePatch"
+    [System.IO.File]::WriteAllText($MainAct.FullName, $Java, $UTF8NoBOM)
+} else {
+    Write-Host "    ERREUR: MainActivity.java introuvable !" -ForegroundColor Red
 }
 
 # ═══════════════════════════════════════════════════════════════════
@@ -743,10 +791,11 @@ npx cap sync
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
-Write-Host ">>> Script v2.2.5 Termine ! Android Auto Ready" -ForegroundColor Green
+Write-Host ">>> Script v2.2.5 Termine ! Android Auto Ready (Java)" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "CHANGEMENTS v2.2.5 :" -ForegroundColor Yellow
+Write-Host "  - Fichiers natifs 100% JAVA (pas de Kotlin requis)" -ForegroundColor White
 Write-Host "  - Android Auto MediaBrowserService integre" -ForegroundColor White
 Write-Host "  - ExoPlayer + Media Compat ajoutes au Gradle" -ForegroundColor White
 Write-Host "  - RadioAutoPlugin Capacitor enregistre dans MainActivity" -ForegroundColor White
@@ -755,7 +804,6 @@ Write-Host "  - Recherche vocale (API radio-browser.info native)" -ForegroundCol
 Write-Host "  - Artwork plein ecran + Next/Previous dans favoris" -ForegroundColor White
 Write-Host "  - Canal radio_playback_v3 avec setShowBadge(false)" -ForegroundColor White
 Write-Host "  - Permissions non dupliquees (verification avant injection)" -ForegroundColor White
-Write-Host "  - Fichiers natifs 100% embarques (aucune dependance externe)" -ForegroundColor White
 Write-Host ""
 Write-Host "IMPORTANT : DESINSTALLER L'ANCIENNE APK AVANT D'INSTALLER !" -ForegroundColor Red
 Write-Host ""
