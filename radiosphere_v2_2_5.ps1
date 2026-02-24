@@ -9,6 +9,7 @@ Write-Host ">>> Lancement du Master Fix v2.2.5 - Android Auto Integration" -Fore
 if (Test-Path $ProjectFolder) { Remove-Item -Recurse -Force $ProjectFolder }
 git clone $RepoUrl
 cd $ProjectFolder
+[System.Environment]::CurrentDirectory = (Get-Location).Path
 
 # ═══════════════════════════════════════════════════════════════════
 # 1. Config Capacitor
