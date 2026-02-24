@@ -1,6 +1,6 @@
 # radiosphere_v2_2_5.ps1
 # Android Auto Integration — Full automated setup (100% autonome)
-$RepoUrl = "https://github.com/Mrbender7/radiosphere"
+$RepoUrl = "https://github.com/Mrbender7/remix-of-radio-sphere"
 $ProjectFolder = "radiosphere"
 $UTF8NoBOM = New-Object System.Text.UTF8Encoding($False)
 
