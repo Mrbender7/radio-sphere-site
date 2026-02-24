@@ -1,41 +1,30 @@
 
 
-# Fix Build Android — automotive_app_desc.xml manquant
+# Fix Script v2.2.5 — Fichiers natifs embarques dans le script
 
 ## Probleme
 
-Le build echoue car le AndroidManifest reference `@xml/automotive_app_desc` mais le fichier XML n'a pas ete copie dans `android/app/src/main/res/xml/`.
+Le script clone le repo GitHub, mais les fichiers `android-auto/RadioBrowserService.kt`, `android-auto/RadioAutoPlugin.kt` et `android-auto/res/xml/automotive_app_desc.xml` n'existent pas dans le repo (ils ont ete crees uniquement dans Lovable). Le script echoue avec des erreurs "Impossible de trouver le chemin d'acces".
 
-Erreur exacte :
-```
-AAPT: error: resource xml/automotive_app_desc (aka com.radiosphere.app:xml/automotive_app_desc) not found.
-```
+## Solution
 
-## Cause
+Embarquer le contenu complet des 3 fichiers natifs directement dans le script PowerShell sous forme de here-strings (`@"..."@`), au lieu de les lire depuis des fichiers externes. Le script generera les fichiers directement dans le dossier Android correct.
 
-Le script PowerShell v2.2.5 a deux problemes :
-1. La copie du fichier XML (etape 6) peut echouer silencieusement si le chemin source est incorrect
-2. La permission `INTERNET` est injectee en doublon (warning dans le build)
+## Modifications
 
-## Corrections a apporter
+### Fichier modifie : `radiosphere_v2_2_5.ps1`
 
-### 1. Script PowerShell `radiosphere_v2_2_5.ps1`
+**Etape 3b** — `automotive_app_desc.xml` : Remplacer la logique de copie par une generation directe du fichier XML via here-string (le fallback existant fait deja ca, on le rend principal).
 
-- Deplacer la creation du dossier `res/xml` et la copie de `automotive_app_desc.xml` **avant** l'injection dans le manifest (etape 4), avec une verification explicite que le fichier a bien ete copie
-- Ajouter une garde pour ne pas injecter la permission `INTERNET` si elle existe deja dans le manifest
-- Ajouter une verification post-copie avec message d'erreur clair si le fichier n'est pas present
+**Etape 6** — Fichiers Kotlin : Remplacer les `Get-Content "android-auto/..."` par des here-strings contenant le code complet de :
+- `RadioBrowserService.kt` (~405 lignes) — service MediaBrowserServiceCompat avec ExoPlayer, browse tree, recherche vocale
+- `RadioAutoPlugin.kt` (~69 lignes) — plugin Capacitor pour SharedPreferences
 
-### 2. Verification des permissions dupliquees
-
-Dans la section d'injection des permissions (etape 4), verifier chaque permission avant de l'ajouter pour eviter les doublons.
-
-## Fichiers modifies
-
-| Fichier | Modification |
-|---------|-------------|
-| `radiosphere_v2_2_5.ps1` | Reorganiser l'ordre des etapes, ajouter verifications, corriger doublons permissions |
+Le remplacement du package (`app.lovable.radiosphere` -> package detecte) sera applique sur les here-strings au lieu des fichiers lus.
 
 ## Impact
 
-Aucun impact sur le code web. Correction uniquement du workflow de build natif Android.
+- Aucun fichier web modifie
+- Le script devient 100% autonome, sans dependance aux fichiers du repo
+- Le dossier `android-auto/` dans Lovable reste comme reference/documentation
 
