@@ -3,6 +3,7 @@ import { RadioStation } from "@/types/radio";
 import { toast } from "@/hooks/use-toast";
 import { reportStationClick } from "@/services/RadioService";
 import { notifyNativePlaybackState } from "@/plugins/RadioAutoPlugin";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 // --- Notification channel (created once via plugin JS API) ---
 const NOTIFICATION_CHANNEL_ID = 'radio_playback_v3';
@@ -134,6 +135,7 @@ export function usePlayer() {
 }
 
 export function PlayerProvider({ children, onStationPlay }: { children: React.ReactNode; onStationPlay?: (station: RadioStation) => void }) {
+  const { t } = useTranslation();
   const audioRef = useRef<HTMLAudioElement>(globalAudio);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const isPlayingRef = useRef(false);
@@ -289,7 +291,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       stopHeartbeat();
       stopNativeForegroundService();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
-      toast({ title: "Erreur de lecture", description: "Impossible de lire ce flux. Essayez une autre station.", variant: "destructive" });
+      toast({ title: t("player.streamError"), description: t("player.streamErrorDesc"), variant: "destructive" });
     };
     audio.addEventListener("error", handleError);
 
@@ -320,7 +322,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     try {
       if (!station.streamUrl) {
         console.error('[RadioSphere] Cannot play station with no stream URL.');
-        toast({ title: "Flux indisponible", description: "Cette station n'a pas d'URL de flux.", variant: "destructive" });
+        toast({ title: t("player.error"), description: t("player.streamUnavailable"), variant: "destructive" });
         return;
       }
 
@@ -378,7 +380,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
             releaseWakeLock();
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
             setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
-            toast({ title: "Erreur de lecture", description: "Impossible de lire ce flux. Essayez une autre station.", variant: "destructive" });
+            toast({ title: t("player.streamError"), description: t("player.streamErrorDesc"), variant: "destructive" });
           });
         audio.removeEventListener('canplay', startPlayback);
         pendingCanplayRef.current = null;
@@ -397,7 +399,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
           stopNativeForegroundService();
           if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
           setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
-          toast({ title: "Délai dépassé", description: "Le flux ne répond pas. Essayez une autre station.", variant: "destructive" });
+          toast({ title: t("player.timeout"), description: t("player.timeoutDesc"), variant: "destructive" });
         }
       }, 15000);
       pendingTimeoutRef.current = timeout;
@@ -417,7 +419,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     } catch (e) {
       console.error("[RadioSphere] Unexpected error in play()", e);
       setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
-      toast({ title: "Erreur inattendue", description: "Une erreur est survenue. Réessayez.", variant: "destructive" });
+      toast({ title: t("player.unexpectedError"), description: t("player.unexpectedErrorDesc"), variant: "destructive" });
     }
   }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat]);
 
