@@ -1,7 +1,9 @@
+import { useState, useRef, useCallback } from "react";
 import { RadioStation } from "@/types/radio";
 import { StationCard } from "@/components/StationCard";
-import { Heart } from "lucide-react";
+import { Heart, ArrowUp } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { cn } from "@/lib/utils";
 
 interface LibraryPageProps {
   favorites: RadioStation[];
@@ -11,9 +13,20 @@ interface LibraryPageProps {
 
 export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: LibraryPageProps) {
   const { t } = useTranslation();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (el) setShowScrollTop(el.scrollTop > 300);
+  }, []);
+
+  const scrollToTop = () => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pb-4">
+    <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 pb-32">
       <h1 className="text-2xl font-heading font-bold mt-6 mb-4 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
         {t("favorites.title")}
         {favorites.length > 0 && (
@@ -34,6 +47,17 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
           ))}
         </div>
       )}
+
+      <button
+        onClick={scrollToTop}
+        className={cn(
+          "fixed bottom-48 right-4 z-50 w-10 h-10 rounded-full bg-primary/70 backdrop-blur-sm text-primary-foreground shadow-lg flex items-center justify-center transition-all duration-300",
+          showScrollTop ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+        )}
+        aria-label="Scroll to top"
+      >
+        <ArrowUp className="w-5 h-5" />
+      </button>
     </div>
   );
 }
