@@ -35,23 +35,28 @@
 
 ## Fonctionnalités Premium futures (idées)
 
-### 4. 🎨 Thèmes personnalisés
+### 4. 📺 Chromecast / TV Casting
+- Diffusion du flux audio sur Chromecast, Android TV ou tout appareil compatible Google Cast
+- Nécessite le Google Cast SDK natif Android (développement conséquent)
+- **Cible : v3**
+
+### 5. 🎨 Thèmes personnalisés
 - Choix de thèmes de couleurs (dark, amoled, blue, warm, etc.)
 - Thème personnalisable par l'utilisateur
 
-### 5. 📻 Qualité audio HD
+### 6. 📻 Qualité audio HD
 - Priorisation des flux haute qualité (320 kbps)
 - Indicateur de qualité dans le player
 
-### 6. 🔇 Sans publicité
+### 7. 🔇 Sans publicité
 - Suppression de toute publicité future dans l'app
 
-### 7. 📊 Statistiques d'écoute
+### 8. 📊 Statistiques d'écoute
 - Temps d'écoute par jour/semaine/mois
 - Stations les plus écoutées
 - Genres préférés
 
-### 8. 🌐 API Premium (nécessite abonnement)
+### 9. 🌐 API Premium (nécessite abonnement)
 - Accès à des contenus exclusifs via une API radio premium
 - Stations en exclusivité, podcasts, replays
 - **Ce cas justifierait le passage à un modèle d'abonnement**
