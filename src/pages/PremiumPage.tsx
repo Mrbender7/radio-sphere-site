@@ -1,4 +1,4 @@
-import { Crown, Zap, Headphones, ShieldCheck, CheckCircle } from "lucide-react";
+import { Crown, Moon, Car, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePremium } from "@/contexts/PremiumContext";
 import { useTranslation } from "@/contexts/LanguageContext";
@@ -8,9 +8,8 @@ export function PremiumPage() {
   const { t } = useTranslation();
 
   const features = [
-    { icon: Zap, title: t("premium.noAds"), desc: t("premium.noAdsDesc") },
-    { icon: Headphones, title: t("premium.hd"), desc: t("premium.hdDesc") },
-    { icon: ShieldCheck, title: t("premium.exclusive"), desc: t("premium.exclusiveDesc") },
+    { icon: Moon, title: t("premium.sleepTimer"), desc: t("premium.sleepTimerDesc") },
+    { icon: Car, title: t("premium.androidAuto"), desc: t("premium.androidAutoDesc") },
   ];
 
   return (

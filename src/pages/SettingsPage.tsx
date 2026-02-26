@@ -4,7 +4,7 @@ import { useSleepTimer, SLEEP_TIMER_OPTIONS } from "@/contexts/SleepTimerContext
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
-import { Wifi, Crown, Zap, Headphones, ShieldCheck, CheckCircle, Database, Globe, ChevronDown, Moon, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, Share2, ExternalLink } from "lucide-react";
+import { Wifi, Crown, Moon, Car, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, Share2, ExternalLink, ShieldCheck } from "lucide-react";
 import { UserGuideModal } from "@/components/UserGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,10 +71,10 @@ export function SettingsPage() {
   const [premiumCode, setPremiumCode] = useState("");
   const [codeError, setCodeError] = useState(false);
   const [radioBrowserOpen, setRadioBrowserOpen] = useState(false);
+  const [customMinutes, setCustomMinutes] = useState("");
   const premiumFeatures = [
-    { icon: Zap, title: t("premium.noAds"), desc: t("premium.noAdsDesc") },
-    { icon: Headphones, title: t("premium.hd"), desc: t("premium.hdDesc") },
-    { icon: ShieldCheck, title: t("premium.exclusive"), desc: t("premium.exclusiveDesc") },
+    { icon: Moon, title: t("premium.sleepTimer"), desc: t("premium.sleepTimerDesc") },
+    { icon: Car, title: t("premium.androidAuto"), desc: t("premium.androidAutoDesc") },
   ];
 
   return (
@@ -137,6 +137,35 @@ export function SettingsPage() {
                   {language === "fr" ? opt.labelFr : opt.labelEn}
                 </button>
               ))}
+            </div>
+
+            {/* Custom timer input */}
+            <div className="flex gap-2 mb-3">
+              <Input
+                type="number"
+                min="1"
+                max="999"
+                placeholder={t("sleepTimer.customPlaceholder")}
+                value={customMinutes}
+                onChange={(e) => setCustomMinutes(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 h-9 text-xs bg-secondary border-border"
+              />
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const mins = parseInt(customMinutes);
+                  if (mins > 0) {
+                    startTimer(mins);
+                    setCustomMinutes("");
+                  }
+                }}
+                size="sm"
+                className="h-9 px-4 text-xs font-semibold"
+                disabled={!customMinutes || parseInt(customMinutes) <= 0}
+              >
+                {t("sleepTimer.customGo")}
+              </Button>
             </div>
 
             {isActive && (
