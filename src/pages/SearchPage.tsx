@@ -96,7 +96,6 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
     queryFn: async () => {
       const baseParams = {
         country: country || undefined,
-        tagList: genres.length ? genres.join(",") : undefined,
         language: languages.length ? languages.join(",") : undefined,
         limit: PAGE_SIZE,
         offset: 0,
@@ -104,13 +103,34 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         reverse: sortReverse,
       };
 
+      const map = new Map<string, RadioStation>();
+
+      // Multi-genre OR: one request per genre, then merge
+      if (genres.length > 1) {
+        const genreSearches = genres.map(g =>
+          query
+            ? Promise.all([
+                radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: query }),
+                radioBrowserProvider.searchStations({ ...baseParams, tag: [g, query].join(",") }),
+              ]).then(([a, b]) => [...a, ...b])
+            : radioBrowserProvider.searchStations({ ...baseParams, tag: g })
+        );
+        const allBatches = await Promise.all(genreSearches);
+        for (const batch of allBatches) {
+          for (const s of batch) if (!map.has(s.id)) map.set(s.id, s);
+        }
+        return Array.from(map.values());
+      }
+
+      // Single genre or no genre
+      const singleTag = genres.length === 1 ? genres[0] : undefined;
+      if (singleTag) baseParams["tag"] = singleTag;
+
       if (query) {
-        // Search by name AND tag in parallel, then deduplicate
         const [nameResults, tagResults] = await Promise.all([
           radioBrowserProvider.searchStations({ ...baseParams, name: query }),
-          radioBrowserProvider.searchStations({ ...baseParams, tag: query }),
+          radioBrowserProvider.searchStations({ ...baseParams, tag: singleTag ? [singleTag, query].join(",") : query }),
         ]);
-        const map = new Map<string, RadioStation>();
         for (const s of nameResults) map.set(s.id, s);
         for (const s of tagResults) if (!map.has(s.id)) map.set(s.id, s);
         return Array.from(map.values());
@@ -143,7 +163,6 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
     try {
       const baseParams = {
         country: country || undefined,
-        tagList: genres.length ? genres.join(",") : undefined,
         language: languages.length ? languages.join(",") : undefined,
         limit: PAGE_SIZE,
         offset,
@@ -152,17 +171,37 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
       };
 
       let data: RadioStation[];
-      if (query) {
-        const [nameResults, tagResults] = await Promise.all([
-          radioBrowserProvider.searchStations({ ...baseParams, name: query }),
-          radioBrowserProvider.searchStations({ ...baseParams, tag: query }),
-        ]);
-        const map = new Map<string, RadioStation>();
-        for (const s of nameResults) map.set(s.id, s);
-        for (const s of tagResults) if (!map.has(s.id)) map.set(s.id, s);
+      const map = new Map<string, RadioStation>();
+
+      if (genres.length > 1) {
+        const genreSearches = genres.map(g =>
+          query
+            ? Promise.all([
+                radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: query }),
+                radioBrowserProvider.searchStations({ ...baseParams, tag: [g, query].join(",") }),
+              ]).then(([a, b]) => [...a, ...b])
+            : radioBrowserProvider.searchStations({ ...baseParams, tag: g })
+        );
+        const allBatches = await Promise.all(genreSearches);
+        for (const batch of allBatches) {
+          for (const s of batch) if (!map.has(s.id)) map.set(s.id, s);
+        }
         data = Array.from(map.values());
       } else {
-        data = await radioBrowserProvider.searchStations(baseParams);
+        const singleTag = genres.length === 1 ? genres[0] : undefined;
+        if (singleTag) baseParams["tag"] = singleTag;
+
+        if (query) {
+          const [nameResults, tagResults] = await Promise.all([
+            radioBrowserProvider.searchStations({ ...baseParams, name: query }),
+            radioBrowserProvider.searchStations({ ...baseParams, tag: singleTag ? [singleTag, query].join(",") : query }),
+          ]);
+          for (const s of nameResults) map.set(s.id, s);
+          for (const s of tagResults) if (!map.has(s.id)) map.set(s.id, s);
+          data = Array.from(map.values());
+        } else {
+          data = await radioBrowserProvider.searchStations(baseParams);
+        }
       }
 
       setExtraResults(prev => {
