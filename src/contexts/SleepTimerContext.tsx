@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect, ReactNode } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 export const SLEEP_TIMER_OPTIONS = [
   { minutes: 15, labelFr: "15 min", labelEn: "15 min" },
@@ -43,6 +44,7 @@ function formatTime(totalSeconds: number): string {
 
 export function SleepTimerProvider({ children }: { children: ReactNode }) {
   const { togglePlay, isPlaying } = usePlayer();
+  const { t } = useTranslation();
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -81,8 +83,8 @@ export function SleepTimerProvider({ children }: { children: ReactNode }) {
       if (isPlaying) {
         togglePlay();
         toast({
-          title: "💤 Sleep Timer",
-          description: "La lecture a été mise en pause automatiquement.",
+          title: "💤 " + t("sleepTimer.title"),
+          description: t("sleepTimer.stopped"),
         });
       }
     }

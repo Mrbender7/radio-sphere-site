@@ -70,14 +70,19 @@ const translations: Record<Language, Record<string, string>> = {
     "sleepTimer.active": "Actif",
     "sleepTimer.remaining": "Restant",
     "sleepTimer.cancel": "Annuler la minuterie",
+    "sleepTimer.stopped": "La lecture a été mise en pause automatiquement.",
 
     // Player
     "player.nowPlaying": "En cours de lecture",
     "player.streamError": "Erreur de lecture",
     "player.streamErrorDesc": "Impossible de lire ce flux. Essayez une autre station.",
-     "player.error": "Error",
-    "player.streamUnavailable": "Stream unavailable",
+    "player.error": "Erreur",
+    "player.streamUnavailable": "Cette station n'a pas d'URL de flux.",
     "player.visitWebsite": "Visiter le site",
+    "player.timeout": "Délai dépassé",
+    "player.timeoutDesc": "Le flux ne répond pas. Essayez une autre station.",
+    "player.unexpectedError": "Erreur inattendue",
+    "player.unexpectedErrorDesc": "Une erreur est survenue. Réessayez.",
 
     // Exit
     "exit.title": "Fermer l'application ?",
@@ -111,6 +116,9 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.imported": "favoris importés",
     "favorites.importError": "Erreur lors de l'import",
     "favorites.noFavoritesToExport": "Aucun favori à exporter",
+
+    // Privacy
+    "settings.privacyPolicy": "Politique de confidentialité",
   },
   en: {
     // Nav
@@ -181,14 +189,19 @@ const translations: Record<Language, Record<string, string>> = {
     "sleepTimer.active": "Active",
     "sleepTimer.remaining": "Remaining",
     "sleepTimer.cancel": "Cancel timer",
+    "sleepTimer.stopped": "Playback was automatically paused.",
 
     // Player
     "player.nowPlaying": "Now playing",
     "player.streamError": "Playback error",
     "player.streamErrorDesc": "Unable to play this stream. Try another station.",
     "player.error": "Error",
-    "player.streamUnavailable": "Stream unavailable",
+    "player.streamUnavailable": "This station has no stream URL.",
     "player.visitWebsite": "Visit website",
+    "player.timeout": "Timeout",
+    "player.timeoutDesc": "The stream is not responding. Try another station.",
+    "player.unexpectedError": "Unexpected error",
+    "player.unexpectedErrorDesc": "An error occurred. Please try again.",
 
     // Exit
     "exit.title": "Close app?",
@@ -222,6 +235,9 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.imported": "favorites imported",
     "favorites.importError": "Import error",
     "favorites.noFavoritesToExport": "No favorites to export",
+
+    // Privacy
+    "settings.privacyPolicy": "Privacy Policy",
   },
 };
 

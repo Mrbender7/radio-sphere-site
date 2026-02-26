@@ -14,16 +14,17 @@ import { RadioStation } from "@/types/radio";
 function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: React.ElementType; title: string; badge?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <button
-      onClick={() => setOpen(o => !o)}
-      className="w-full rounded-xl bg-accent p-4 mb-4 text-left transition-all"
-    >
-      <div className="flex items-center gap-2">
+    <div className="w-full rounded-xl bg-accent p-4 mb-4 text-left transition-all">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2"
+        type="button"
+      >
         <Icon className="w-5 h-5 text-amber-400" />
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {badge && <span className="ml-auto">{badge}</span>}
         <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300 ml-auto", open && "rotate-180")} />
-      </div>
+      </button>
       <div
         className={cn(
           "overflow-hidden transition-all duration-300 ease-in-out",
@@ -32,7 +33,7 @@ function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: Reac
       >
         {children}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -426,6 +427,20 @@ export function SettingsPage() {
           </div>
         </div>
       </button>
+
+      {/* Privacy Policy */}
+      <a
+        href="https://music-radio-sphere.github.io/privacy-policy/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-1.5 text-xs text-primary hover:underline mb-4"
+      >
+        <ShieldCheck className="w-3.5 h-3.5" />
+        {t("settings.privacyPolicy")}
+      </a>
+
+      {/* App version */}
+      <p className="text-center text-[10px] text-muted-foreground mb-6">Radio Sphere v2.2.7</p>
     </div>
   );
 }

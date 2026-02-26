@@ -33,12 +33,14 @@ export function useFavorites() {
   const isFavorite = useCallback((id: string) => favorites.some(s => s.id === id), [favorites]);
 
   const importFavorites = useCallback((stations: RadioStation[]) => {
+    let addedCount = 0;
     setFavorites(prev => {
       const existingUrls = new Set(prev.map(s => s.streamUrl));
       const newStations = stations.filter(s => !existingUrls.has(s.streamUrl));
+      addedCount = newStations.length;
       return [...prev, ...newStations].sort((a, b) => a.name.localeCompare(b.name));
     });
-    return stations.length;
+    return addedCount;
   }, []);
 
   return { favorites, toggleFavorite, isFavorite, importFavorites };
