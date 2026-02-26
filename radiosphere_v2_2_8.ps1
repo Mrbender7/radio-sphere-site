@@ -1,10 +1,10 @@
-# radiosphere_v2_2_7c.ps1
-# Android Auto v2.2.7c — MediaSession flags + tag search + empty placeholders
+# radiosphere_v2_2_8.ps1
+# Android Auto v2.2.8 — MediaSession flags + tag search + audit fixes
 $RepoUrl = "https://github.com/Mrbender7/remix-of-radio-sphere"
 $ProjectFolder = "remix-of-radio-sphere"
 $UTF8NoBOM = New-Object System.Text.UTF8Encoding($False)
 
-Write-Host ">>> Lancement du Master Fix v2.2.6 - AudioFocus + Notification Buttons" -ForegroundColor Cyan
+Write-Host ">>> Lancement du Master Fix v2.2.8 - AudioFocus + Notification Buttons + Audit Fixes" -ForegroundColor Cyan
 
 if (Test-Path $ProjectFolder) { Remove-Item -Recurse -Force $ProjectFolder }
 git clone $RepoUrl
@@ -23,14 +23,14 @@ $ConfigJSON = @"
   "server": { "androidScheme": "https", "allowNavigation": ["*"] }
 }
 "@
-$ConfigJSON | Out-File -FilePath "capacitor.config.json" -Encoding utf8
+[System.IO.File]::WriteAllText((Join-Path (Get-Location).Path "capacitor.config.json"), $ConfigJSON, $UTF8NoBOM)
 
 # ═══════════════════════════════════════════════════════════════════
 # 2. Installation et Build
 # ═══════════════════════════════════════════════════════════════════
 Write-Host ">>> Installation des dependances et build..." -ForegroundColor Yellow
 npm install --legacy-peer-deps
-npm install @capacitor/cli @capawesome-team/capacitor-android-foreground-service @capacitor/app
+npm install @capacitor/core @capacitor/cli @capawesome-team/capacitor-android-foreground-service @capacitor/app @capacitor/local-notifications
 npm run build
 npm install @capacitor/android
 npx cap add android
@@ -258,7 +258,7 @@ Write-Host "    RadioAutoPlugin.java genere avec succes" -ForegroundColor Green
 
 # --- RadioBrowserService.java (embarque, single-quoted here-string) ---
 # v2.2.6: Added AudioFocus management to pause other media apps
-Write-Host "    Generation RadioBrowserService.java (v2.2.6 + AudioFocus)..." -ForegroundColor DarkGray
+Write-Host "    Generation RadioBrowserService.java (v2.2.8 + AudioFocus)..." -ForegroundColor DarkGray
 $RadioBrowserServiceJava = @'
 package __PACKAGE__;
 
@@ -845,7 +845,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
 '@
 $RadioBrowserServiceJava = $RadioBrowserServiceJava -replace '__PACKAGE__', $ActualPackage
 [System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioBrowserService.java"), $RadioBrowserServiceJava, $UTF8NoBOM)
-Write-Host "    RadioBrowserService.java genere avec succes (v2.2.6 + AudioFocus)" -ForegroundColor Green
+Write-Host "    RadioBrowserService.java genere avec succes (v2.2.8 + AudioFocus)" -ForegroundColor Green
 
 Write-Host "    Fichiers Android Auto (Java) generes avec succes!" -ForegroundColor Green
 
@@ -904,17 +904,18 @@ npx cap sync
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
-Write-Host ">>> Script v2.2.6 Termine ! AudioFocus + Notification Buttons" -ForegroundColor Green
+Write-Host ">>> Script v2.2.8 Termine ! AudioFocus + Notification + Audit" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "CHANGEMENTS v2.2.6 :" -ForegroundColor Yellow
+Write-Host "CHANGEMENTS v2.2.8 :" -ForegroundColor Yellow
 Write-Host "  - AudioFocus: Spotify/autres apps mises en pause automatiquement" -ForegroundColor White
 Write-Host "  - AudioFocus: Gestion perte de focus (pause/duck/resume)" -ForegroundColor White
 Write-Host "  - Notification: Boutons Play/Pause dans la barre des taches" -ForegroundColor White
-Write-Host "  - Notification: Listener buttonClicked dans PlayerContext" -ForegroundColor White
-Write-Host "  - Navigation Next/Previous dans favoris/recents — inchange" -ForegroundColor White
-Write-Host "  - Recherche vocale + textuelle — inchange" -ForegroundColor White
-Write-Host "  - Browse tree: Favoris, Recents, 24 Genres — inchange" -ForegroundColor White
+Write-Host "  - Notification: Listener buttonClicked separe (fix v2.2.8b)" -ForegroundColor White
+Write-Host "  - i18n: Toasts player et sleep timer traduits FR/EN" -ForegroundColor White
+Write-Host "  - Accessibilite: CollapsibleSection sans boutons imbriques" -ForegroundColor White
+Write-Host "  - Google Play: Lien privacy policy + version dans Settings" -ForegroundColor White
+Write-Host "  - Script: capacitor.config.json sans BOM, deps explicites" -ForegroundColor White
 Write-Host "  - Zero reference iOS — code propre" -ForegroundColor White
 Write-Host ""
 Write-Host "IMPORTANT : DESINSTALLER L'ANCIENNE APK AVANT D'INSTALLER !" -ForegroundColor Red
