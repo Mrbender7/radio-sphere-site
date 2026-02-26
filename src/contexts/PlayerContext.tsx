@@ -5,89 +5,9 @@ import { reportStationClick } from "@/services/RadioService";
 import { notifyNativePlaybackState } from "@/plugins/RadioAutoPlugin";
 import { useTranslation } from "@/contexts/LanguageContext";
 
-// --- Notification channel (created once via plugin JS API) ---
-const NOTIFICATION_CHANNEL_ID = 'radio_playback_v3';
-let channelCreated = false;
-
-async function ensureNotificationChannel() {
-  if (channelCreated) return;
-  try {
-    const { ForegroundService } = await import('@capawesome-team/capacitor-android-foreground-service');
-    await (ForegroundService as any).createNotificationChannel({
-      id: NOTIFICATION_CHANNEL_ID,
-      name: 'Radio Playback',
-      description: 'Notification silencieuse pour la lecture radio',
-      importance: 2, // LOW — no sound, no vibration, visible in tray & lockscreen
-      sound: undefined,
-      vibration: false,
-    });
-    channelCreated = true;
-    console.log("[RadioSphere] Notification channel created via plugin JS:", NOTIFICATION_CHANNEL_ID);
-  } catch (e) {
-    console.log("[RadioSphere] createNotificationChannel not available", e);
-  }
-}
-
-function getStationSubtitle(station: RadioStation): string {
-  if (station.tags && station.tags.length > 0) return station.tags.slice(0, 2).join(' • ');
-  return station.country || 'Radio Sphere';
-}
-
-// --- Android Foreground Service helpers (Capacitor only) ---
-async function startNativeForegroundService(station: RadioStation, isPaused = false) {
-  try {
-    await ensureNotificationChannel();
-    const { ForegroundService } = await import('@capawesome-team/capacitor-android-foreground-service');
-    await ForegroundService.startForegroundService({
-      id: 1,
-      title: station.name,
-      body: getStationSubtitle(station),
-      smallIcon: 'ic_notification',
-      serviceType: 2,
-      silent: true,
-      notificationChannelId: NOTIFICATION_CHANNEL_ID,
-      buttons: [
-        { title: isPaused ? '▶ Play' : '⏸ Pause', id: isPaused ? 1 : 2 }
-      ],
-    } as any);
-    console.log("[RadioSphere] Foreground service started (channel:", NOTIFICATION_CHANNEL_ID, ")");
-  } catch (e) {
-    console.log("[RadioSphere] Foreground service not available", e);
-  }
-}
-
-async function updateNativeForegroundService(station: RadioStation, isPaused: boolean) {
-  try {
-    const { ForegroundService } = await import('@capawesome-team/capacitor-android-foreground-service');
-    await (ForegroundService as any).updateForegroundService({
-      id: 1,
-      title: station.name,
-      body: getStationSubtitle(station),
-      smallIcon: 'ic_notification',
-      notificationChannelId: NOTIFICATION_CHANNEL_ID,
-      buttons: [
-        { title: isPaused ? '▶ Play' : '⏸ Pause', id: isPaused ? 1 : 2 }
-      ],
-    });
-    console.log("[RadioSphere] Foreground service updated");
-  } catch (e) {
-    console.log("[RadioSphere] Foreground service update failed", e);
-  }
-}
-
-async function stopNativeForegroundService() {
-  try {
-    const { ForegroundService } = await import('@capawesome-team/capacitor-android-foreground-service');
-    await ForegroundService.stopForegroundService();
-    foregroundServiceRunning = false;
-    console.log("[RadioSphere] Foreground service stopped");
-  } catch (e) {
-    console.log("[RadioSphere] Foreground service stop failed", e);
-  }
-}
-
-// Flag: foreground service is currently running
-let foregroundServiceRunning = false;
+// Note: The old Capawesome foreground service has been removed in v2.2.9.
+// Lock screen / notification controls are now handled by the native MediaPlaybackService
+// via notifyNativePlaybackState() which creates a proper MediaStyle notification.
 
 // Global audio instance — survives React lifecycle, never destroyed by re-renders
 const globalAudio = new Audio();
@@ -165,10 +85,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     currentStationRef.current = state.currentStation;
   }, [state.currentStation]);
 
-  // Create notification channel once at mount
-  useEffect(() => {
-    ensureNotificationChannel();
-  }, []);
 
   const requestWakeLock = useCallback(async () => {
     if ('wakeLock' in navigator) {
@@ -256,11 +172,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         startHeartbeat();
         requestWakeLock();
         if (station) {
-          if (foregroundServiceRunning) {
-            updateNativeForegroundService(station, false);
-          } else {
-            startNativeForegroundService(station, false).then(() => { foregroundServiceRunning = true; });
-          }
+          notifyNativePlaybackState(station, true);
         }
         console.log("[RadioSphere] Stream reloaded successfully");
       }).catch(() => {
@@ -309,14 +221,14 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
   }, []);
 
-  // Shared play/pause handlers used by MediaSession + Foreground Service
+  // Shared play/pause handlers used by MediaSession + native MediaStyle notification
   const handlePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !audio.src) return;
     audio.play().catch(() => {});
     startSilentLoop();
     setState(s => {
-      if (s.currentStation) startNativeForegroundService(s.currentStation, false);
+      if (s.currentStation) notifyNativePlaybackState(s.currentStation, true);
       return { ...s, isPlaying: true };
     });
     requestWakeLock();
@@ -329,7 +241,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     audio.pause();
     stopSilentLoop();
     setState(s => {
-      if (s.currentStation) updateNativeForegroundService(s.currentStation, true);
+      if (s.currentStation) notifyNativePlaybackState(s.currentStation, false);
       return { ...s, isPlaying: false };
     });
     releaseWakeLock();
@@ -356,24 +268,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
   }, [handlePlay, handlePause]);
 
-  // Dedicated listener for Android Foreground Service notification buttons (no mediaSession guard)
-  useEffect(() => {
-    let buttonListenerRemove: (() => void) | null = null;
-    import('@capawesome-team/capacitor-android-foreground-service').then(({ ForegroundService }) => {
-      ForegroundService.addListener('buttonClicked', (event: any) => {
-        const btnId = event?.buttonId ?? event?.id;
-        console.log("[RadioSphere] Notification button clicked, id:", btnId);
-        if (btnId === 1) handlePlay();
-        if (btnId === 2) handlePause();
-      }).then(listener => {
-        buttonListenerRemove = () => listener.remove();
-      });
-    }).catch(() => {});
-
-    return () => {
-      if (buttonListenerRemove) buttonListenerRemove();
-    };
-  }, [handlePlay, handlePause]);
+  // Old Capawesome foreground service listener removed in v2.2.9
+  // Notification buttons are now handled by MediaPlaybackService via mediaToggle event
 
   // v2.2.9: Listen for MediaStyle notification toggle (native MediaPlaybackService)
   useEffect(() => {
@@ -416,7 +312,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       setState(s => ({ ...s, isPlaying: false }));
       stopSilentLoop();
       stopHeartbeat();
-      stopNativeForegroundService();
+      notifyNativePlaybackState(null, false);
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
       toast({ title: t("player.streamError"), description: t("player.streamErrorDesc"), variant: "destructive" });
     };
@@ -519,15 +415,11 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
             notifyNativePlaybackState(station, true);
             startSilentLoop();
             startHeartbeat();
-            if (foregroundServiceRunning) {
-              updateNativeForegroundService(station, false);
-            } else {
-              startNativeForegroundService(station, false).then(() => { foregroundServiceRunning = true; });
-            }
+            notifyNativePlaybackState(station, true);
           })
           .catch((e) => {
             console.error("[RadioSphere] Playback failed", e);
-            stopNativeForegroundService();
+            notifyNativePlaybackState(null, false);
             stopSilentLoop();
             stopHeartbeat();
             releaseWakeLock();
@@ -549,7 +441,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
           console.warn("[RadioSphere] Stream timeout — no canplay after 15s");
           audio.pause();
           audio.removeAttribute('src');
-          stopNativeForegroundService();
+          notifyNativePlaybackState(null, false);
           if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
           setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
           toast({ title: t("player.timeout"), description: t("player.timeoutDesc"), variant: "destructive" });
@@ -585,7 +477,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       stopHeartbeat();
       releaseWakeLock();
       retryCountRef.current = 0;
-      updateNativeForegroundService(state.currentStation, true);
+      notifyNativePlaybackState(state.currentStation, false);
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       setState(s => ({ ...s, isPlaying: false }));
       updateMediaSession(state.currentStation, false);
@@ -599,7 +491,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         startSilentLoop();
         startHeartbeat();
         requestWakeLock();
-        startNativeForegroundService(state.currentStation!, false);
+        notifyNativePlaybackState(state.currentStation!, true);
         updateMediaSession(state.currentStation!, true);
         notifyNativePlaybackState(state.currentStation!, true);
       }).catch(() => {
