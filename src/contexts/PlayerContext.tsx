@@ -211,35 +211,36 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
   }, []);
 
-  // Register Media Session action handlers + Foreground Service button listener
+  // Shared play/pause handlers used by MediaSession + Foreground Service
+  const handlePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || !audio.src) return;
+    audio.play().catch(() => {});
+    startSilentLoop();
+    setState(s => {
+      if (s.currentStation) startNativeForegroundService(s.currentStation, false);
+      return { ...s, isPlaying: true };
+    });
+    requestWakeLock();
+    startHeartbeat();
+  }, [requestWakeLock, startHeartbeat]);
+
+  const handlePause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    stopSilentLoop();
+    setState(s => {
+      if (s.currentStation) updateNativeForegroundService(s.currentStation, true);
+      return { ...s, isPlaying: false };
+    });
+    releaseWakeLock();
+    stopHeartbeat();
+  }, [releaseWakeLock, stopHeartbeat]);
+
+  // Register Media Session action handlers
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
-
-    const handlePlay = () => {
-      const audio = audioRef.current;
-      if (!audio || !audio.src) return;
-      audio.play().catch(() => {});
-      startSilentLoop();
-      setState(s => {
-        if (s.currentStation) startNativeForegroundService(s.currentStation, false);
-        return { ...s, isPlaying: true };
-      });
-      requestWakeLock();
-      startHeartbeat();
-    };
-
-    const handlePause = () => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      audio.pause();
-      stopSilentLoop();
-      setState(s => {
-        if (s.currentStation) updateNativeForegroundService(s.currentStation, true);
-        return { ...s, isPlaying: false };
-      });
-      releaseWakeLock();
-      stopHeartbeat();
-    };
 
     const noop = () => {};
     navigator.mediaSession.setActionHandler('play', handlePlay);
@@ -248,27 +249,33 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     navigator.mediaSession.setActionHandler('seekbackward', noop);
     navigator.mediaSession.setActionHandler('seekforward', noop);
 
-    // Listen for notification button clicks (Android foreground service)
-    let buttonListenerRemove: (() => void) | null = null;
-    import('@capawesome-team/capacitor-android-foreground-service').then(({ ForegroundService }) => {
-      ForegroundService.addListener('buttonClicked', (event: any) => {
-        const btnId = event?.buttonId ?? event?.id;
-        if (btnId === 1) handlePlay();   // Play button
-        if (btnId === 2) handlePause();  // Pause button
-      }).then(listener => {
-        buttonListenerRemove = () => listener.remove();
-      });
-    }).catch(() => {});
-
     return () => {
       navigator.mediaSession.setActionHandler('play', null);
       navigator.mediaSession.setActionHandler('pause', null);
       navigator.mediaSession.setActionHandler('stop', null);
       navigator.mediaSession.setActionHandler('seekbackward', null);
       navigator.mediaSession.setActionHandler('seekforward', null);
+    };
+  }, [handlePlay, handlePause]);
+
+  // Dedicated listener for Android Foreground Service notification buttons (no mediaSession guard)
+  useEffect(() => {
+    let buttonListenerRemove: (() => void) | null = null;
+    import('@capawesome-team/capacitor-android-foreground-service').then(({ ForegroundService }) => {
+      ForegroundService.addListener('buttonClicked', (event: any) => {
+        const btnId = event?.buttonId ?? event?.id;
+        console.log("[RadioSphere] Notification button clicked, id:", btnId);
+        if (btnId === 1) handlePlay();
+        if (btnId === 2) handlePause();
+      }).then(listener => {
+        buttonListenerRemove = () => listener.remove();
+      });
+    }).catch(() => {});
+
+    return () => {
       if (buttonListenerRemove) buttonListenerRemove();
     };
-  }, [requestWakeLock, releaseWakeLock, startHeartbeat, stopHeartbeat]);
+  }, [handlePlay, handlePause]);
 
   // Request notification permission at startup
   useEffect(() => {
