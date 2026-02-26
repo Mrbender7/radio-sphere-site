@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { RadioStation } from "@/types/radio";
-import { Capacitor } from "@capacitor/core";
+
 
 function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: React.ElementType; title: string; badge?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -310,19 +310,22 @@ export function SettingsPage() {
               );
               const csv = [header, ...rows].join("\n");
 
-              if (Capacitor.isNativePlatform() && typeof navigator.share === "function") {
-                const file = new File([csv], "radiosphere_favorites.csv", { type: "text/csv" });
-                try {
-                  await navigator.share({ files: [file], title: "Radio Sphere Favorites" });
-                } catch { /* user cancelled */ }
-              } else {
+              // Try blob download first, fallback to data URI for Android WebView
+              try {
                 const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
                 a.download = "radiosphere_favorites.csv";
+                document.body.appendChild(a);
                 a.click();
-                URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              } catch {
+                // Fallback: open as data URI
+                const encoded = encodeURIComponent(csv);
+                const dataUri = `data:text/csv;charset=utf-8,${encoded}`;
+                window.open(dataUri, '_blank');
               }
               toast({ title: `✅ ${t("favorites.exported")}` });
             }}
