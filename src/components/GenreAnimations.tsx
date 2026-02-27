@@ -324,18 +324,26 @@ function BluesGuitar() {
   );
 }
 
-function Banjo() {
+function CowboyHat() {
   return (
     <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <circle cx="35" cy="50" r="20" stroke={W} strokeWidth="2.5" {...S} />
-      <circle cx="35" cy="50" r="8" stroke={W} strokeWidth="1.5" {...S} opacity="0.5" />
-      <line x1="55" y1="42" x2="75" y2="8" stroke={W} strokeWidth="3" {...S} />
-      <rect x="72" y="4" width="6" height="8" rx="1" stroke={W} strokeWidth="1.5" {...S} />
-      {[32, 35, 38].map((x, i) => (
-        <line key={i} x1={x} y1="30" x2={x + 12} y2="12" stroke={W} strokeWidth="1" {...S} opacity="0.6">
-          <animate attributeName="x1" values={`${x};${x + 1};${x - 1};${x}`} dur={`${0.25 + i * 0.08}s`} repeatCount="indefinite" />
-        </line>
-      ))}
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-3 40 40;3 40 40;-3 40 40" dur="3s" repeatCount="indefinite" />
+        {/* Bord large du chapeau */}
+        <ellipse cx="40" cy="52" rx="36" ry="8" stroke={W} strokeWidth="2.5" {...S} />
+        {/* Calotte avec creux au centre */}
+        <path d="M16,52 C16,42 22,28 30,30 Q35,18 40,16 Q45,18 50,30 C58,28 64,42 64,52" stroke={W} strokeWidth="2.5" {...S} />
+        {/* Creux central */}
+        <path d="M30,30 Q35,36 40,34 Q45,36 50,30" stroke={W} strokeWidth="1.5" {...S} opacity="0.5" />
+        {/* Bande décorative */}
+        <path d="M22,46 Q30,42 40,43 Q50,42 58,46" stroke={W} strokeWidth="1.5" {...S} opacity="0.6">
+          <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2s" repeatCount="indefinite" />
+        </path>
+        {/* Petite étoile sur la bande */}
+        <polygon points="40,42 41,44 43,44 41.5,45.5 42,47.5 40,46 38,47.5 38.5,45.5 37,44 39,44" fill={W} stroke="none" opacity="0.7">
+          <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite" />
+        </polygon>
+      </g>
     </svg>
   );
 }
@@ -479,7 +487,7 @@ const GENRE_MAP: Record<string, () => JSX.Element> = {
   blues: BluesGuitar,
   chillout: SineWave,
   classical: GrandPiano,
-  country: Banjo,
+  country: CowboyHat,
   electronic: ElectricCircuit,
   funk: FunkBass,
   hiphop: Microphone,
