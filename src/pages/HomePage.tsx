@@ -121,7 +121,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
         <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.exploreByGenre")}</h2>
         <div className="grid grid-cols-2 gap-3">
           {GENRES.map(genre => (
-            <GenreCard key={genre} genre={genre} onClick={() => onGenreClick(genre)} />
+            <GenreCard key={genre} genre={genre} onClick={() => onGenreClick(genre)} t={t} />
           ))}
         </div>
       </section>
@@ -167,14 +167,14 @@ const GENRE_COLORS: Record<string, string> = {
   world: "from-teal-700 to-emerald-400",
 };
 
-function GenreCard({ genre, onClick }: { genre: string; onClick: () => void }) {
+function GenreCard({ genre, onClick, t }: { genre: string; onClick: () => void; t: (key: string) => string }) {
   return (
     <div
       className={`rounded-xl p-4 h-20 flex items-end bg-gradient-to-br ${GENRE_COLORS[genre] || "from-gray-700 to-gray-500"} cursor-pointer active:scale-95 transition-all shadow-lg border-t border-white/10 relative overflow-hidden`}
       onClick={onClick}
     >
       <GenreAnimation genre={genre} />
-      <span className="text-sm font-heading font-bold text-white capitalize drop-shadow-md relative z-10">{genre}</span>
+      <span className="text-sm font-heading font-bold text-white capitalize drop-shadow-md relative z-10">{t("genre." + genre)}</span>
     </div>
   );
 }
