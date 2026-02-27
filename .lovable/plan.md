@@ -1,65 +1,59 @@
 
 
-# Animations SVG neon par genre
+# Plan : Genres manquants + Tri par pays des favoris + Note Collections
 
-## Objectif
-Remplacer les icones Iconify statiques des cartes de genre (HomePage) par des animations SVG inline "lignes de neon" utilisant le degradé bleu electrique (#00d2ff) vers violet (#9d50bb). Chaque genre aura une animation unique positionnée en haut a droite de la carte, integree dans le fond.
+## 1. Ajouter les 10 animations SVG manquantes
 
-## Architecture
+Ajouter dans `src/components/GenreAnimations.tsx` les 10 composants SVG suivants, en blanc avec le meme style (drop-shadow blanc, stroke round, animations SVG natives) :
 
-### 1. Nouveau composant : `src/components/GenreAnimations.tsx`
-Un fichier unique contenant une fonction `GenreAnimation({ genre }: { genre: string })` qui retourne le SVG animé correspondant au genre. Chaque SVG :
-- Dimensions : ~80x80, positionné en `absolute top-1 right-1`
-- Style : `stroke` uniquement (pas de fill), avec `linearGradient` #00d2ff -> #9d50bb
-- Opacité globale ~0.35-0.5 pour s'integrer dans le fond sans distraire
-- Animations CSS via `<animate>` / `<animateTransform>` SVG natifs (leger, pas de JS)
-
-### 2. Animations par genre (24 genres couverts)
-
-| Genre | Animation SVG |
-|-------|--------------|
-| 60s | Fleur peace & love dont les petales pulsent |
-| 70s | Disque vinyle qui tourne lentement |
-| 80s | Lignes neon zigzag qui scintillent |
-| 90s | Equalizer (barres qui montent/descendent) |
-| ambient | Cercles concentriques qui pulsent doucement |
+| Genre | Animation |
+|-------|-----------|
+| 60s | Fleur peace & love avec petales qui pulsent |
 | blues | Guitare acoustique avec cordes qui vibrent |
-| chillout | Vague sinusoidale fluide |
-| classical | Cle de sol avec note qui pulse |
-| country | Banjo/guitare avec cordes vibrantes |
-| electronic | Circuit/pulsation electrique |
-| funk | Ligne de basse ondulante |
-| hiphop | Micro avec ondes sonores |
-| jazz | Saxophone avec notes flottantes |
+| country | Banjo avec cordes vibrantes |
+| funk | Ligne de basse ondulante (waveform funky) |
 | latin | Maracas avec mouvement de secousse |
 | metal | Eclair/foudre pulsant |
-| news | Ondes radio classiques |
-| pop | Etoile dont les branches scintillent |
-| r&b | Coeur avec pulsation rythmique |
-| reggae | Onde sonore relaxante |
-| rock | Guitare electrique avec eclairs |
-| soul | Flamme qui ondule |
-| techno | Forme d'onde geometrique |
-| trance | Spirale hypnotique |
+| reggae | Onde sonore relaxante (vagues lentes) |
+| techno | Forme d'onde geometrique (carree/repetitive) |
+| trance | Spirale hypnotique qui tourne |
 | world | Globe avec lignes meridiennes |
 
-### 3. Modification de `GenreCard` dans `HomePage.tsx`
-- Retirer l'icone `<Icon>` d'Iconify
-- Importer et placer `<GenreAnimation genre={genre} />` en position absolue top-right
-- Garder le meme layout (texte en bas a gauche, animation en haut a droite integree dans le fond)
+Ajouter ces 10 entrees dans le `GENRE_MAP`.
 
-### 4. Modification de `SearchPage.tsx` (optionnel, memes genres)
-- La SearchPage utilise des Badges pour les genres, pas de cartes visuelles -- pas de modification necessaire ici.
+Mettre a jour la liste `GENRES` dans `HomePage.tsx` pour inclure les 10 nouveaux genres : `["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"]`.
 
-## Details techniques
+Ajouter egalement les couleurs de fond correspondantes dans `GENRE_COLORS`.
 
-- Toutes les animations utilisent `<animate>`, `<animateTransform>` SVG natifs (zero JS, zero librairie)
-- Un seul `<linearGradient>` defini par SVG, reutilise par les strokes
-- `stroke-linecap="round"` et `stroke-width` entre 1.5 et 2.5 pour l'effet neon
-- `filter: drop-shadow(0 0 3px #00d2ff)` en CSS pour l'effet lumineux neon
-- Fichier unique ~400-500 lignes avec un switch/map pour chaque genre
+## 2. Tri par pays dans les favoris (LibraryPage)
+
+Modifier `src/pages/LibraryPage.tsx` pour ajouter un selecteur de tri :
+- **A-Z** (par defaut, tri actuel par nom)
+- **Par pays** (regroupe les stations par `country`, avec un sous-titre separateur pour chaque pays, tries alphabetiquement)
+
+Implementation :
+- Ajouter un state `sortMode: "name" | "country"` 
+- Deux boutons toggle sous le titre "Favoris" (style identique aux boutons de tri de SearchPage : pills arrondies)
+- En mode "country" : grouper les favoris par `station.country`, trier les groupes alphabetiquement, afficher un separateur texte pour chaque pays
+- Ajouter les traductions FR/EN dans `translations.ts` : `"favorites.sortName"`, `"favorites.sortCountry"`
+
+## 3. Note future : Collections (Premium Roadmap)
+
+Ajouter dans `docs/PREMIUM_ROADMAP.md` une nouvelle section dans les fonctionnalites premium futures :
+
+```
+### 10. Collections personnalisees
+- Creer des collections thematiques dans les favoris (ex: "Chill", "Workout", "Jazz du soir")
+- Glisser-deposer des stations entre collections
+- Icone et couleur personnalisables par collection
+- **Statut** : A venir (Premium)
+```
 
 ## Fichiers modifies
-1. **Creer** `src/components/GenreAnimations.tsx` -- toutes les animations SVG
-2. **Modifier** `src/pages/HomePage.tsx` -- remplacer Icon par GenreAnimation dans GenreCard
+
+1. `src/components/GenreAnimations.tsx` -- ajouter 10 animations SVG + entrees GENRE_MAP
+2. `src/pages/HomePage.tsx` -- etendre GENRES et GENRE_COLORS avec les 10 nouveaux genres
+3. `src/pages/LibraryPage.tsx` -- ajouter selecteur tri A-Z / par pays avec regroupement
+4. `src/i18n/translations.ts` -- ajouter traductions pour tri favoris
+5. `docs/PREMIUM_ROADMAP.md` -- ajouter note Collections
 
