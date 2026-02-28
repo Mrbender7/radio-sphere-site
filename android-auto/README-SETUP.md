@@ -18,6 +18,10 @@ dependencies {
 
     // Android Media Compat (MediaBrowserService, MediaSession)
     implementation 'androidx.media:media:1.7.0'
+
+    // Chromecast / Google Cast
+    implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
+    implementation 'androidx.mediarouter:mediarouter:1.7.0'
 }
 ```
 
@@ -36,6 +40,7 @@ android-auto/res/xml/automotive_app_desc.xml  →  android/app/src/main/res/xml/
 Ouvrez `android/app/src/main/AndroidManifest.xml` et ajoutez à l'intérieur de la balise `<application>` les éléments décrits dans `AndroidManifest-snippet.xml` :
 
 ```xml
+<!-- Android Auto -->
 <meta-data
     android:name="com.google.android.gms.car.application"
     android:resource="@xml/automotive_app_desc" />
@@ -47,6 +52,11 @@ Ouvrez `android/app/src/main/AndroidManifest.xml` et ajoutez à l'intérieur de 
         <action android:name="android.media.browse.MediaBrowserService" />
     </intent-filter>
 </service>
+
+<!-- Chromecast — OBLIGATOIRE pour Cast SDK -->
+<meta-data
+    android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+    android:value="com.radiosphere.app.CastOptionsProvider" />
 ```
 
 ## Étape 4 : Enregistrer le plugin Capacitor
@@ -55,10 +65,12 @@ Dans `android/app/src/main/java/app/lovable/radiosphere/MainActivity.kt`, ajoute
 
 ```kotlin
 import app.lovable.radiosphere.RadioAutoPlugin
+import com.radiosphere.app.CastPlugin
 
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         registerPlugin(RadioAutoPlugin::class.java)
+        registerPlugin(CastPlugin::class.java)
         super.onCreate(savedInstanceState)
     }
 }

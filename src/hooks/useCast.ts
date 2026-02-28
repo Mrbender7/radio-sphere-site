@@ -7,6 +7,7 @@ const CAST_APP_ID = "65257ADB";
 declare global {
   interface Window {
     __onGCastApiAvailable?: (isAvailable: boolean) => void;
+    __castSdkReady?: boolean;
     cast?: any;
     chrome?: any;
   }
@@ -30,7 +31,13 @@ interface CastPluginInterface {
   addListener(event: string, callback: (data: any) => void): Promise<{ remove: () => void }>;
 }
 
-const CastPlugin = registerPlugin<CastPluginInterface>("CastPlugin");
+let CastPluginInstance: CastPluginInterface | null = null;
+function getCastPlugin(): CastPluginInterface {
+  if (!CastPluginInstance) {
+    CastPluginInstance = registerPlugin<CastPluginInterface>("CastPlugin");
+  }
+  return CastPluginInstance;
+}
 
 // ─── Platform detection ─────────────────────────────────────────────
 function isCapacitorNative(): boolean {
@@ -41,146 +48,168 @@ function isCapacitorNative(): boolean {
   }
 }
 
-/** Detect if the browser supports Cast (Chrome/Edge Chromium) */
-function isChromiumBrowser(): boolean {
-  const ua = navigator.userAgent;
-  return /Chrome\//.test(ua) && !/Edg\//.test(ua) || /Edg\//.test(ua);
-}
-
 export type CastUiMode = "launcher" | "native" | "fallback";
+export type CastInitState = "idle" | "initializing" | "ready" | "unavailable";
 
 export function useCast() {
   const [isCastAvailable, setIsCastAvailable] = useState(false);
   const [isCasting, setIsCasting] = useState(false);
   const [castDeviceName, setCastDeviceName] = useState<string | null>(null);
   const [castUiMode, setCastUiMode] = useState<CastUiMode>("fallback");
-  const sdkLoadedRef = useRef(false);
+  const [castInitState, setCastInitState] = useState<CastInitState>("idle");
+  const initDoneRef = useRef(false);
   const remotePlayerRef = useRef<any>(null);
   const remotePlayerControllerRef = useRef<any>(null);
-  const isNative = isCapacitorNative();
+  const isNative = useRef(isCapacitorNative()).current;
 
   useEffect(() => {
-    if (sdkLoadedRef.current) return;
-    sdkLoadedRef.current = true;
+    if (initDoneRef.current) return;
+    initDoneRef.current = true;
+    setCastInitState("initializing");
 
     if (isNative) {
-      // ─── NATIVE PATH: Use Capacitor CastPlugin ───────────────
-      console.log("[RadioSphere][Cast] Native platform detected, initializing CastPlugin...");
+      // ─── NATIVE PATH ─────────────────────────────────────────
+      console.log("[RadioSphere][Cast] Native platform, initializing CastPlugin...");
       setCastUiMode("native");
 
-      CastPlugin.initialize()
+      const plugin = getCastPlugin();
+      plugin.initialize()
         .then((result) => {
           console.log("[RadioSphere][Cast] CastPlugin initialized:", result);
           setIsCastAvailable(result.available);
+          setCastInitState("ready");
         })
         .catch((err) => {
           console.warn("[RadioSphere][Cast] CastPlugin init error:", err);
+          setCastInitState("unavailable");
         });
 
-      CastPlugin.addListener("castDevicesAvailable", (data: any) => {
+      plugin.addListener("castDevicesAvailable", (data: any) => {
         console.log("[RadioSphere][Cast] Devices available:", data.available);
         setIsCastAvailable(data.available);
       });
 
-      CastPlugin.addListener("castStateChanged", (data: any) => {
+      plugin.addListener("castStateChanged", (data: any) => {
         console.log("[RadioSphere][Cast] Session state:", data);
         setIsCasting(data.connected);
         setCastDeviceName(data.connected ? data.deviceName : null);
       });
-    } else {
-      // ─── WEB PATH ────────────────────────────────────────────
-      if (!isChromiumBrowser()) {
-        console.log("[RadioSphere][Cast] Non-Chromium browser — fallback mode");
+
+      return;
+    }
+
+    // ─── WEB PATH ────────────────────────────────────────────────
+    console.log("[RadioSphere][Cast] Web platform, initializing Cast SDK...");
+
+    // Idempotent init — called exactly once when framework is ready
+    let webInitDone = false;
+    const initWebCastContext = () => {
+      if (webInitDone) return;
+      const cast = window.cast;
+      if (!cast?.framework) {
+        console.warn("[RadioSphere][Cast] cast.framework not available at init time");
         setCastUiMode("fallback");
+        setCastInitState("unavailable");
         return;
       }
 
-      // Chromium detected — try launcher mode
-      setCastUiMode("launcher");
-      console.log("[RadioSphere][Cast] Chromium browser, setting up Cast SDK...");
+      webInitDone = true;
+      console.log("[RadioSphere][Cast] Initializing CastContext with App ID:", CAST_APP_ID);
 
-      const initWebCastContext = () => {
-        try {
-          const cast = window.cast;
-          if (!cast?.framework) {
-            console.warn("[RadioSphere][Cast] cast.framework not available");
-            return;
+      try {
+        cast.framework.CastContext.getInstance().setOptions({
+          receiverApplicationId: CAST_APP_ID,
+          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+        });
+
+        const ctx = cast.framework.CastContext.getInstance();
+
+        ctx.addEventListener(
+          cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+          (event: any) => {
+            const session = ctx.getCurrentSession();
+            if (
+              event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
+              event.sessionState === cast.framework.SessionState.SESSION_RESUMED
+            ) {
+              setIsCasting(true);
+              setCastDeviceName(session?.getCastDevice()?.friendlyName || null);
+              remotePlayerRef.current = new cast.framework.RemotePlayer();
+              remotePlayerControllerRef.current = new cast.framework.RemotePlayerController(remotePlayerRef.current);
+            } else if (
+              event.sessionState === cast.framework.SessionState.SESSION_ENDED
+            ) {
+              setIsCasting(false);
+              setCastDeviceName(null);
+              remotePlayerRef.current = null;
+              remotePlayerControllerRef.current = null;
+            }
           }
+        );
 
-          console.log("[RadioSphere][Cast] Initializing CastContext with App ID:", CAST_APP_ID);
-          cast.framework.CastContext.getInstance().setOptions({
-            receiverApplicationId: CAST_APP_ID,
-            autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
-          });
+        ctx.addEventListener(
+          cast.framework.CastContextEventType.CAST_STATE_CHANGED,
+          (event: any) => {
+            const available = event.castState !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
+            console.log("[RadioSphere][Cast] Cast state:", event.castState, "available:", available);
+            setIsCastAvailable(available);
+          }
+        );
 
-          const ctx = cast.framework.CastContext.getInstance();
-
-          ctx.addEventListener(
-            cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-            (event: any) => {
-              const session = ctx.getCurrentSession();
-              if (
-                event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
-                event.sessionState === cast.framework.SessionState.SESSION_RESUMED
-              ) {
-                setIsCasting(true);
-                setCastDeviceName(session?.getCastDevice()?.friendlyName || null);
-                remotePlayerRef.current = new cast.framework.RemotePlayer();
-                remotePlayerControllerRef.current = new cast.framework.RemotePlayerController(remotePlayerRef.current);
-              } else if (
-                event.sessionState === cast.framework.SessionState.SESSION_ENDED
-              ) {
-                setIsCasting(false);
-                setCastDeviceName(null);
-                remotePlayerRef.current = null;
-                remotePlayerControllerRef.current = null;
-              }
-            }
-          );
-
-          ctx.addEventListener(
-            cast.framework.CastContextEventType.CAST_STATE_CHANGED,
-            (event: any) => {
-              const available = event.castState !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
-              console.log("[RadioSphere][Cast] Cast state changed:", event.castState, "available:", available);
-              setIsCastAvailable(available);
-            }
-          );
-
-          setIsCastAvailable(true);
-          console.log("[RadioSphere][Cast] CastContext initialized successfully");
-        } catch (e) {
-          console.warn("[RadioSphere][Cast] SDK init error:", e);
-        }
-      };
-
-      // Case 1: SDK already loaded (race condition fix)
-      if (window.cast?.framework) {
-        console.log("[RadioSphere][Cast] SDK already available, initializing immediately");
-        initWebCastContext();
+        setCastUiMode("launcher");
+        setCastInitState("ready");
+        setIsCastAvailable(true);
+        console.log("[RadioSphere][Cast] CastContext initialized ✓");
+      } catch (e) {
+        console.warn("[RadioSphere][Cast] SDK init error:", e);
+        setCastUiMode("fallback");
+        setCastInitState("unavailable");
       }
+    };
 
-      // Case 2: Normal callback path
-      window.__onGCastApiAvailable = (isAvailable: boolean) => {
-        console.log("[RadioSphere][Cast] __onGCastApiAvailable:", isAvailable);
-        if (!isAvailable) return;
-        initWebCastContext();
-      };
-
-      // Case 3: Safety timeout — if SDK never calls back after 8s, mark unavailable
-      const safetyTimeout = setTimeout(() => {
-        if (!window.cast?.framework) {
-          console.log("[RadioSphere][Cast] Safety timeout: SDK never loaded, staying in launcher mode with low opacity");
-        }
-      }, 8000);
-
-      return () => clearTimeout(safetyTimeout);
+    // Entry 1: SDK already loaded (race condition fix + bridge flag)
+    if (window.cast?.framework || window.__castSdkReady) {
+      console.log("[RadioSphere][Cast] SDK already available, init immediately");
+      initWebCastContext();
     }
+
+    // Entry 2: Normal callback
+    const prevCallback = window.__onGCastApiAvailable;
+    window.__onGCastApiAvailable = (isAvailable: boolean) => {
+      console.log("[RadioSphere][Cast] __onGCastApiAvailable:", isAvailable);
+      if (isAvailable) {
+        initWebCastContext();
+      } else {
+        setCastUiMode("fallback");
+        setCastInitState("unavailable");
+      }
+    };
+
+    // Entry 3: Listen for custom bridge event
+    const handleBridgeEvent = () => {
+      console.log("[RadioSphere][Cast] castSdkReady event received");
+      initWebCastContext();
+    };
+    window.addEventListener("castSdkReady", handleBridgeEvent);
+
+    // Entry 4: Safety timeout — if nothing fires after 10s, go fallback
+    const safetyTimeout = setTimeout(() => {
+      if (!webInitDone) {
+        console.log("[RadioSphere][Cast] Safety timeout: SDK never loaded → fallback");
+        setCastUiMode("fallback");
+        setCastInitState("unavailable");
+      }
+    }, 10000);
+
+    return () => {
+      clearTimeout(safetyTimeout);
+      window.removeEventListener("castSdkReady", handleBridgeEvent);
+    };
   }, [isNative]);
 
   const startCast = useCallback(() => {
     if (isNative) {
-      CastPlugin.requestSession().catch((e) =>
+      getCastPlugin().requestSession().catch((e) =>
         console.warn("[RadioSphere][Cast] requestSession error:", e)
       );
     } else {
@@ -194,7 +223,7 @@ export function useCast() {
 
   const stopCast = useCallback(() => {
     if (isNative) {
-      CastPlugin.endSession().catch((e) =>
+      getCastPlugin().endSession().catch((e) =>
         console.warn("[RadioSphere][Cast] endSession error:", e)
       );
     } else {
@@ -209,7 +238,7 @@ export function useCast() {
   const loadMedia = useCallback(
     (station: RadioStation) => {
       if (isNative) {
-        CastPlugin.loadMedia({
+        getCastPlugin().loadMedia({
           streamUrl: station.streamUrl,
           title: station.name,
           logo: station.logo || "",
@@ -254,7 +283,7 @@ export function useCast() {
 
   const toggleCastPlayPause = useCallback(() => {
     if (isNative) {
-      CastPlugin.togglePlayPause().catch((e) =>
+      getCastPlugin().togglePlayPause().catch((e) =>
         console.warn("[RadioSphere][Cast] togglePlayPause error:", e)
       );
     } else {
@@ -269,6 +298,7 @@ export function useCast() {
     isCasting,
     castDeviceName,
     castUiMode,
+    castInitState,
     startCast,
     stopCast,
     loadMedia,
