@@ -174,16 +174,15 @@ public class CastPlugin extends Plugin {
         try {
             getActivity().runOnUiThread(() -> {
                 try {
-                    if (castContext != null) {
-                        castContext.getSessionManager().startSession(castContext.getSessionManager().getCurrentCastSession() != null ?
-                            castContext.getSessionManager().getCurrentCastSession().getCastDevice() : null);
-                    }
-                    // Also try the route selector dialog approach
-                    if (mediaRouter != null) {
+                    if (mediaRouter != null && mediaRouteSelector != null) {
+                        // Use the official MediaRouteChooserDialog (best practice)
                         androidx.mediarouter.app.MediaRouteChooserDialog dialog =
                             new androidx.mediarouter.app.MediaRouteChooserDialog(getActivity());
                         dialog.setRouteSelector(mediaRouteSelector);
                         dialog.show();
+                    } else {
+                        call.reject("Cast not initialized");
+                        return;
                     }
                     call.resolve();
                 } catch (Exception e) {

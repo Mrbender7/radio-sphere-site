@@ -527,9 +527,17 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   }, []);
 
   // Auto-push media to Chromecast when session starts or station changes
+  const lastCastStationIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (isCasting && state.currentStation) {
-      castLoadMedia(state.currentStation);
+      // Guard: don't re-push the same station
+      if (lastCastStationIdRef.current !== state.currentStation.id) {
+        lastCastStationIdRef.current = state.currentStation.id;
+        castLoadMedia(state.currentStation);
+      }
+    }
+    if (!isCasting) {
+      lastCastStationIdRef.current = null;
     }
   }, [isCasting, state.currentStation, castLoadMedia]);
 
