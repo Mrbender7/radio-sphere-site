@@ -1,104 +1,100 @@
-# Plan d'implementation : Chromecast, correctifs MiniPlayer et Android Auto
 
-## 1. Corriger le MiniPlayer cache par la BottomNav
 
-**Probleme** : La `BottomNav` est en `fixed bottom-0`, mais le `MiniPlayer` est positionne en flux normal juste avant elle. Sur l'APK Android, le MiniPlayer est masque sous la barre de navigation fixe.
+# Diagnostic et corrections : Android Auto + Chromecast
 
-**Solution** : Rendre le MiniPlayer egalement `fixed`, positionne juste au-dessus de la BottomNav. Ajuster le padding du contenu en consequence.
+## Probleme 1 : Chromecast -- le bouton n'apparait jamais
 
-**Fichiers modifies** :
+### Cause racine identifiee
 
-- `src/components/MiniPlayer.tsx` : ajouter `fixed bottom-[env(safe-area-inset-bottom)] left-0 right-0 z-30` et un `bottom` calcule pour se placer au-dessus de la BottomNav (~56px)
-- `src/pages/Index.tsx` : augmenter le `pb-14` en `pb-28` quand un MiniPlayer est visible (via le contexte Player), pour laisser la place aux deux barres fixes
+Le **Google Cast Sender SDK** (`cast_sender.js`) fonctionne **uniquement dans le navigateur Google Chrome**. Il ne fonctionne PAS dans :
+- Les WebView Android (ce qu'utilise Capacitor pour l'APK)
+- Safari, Firefox, ou tout autre navigateur
 
----
+Quand l'app tourne dans l'APK Android via Capacitor, le SDK se charge mais `__onGCastApiAvailable` ne se declenche jamais car le WebView n'a pas d'integration Cast native. Le `isCastAvailable` reste donc toujours `false` et le bouton ne s'affiche jamais.
 
-## 2. Integration Google Cast (Chromecast)
+### Solution
 
-### 2a. Hook `src/hooks/useCast.ts`
+Pour que le Chromecast fonctionne dans l'APK Android, il faut utiliser un **plugin Capacitor natif** qui communique avec le SDK Cast Android natif (pas le SDK web).
 
-Nouveau fichier. Charge dynamiquement le SDK Cast Sender (`cast_sender.js?loadCastFramework=1`). Configure le `CastContext` avec l'Application ID `65257ADB`.
+Deux approches possibles :
 
-Expose :
+**Approche A -- Plugin Cast natif (recommandee)** : Creer un petit plugin Capacitor natif (`CastPlugin.java`) qui utilise le SDK Cast Android natif cote Java. Le code TypeScript (`useCast.ts`) appellerait ce plugin au lieu du SDK web quand on est sur Capacitor Android. Cela necessite d'ajouter la dependance `play-services-cast-framework` dans le Gradle.
 
-- `isCastAvailable` : true si un appareil Cast est detecte sur le reseau
-- `isCasting` : true si connecte
-- `castDeviceName` : nom de l'appareil
-- `startCast()` : ouvre le picker
-- `stopCast()` : deconnecte
-- `loadMedia(station)` : envoie le flux au Chromecast avec `contentId` (streamUrl), `metadata` (titre, favicon URL), et `customData` (tags pour le genre)
+**Approche B -- Mode hybride** : Garder le SDK web pour Chrome desktop (quand l'app est utilisee en PWA sur Chrome), et ajouter le plugin natif pour l'APK. Le hook `useCast.ts` detecterait automatiquement l'environnement et utiliserait le bon SDK.
 
-### 2b. Bouton Cast `src/components/CastButton.tsx`
+### Modifications prevues
 
-Nouveau composant. Icone Cast (lucide `Cast`). Rendu uniquement si `isCastAvailable === true`. Quand connecte, icone en couleur primaire. Clic : toggle connect/disconnect.
+#### Fichier : `android-auto/CastPlugin.java` (nouveau)
+- Plugin Capacitor natif utilisant `com.google.android.gms.cast.framework`
+- Methodes : `initialize()`, `requestSession()`, `endSession()`, `loadMedia()`, `togglePlayPause()`
+- Listener natif pour detecter les appareils Cast sur le reseau
+- Utilise l'App ID `65257ADB`
 
-### 2c. Integration dans le PlayerContext
+#### Fichier : `src/hooks/useCast.ts` (modifier)
+- Ajouter detection de plateforme : `Capacitor.isNativePlatform()`
+- Si natif Android : appeler `CastPlugin` (Capacitor) au lieu du SDK web
+- Si Chrome desktop : garder le SDK web actuel
+- Ajouter des `console.log` de debug pour tracer l'initialisation
 
-`**src/contexts/PlayerContext.tsx**` :
-
-- Importer et utiliser `useCast`
-- Quand `play(station)` est appele et que `isCasting` est true : appeler `loadMedia(station)` en plus de la lecture locale
-- Quand `togglePlay()` en mode cast : envoyer play/pause au Chromecast via le `RemotePlayer`
-- Exposer `isCasting` et `castDeviceName` dans le contexte
-
-### 2d. UI - HomePage et FullScreenPlayer
-
-`**src/pages/HomePage.tsx**` : Ajouter `CastButton` dans le header, a droite du titre "Radio Sphere"
-
-`**src/components/FullScreenPlayer.tsx**` : Ajouter `CastButton` dans le header, entre le bouton "www" et le bouton partage. Afficher un badge "Casting vers [appareil]" quand actif.
-
-### 2e. MiniPlayer
-
-`**src/components/MiniPlayer.tsx**` : Quand `isCasting`, afficher une petite icone Cast + nom de l'appareil
-
-### 2f. Traductions
-
-`**src/i18n/translations.ts**` : Ajouter les cles `cast.castingTo`, `cast.controlFromPhone`, `cast.connected`, `cast.disconnected` dans les 5 langues.
-
-### 2g. Donnees envoyees au receiver
-
-Le sender envoie au receiver via les metadonnees Cast :
-
-- `title` : nom de la station
-- `images[0].url` : URL du favicon de la station (ou placeholder)
-- `customData.tags` : les tags de la station (pour que le receiver detecte le genre et affiche l'animation correspondante)
+#### Fichier : `radiosphere_v2_3_0.ps1` (modifier)
+- Ajouter la dependance Gradle : `implementation 'com.google.android.gms:play-services-cast-framework:22.0.0'`
+- Generer `CastPlugin.java` dans le dossier du package
+- Generer `CastOptionsProvider.java` (requis par le framework Cast Android)
+- Ajouter `<meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" ...>` dans le Manifest
+- Enregistrer le plugin dans `MainActivity`
 
 ---
 
-## 3. Receiver Cast (`public/cast-receiver.html`)
+## Probleme 2 : Android Auto -- certaines stations ne demarrent pas
 
-Reecriture complete du fichier. Page HTML standalone (pas React) qui tourne sur le Chromecast. Utilise le Cast Web Receiver SDK v3.
+### Causes probables identifiees
 
-**Design** :
+1. **Streams HTTP bloques** : Malgre `cleartextTrafficPermitted="true"` dans `network_security_config.xml`, certaines versions d'Android ou configurations vehicule peuvent bloquer les flux HTTP. Le `playStation()` utilise `MediaItem.fromUri()` qui devrait gerer les redirections, mais certains streams utilisent des protocoles non standards (HLS `.m3u8`, playlists PLS/M3U).
 
-- Fond sombre (#0a0a1a) avec degradee bleu/violet aux couleurs du theme Radio Sphere
-- **En haut** : Logo anime RadioSphere (SVG inspire de `RadioSphereLogo.tsx`) + texte "Radio Sphere"
-- **Au centre** : Grande animation SVG (~250px) correspondant au genre detecte dans les tags. Les 24 genres sont reproduits en SVG anime standalone (adaptes de `GenreAnimations.tsx`). Si aucun genre reconnu : animation ondes radio generique.
-- **Sous l'animation** : Nom de la station en grand, gradient bleu-violet. Tags en dessous (pas de pays).
-- **En bas** : Mini-lecteur avec petite icone station (favicon), nom, barres equaliseur animees
-- **Tout en bas** : Mention discrete "Controlez la lecture depuis votre telephone" en 5 langues (detectee via `customData.lang` ou defaut FR)
+2. **Formats de stream non supportes** : ExoPlayer supporte MP3/AAC/OGG natifs, mais certaines stations utilisent des playlists (`.m3u`, `.pls`) qui contiennent l'URL reelle du stream. ExoPlayer ne parse pas ces playlists automatiquement.
 
-Polices chargees via Google Fonts : Inter + Poppins.
+3. **Redirections en chaine** : Certaines stations passent par plusieurs redirections HTTP avant d'atteindre le flux reel. `HttpURLConnection` (utilise dans `httpGet()`) ne suit pas toujours toutes les redirections cross-protocol (HTTP vers HTTPS ou inversement).
 
----
+### Modifications prevues
 
-## 4. Audit Android Auto : stations qui "tournent dans le vide"
-
-**Probleme identifie** : Le `RadioBrowserService.java` utilise ExoPlayer pour la lecture native independante du WebView. Quand on selectionne une station dans Android Auto, `playStation()` est appele, qui configure ExoPlayer avec l'URL du stream. Cependant, le probleme potentiel est que certains streams radio utilisent des redirections HTTP ou des URLs `http://` (non HTTPS) qui peuvent etre bloquees par la politique de securite reseau d'Android.
-
-**Actions correctives prevues** :
-
-- Verifier que `playStation()` dans `RadioBrowserService.java` gere correctement les redirections HTTP et le mixed content (http/https). Ajouter `player.setMediaItem(MediaItem.fromUri(...))` avec les headers adequats si necessaire.
-- S'assurer que le `network_security_config.xml` autorise le cleartext traffic pour les streams radio (beaucoup de stations n'ont pas de HTTPS)
-- Ajouter un fichier `android-auto/network_security_config.xml` avec `cleartextTrafficPermitted="true"` et documenter son ajout dans le `AndroidManifest.xml`
-- Ajouter un log dans `playerListener.onPlaybackStateChanged` pour diagnostiquer les cas ou le stream reste en buffering indefiniment
+#### Fichier : `android-auto/RadioBrowserService.java` (modifier)
+- Ajouter une methode `resolveStreamUrl()` qui suit manuellement les redirections HTTP/HTTPS (jusqu'a 5 niveaux) pour obtenir l'URL finale du stream
+- Detecter les URLs `.m3u` et `.pls` : les telecharger et extraire l'URL du stream reel
+- Dans `playStation()` : appeler `resolveStreamUrl()` avant de passer l'URL a ExoPlayer
+- Ajouter un fallback : si le stream echoue apres 10s de buffering, tenter avec `http://` au lieu de `https://` (ou inversement)
+- Ajouter des logs plus detailles pour chaque etape
 
 ---
 
-EDIT : auditer le fichier ps1 pour vérifier que tout est en place et en ordre pour android auto et chrome cast + fonctionnalités de base.  
+## Probleme 3 : Stations sans image sur Android Auto
 
-## ✅ IMPLEMENTÉ
+### Cause
+La constante `DEFAULT_ARTWORK` pointe vers `https://placehold.co/512x512/1a1a2e/e94560?text=RadioSphere`, un service externe qui peut etre lent ou inaccessible depuis le vehicule.
 
-Tous les fichiers ci-dessus ont été créés/modifiés. Cast SDK configuré avec App ID `65257ADB`.
-MiniPlayer fixé au-dessus de la BottomNav. Android Auto : logs de debug ajoutés + network_security_config.xml créé.
-Cast receiver HTML complet avec les 24 animations SVG de genres.
+### Solution
+Utiliser une image locale embarquee dans l'APK comme placeholder. Cela garantit un affichage instantane et fiable.
+
+#### Fichier : `android-auto/RadioBrowserService.java` (modifier)
+- Remplacer `DEFAULT_ARTWORK` (URL externe) par une reference a une ressource locale : `android.resource://com.radiosphere.app/mipmap/ic_launcher`
+- Dans `stationToMediaItem()` et `playStation()` : utiliser `Uri.parse("android.resource://" + getPackageName() + "/mipmap/ic_launcher")` quand le logo est vide
+- Cela utilise l'icone de l'app comme placeholder -- toujours disponible, haute resolution
+
+---
+
+## Probleme 4 : Detection d'Android Auto necessite un redemarrage
+
+### Explication
+C'est un comportement **normal** d'Android Auto. Le `MediaBrowserServiceCompat` est decouvert par le systeme au moment de l'installation de l'APK ou au redemarrage d'Android Auto. Ce n'est pas un bug a corriger, mais on peut documenter ce comportement.
+
+---
+
+## Resume des fichiers
+
+| Fichier | Action |
+|---|---|
+| `android-auto/CastPlugin.java` | Creer (plugin Capacitor natif pour Cast) |
+| `android-auto/CastOptionsProvider.java` | Creer (requis par Cast framework Android) |
+| `src/hooks/useCast.ts` | Modifier (detection plateforme, bridge natif) |
+| `android-auto/RadioBrowserService.java` | Modifier (resolution URLs, playlists, placeholder local) |
+| `radiosphere_v2_3_0.ps1` | Modifier (Gradle cast-framework, CastPlugin, Manifest) |
+
