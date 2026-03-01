@@ -77,29 +77,49 @@ export function useCast() {
       setCastUiMode("native");
 
       const plugin = getCastPlugin();
-      plugin.initialize()
-        .then((result) => {
+
+      const initNativeCast = async () => {
+        try {
+          const permStatus = await plugin.checkDiscoveryPermissions();
+          console.log("[RadioSphere][Cast] checkDiscoveryPermissions:", JSON.stringify(permStatus));
+
+          let granted = permStatus.granted;
+          if (!granted) {
+            console.log("[RadioSphere][Cast] Permissions manquantes, demande en cours...");
+            const permResult = await plugin.requestDiscoveryPermissions();
+            console.log("[RadioSphere][Cast] requestDiscoveryPermissions:", JSON.stringify(permResult));
+            granted = permResult.granted;
+          }
+
+          setPermissionsGranted(granted);
+          if (!granted) {
+            console.warn("[RadioSphere][Cast] Permissions Cast refusées: découverte indisponible");
+            setIsCastAvailable(false);
+            setCastInitState("unavailable");
+            return;
+          }
+
+          const result = await plugin.initialize();
           console.log("[RadioSphere][Cast] CastPlugin initialized:", JSON.stringify(result));
           console.log("[RadioSphere][Cast] initialized=" + result.initialized + ", available=" + result.available + ", appId=" + (result.appId || "N/A"));
-          setIsCastAvailable(result.available);
-          setPermissionsGranted(result.permissionsGranted ?? false);
-          setCastInitState("ready");
 
-          // If permissions not granted, request them proactively
-          if (!result.permissionsGranted) {
-            console.log("[RadioSphere][Cast] Permissions not granted, requesting...");
-            plugin.requestDiscoveryPermissions()
-              .then((permResult) => {
-                console.log("[RadioSphere][Cast] Permission request result:", JSON.stringify(permResult));
-                setPermissionsGranted(permResult.granted);
-              })
-              .catch((e) => console.warn("[RadioSphere][Cast] Permission request error:", e));
+          const initialized = !!result.initialized;
+          const available = !!result.available;
+          setIsCastAvailable(available);
+          setPermissionsGranted(result.permissionsGranted ?? granted);
+          setCastInitState(initialized ? "ready" : "unavailable");
+
+          if (!initialized) {
+            console.warn("[RadioSphere][Cast] initialize() n'a pas retourné initialized=true");
           }
-        })
-        .catch((err) => {
+        } catch (err) {
           console.warn("[RadioSphere][Cast] CastPlugin init error:", err);
           setCastInitState("unavailable");
-        });
+          setIsCastAvailable(false);
+        }
+      };
+
+      void initNativeCast();
 
       plugin.addListener("castDevicesAvailable", (data: any) => {
         console.log("[RadioSphere][Cast] castDevicesAvailable event:", JSON.stringify(data));

@@ -579,7 +579,7 @@ import com.google.android.gms.cast.framework.media.RemoteMediaClient;
 import com.google.android.gms.common.images.WebImage;
 import android.net.Uri;
 
-@CapacitorPlugin(name = "CastPlugin", permissions = { @Permission(alias = "network", strings = { "android.permission.ACCESS_FINE_LOCATION", "android.permission.NEARBY_WIFI_DEVICES" }) })
+@CapacitorPlugin(name = "CastPlugin", permissions = { @Permission(alias = "network", strings = { "android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION", "android.permission.NEARBY_WIFI_DEVICES" }) })
 public class CastPlugin extends Plugin {
     private static final String TAG = "CastPlugin";
     private static final String CAST_APP_ID = "65257ADB";
@@ -620,13 +620,13 @@ public class CastPlugin extends Plugin {
         if (has != devicesAvailable) { devicesAvailable = has; JSObject d = new JSObject(); d.put("available", has); notifyListeners("castDevicesAvailable", d); }
     }
     private boolean hasPerms() { Context c = getContext(); if (Build.VERSION.SDK_INT >= 33) return ContextCompat.checkSelfPermission(c, "android.permission.NEARBY_WIFI_DEVICES") == PackageManager.PERMISSION_GRANTED;
-        return ContextCompat.checkSelfPermission(c, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED; }
+        return ContextCompat.checkSelfPermission(c, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(c, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED; }
     @PluginMethod public void checkDiscoveryPermissions(PluginCall call) { JSObject r = new JSObject(); r.put("granted", hasPerms()); call.resolve(r); }
     @PluginMethod public void requestDiscoveryPermissions(PluginCall call) { if (hasPerms()) { JSObject r = new JSObject(); r.put("granted", true); call.resolve(r); return; } requestPermissionForAlias("network", call, "networkPermissionCallback"); }
     @PermissionCallback private void networkPermissionCallback(PluginCall call) { boolean g = hasPerms(); JSObject r = new JSObject(); r.put("granted", g); call.resolve(r); if (g && savedInitCall != null) { PluginCall s = savedInitCall; savedInitCall = null; doInitialize(s); } }
     @PluginMethod public void initialize(PluginCall call) { if (!hasPerms()) { savedInitCall = call; requestPermissionForAlias("network", call, "networkPermissionCallback"); return; } doInitialize(call); }
     private void doInitialize(PluginCall call) { try { getActivity().runOnUiThread(() -> { try { castContext = CastContext.getSharedInstance(getContext()); castContext.getSessionManager().addSessionManagerListener(sessionListener, CastSession.class);
-        mediaRouteSelector = new MediaRouteSelector.Builder().addControlCategory(CastMediaControlIntent.categoryForCast(CAST_APP_ID)).build();
+        mediaRouteSelector = new MediaRouteSelector.Builder().addControlCategory(CastMediaControlIntent.categoryForCast(CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID)).build();
         mediaRouter = MediaRouter.getInstance(getContext()); mediaRouter.addCallback(mediaRouteSelector, mediaRouterCallback, MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY | MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
         updateDeviceAvailability(mediaRouter); JSObject res = new JSObject(); res.put("initialized", true); res.put("available", devicesAvailable); call.resolve(res);
         } catch (Exception e) { call.reject(e.getMessage()); } }); } catch (Exception e) { call.reject(e.getMessage()); } }

@@ -44,6 +44,7 @@ import android.net.Uri;
             alias = "network",
             strings = {
                 "android.permission.ACCESS_FINE_LOCATION",
+                "android.permission.ACCESS_COARSE_LOCATION",
                 "android.permission.NEARBY_WIFI_DEVICES"
             }
         )
@@ -149,7 +150,9 @@ public class CastPlugin extends Plugin {
         if (Build.VERSION.SDK_INT >= 33) {
             return ContextCompat.checkSelfPermission(ctx, "android.permission.NEARBY_WIFI_DEVICES") == PackageManager.PERMISSION_GRANTED;
         }
-        return ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean fineGranted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return fineGranted || coarseGranted;
     }
 
     @PluginMethod
