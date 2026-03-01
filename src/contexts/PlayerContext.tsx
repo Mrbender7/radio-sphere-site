@@ -486,9 +486,21 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     const audio = audioRef.current;
     if (!state.currentStation) return;
 
-    // Also toggle on Chromecast if casting
     if (isCasting) {
+      // When casting: only control Chromecast, don't touch local audio
       toggleCastPlayPause();
+      if (state.isPlaying) {
+        notifyNativePlaybackState(state.currentStation, false);
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+        setState(s => ({ ...s, isPlaying: false }));
+        updateMediaSession(state.currentStation, false);
+      } else {
+        notifyNativePlaybackState(state.currentStation, true);
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+        setState(s => ({ ...s, isPlaying: true }));
+        updateMediaSession(state.currentStation, true);
+      }
+      return;
     }
 
     if (state.isPlaying) {
@@ -501,9 +513,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       setState(s => ({ ...s, isPlaying: false }));
       updateMediaSession(state.currentStation, false);
-      notifyNativePlaybackState(state.currentStation, false);
     } else {
-      // Try simple play first; if it fails, do full reload
       audio.play().then(() => {
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         retryCountRef.current = 0;
@@ -513,10 +523,9 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         requestWakeLock();
         notifyNativePlaybackState(state.currentStation!, true);
         updateMediaSession(state.currentStation!, true);
-        notifyNativePlaybackState(state.currentStation!, true);
       }).catch(() => {
         console.log("[RadioSphere] togglePlay: play() failed, reloading stream");
-        retryCountRef.current = 0; // Reset for fresh reload attempt
+        retryCountRef.current = 0;
         reloadStream();
       });
     }

@@ -47,6 +47,7 @@ export function SleepTimerProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wasActiveRef = useRef(false);
 
   const clearInterval_ = useCallback(() => {
     if (intervalRef.current) {
@@ -57,6 +58,7 @@ export function SleepTimerProvider({ children }: { children: ReactNode }) {
 
   const cancelTimer = useCallback(() => {
     clearInterval_();
+    wasActiveRef.current = false;
     setRemainingSeconds(0);
   }, [clearInterval_]);
 
@@ -64,6 +66,7 @@ export function SleepTimerProvider({ children }: { children: ReactNode }) {
     clearInterval_();
     const totalSeconds = minutes * 60;
     setRemainingSeconds(totalSeconds);
+    wasActiveRef.current = true;
 
     intervalRef.current = setInterval(() => {
       setRemainingSeconds(prev => {
@@ -76,17 +79,17 @@ export function SleepTimerProvider({ children }: { children: ReactNode }) {
     }, 1000);
   }, [clearInterval_]);
 
-  // When timer reaches 0, pause playback
+  // When timer reaches 0 after being active, pause playback
   useEffect(() => {
-    if (remainingSeconds === 0 && intervalRef.current === null) return;
-    if (remainingSeconds === 0) {
+    if (remainingSeconds === 0 && wasActiveRef.current) {
+      wasActiveRef.current = false;
       if (isPlaying) {
         togglePlay();
-        toast({
-          title: "💤 " + t("sleepTimer.title"),
-          description: t("sleepTimer.stopped"),
-        });
       }
+      toast({
+        title: "💤 " + t("sleepTimer.title"),
+        description: t("sleepTimer.stopped"),
+      });
     }
   }, [remainingSeconds, isPlaying, togglePlay]);
 
