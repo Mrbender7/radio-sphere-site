@@ -33,7 +33,7 @@ export function MiniPlayer() {
       style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
       onClick={openFullScreen}
     >
-      <div className="w-10 h-10 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+      <div className="w-10 h-10 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0" style={{ boxShadow: '0 4px 15px -3px hsla(250, 80%, 50%, 0.4), 0 2px 8px -2px hsla(220, 90%, 60%, 0.25)' }}>
         {currentStation.logo ? (
           <img src={currentStation.logo.replace('http://', 'https://')} alt={currentStation.name} loading="lazy" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = stationPlaceholder; }} />
         ) : (
