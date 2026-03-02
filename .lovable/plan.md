@@ -1,96 +1,96 @@
 
 
-# Audit Android Auto v2.4.7 — Deux problemes identifies
+# Android Auto v2.4.8 — Flux, Recherche, Tri, Indicateurs
 
-## Probleme 1 : Deux "Radio Sphere" dans le lanceur Android Auto
+## Problemes identifies
 
-**Cause racine identifiee** : Le Manifest declare DEUX services avec le meme intent-filter `android.media.browse.MediaBrowserService` :
+### 1. Certains flux ne demarrent pas sur AA
+**Cause racine** : La resolution d'URL dans `resolveStreamUrl` a plusieurs faiblesses :
+- Pas de header `User-Agent` dans les requetes HTTP — certains serveurs (comme dparkradio.com) rejettent les requetes sans User-Agent
+- Detection de playlist basee uniquement sur l'extension URL, pas sur le Content-Type reponse
+- `parsePlsPlaylist` ne cherche que `File1=` en minuscule exacte — certains fichiers PLS utilisent `file1=` ou des casses variables
+- `httpGet` n'envoie pas de User-Agent non plus
+- Timeout de 5s peut etre trop court pour des serveurs lents
 
+### 2. Pas d'indicateur de chargement
+Le code met bien `STATE_BUFFERING` mais si la resolution d'URL echoue silencieusement (exception attrapee, URL originale retournee), ExoPlayer recoit une URL non jouable et reste en buffering indefiniment sans feedback utilisateur. Apres le protocol fallback, l'etat passe a `STATE_ERROR` mais sans message d'erreur visible.
+
+### 3. Recherche manquante
+`onSearch` et `onPlayFromSearch` sont implementes (recherche vocale). Mais il manque une entree "Recherche" dans l'arbre de navigation. Sur Android Auto, on peut ajouter une categorie "Top Stations" car la saisie clavier n'est pas possible en conduite — la recherche vocale via le micro AA est deja fonctionnelle.
+
+### 4. Tri alphabetique des favoris
+`loadStations` retourne les stations dans l'ordre du JSON stocke, sans tri. Les favoris devraient etre tries alphabetiquement.
+
+---
+
+## Plan de corrections
+
+### Fichier 1 : `android-auto/RadioBrowserService.java`
+
+**a) Ajouter User-Agent a toutes les requetes HTTP**
+- `followRedirects` : ajouter `conn.setRequestProperty("User-Agent", "RadioSphere/1.0")`
+- `httpGet` : ajouter `conn.setRequestProperty("User-Agent", "RadioSphere/1.0")`
+
+**b) Detection playlist par Content-Type**
+- Dans `resolveStreamUrl`, apres `followRedirects`, faire une requete HEAD pour lire le Content-Type
+- Si Content-Type contient `audio/x-scpls` → traiter comme PLS
+- Si Content-Type contient `audio/mpegurl` ou `audio/x-mpegurl` → traiter comme M3U
+- Garder aussi la detection par extension URL comme fallback
+
+**c) PLS parsing plus robuste**
+- `parsePlsPlaylist` : chercher `fileN=` (n'importe quel numero) en case-insensitive, pas seulement `file1=`
+
+**d) Tri alphabetique des favoris**
+- Apres `parseStationsJson`, trier la liste par `name` (case-insensitive) quand on charge les favoris
+
+**e) Remplacer "Genres" par "Top Stations"**
+- Dans `onLoadChildren(ROOT_ID)` : remplacer l'entree "Genres" par "Top Stations" qui charge les stations les plus populaires via l'API
+- La recherche vocale reste disponible via le bouton micro d'Android Auto (deja fonctionnel via `onPlayFromSearch`)
+
+**f) Meilleur feedback d'erreur**
+- Dans `updatePlaybackState`, quand state = ERROR, ajouter un message d'erreur via `setErrorMessage`
+- Reduire le buffering timeout de 10s a 15s pour laisser plus de temps aux serveurs lents avant de tenter le fallback
+
+**g) Augmenter les timeouts HTTP**
+- Passer de 5000ms a 8000ms pour `connectTimeout` et `readTimeout`
+
+### Fichier 2 : `radiosphere_v2_4_7.ps1`
+- Appliquer exactement les memes modifications au RadioBrowserService.java embarque dans le script PS1 (lignes 680-1230)
+- Mettre a jour le numero de version dans les logs de sortie
+
+---
+
+## Detail technique des modifications
+
+### resolveStreamUrl ameliore (pseudo-code)
 ```text
-Service 1: RadioBrowserService     → Le vrai service AA (ExoPlayer, browse tree)
-Service 2: MediaPlaybackService    → Service de notification lock screen (PAS un MediaBrowserService)
+1. followRedirects(url, 5)  // avec User-Agent
+2. HEAD request sur URL resolue → lire Content-Type
+3. Si Content-Type = audio/x-scpls OU URL contient .pls → parsePlsPlaylist
+4. Si Content-Type = audio/mpegurl OU URL contient .m3u → parseM3uPlaylist  
+5. Sinon → retourner URL resolue directement
 ```
 
-`MediaPlaybackService` etend `Service` (pas `MediaBrowserServiceCompat`), donc Android Auto le detecte comme source media mais ne peut pas l'interroger → ecran noir qui tourne a vide.
-
-**Correction** : Retirer l'intent-filter `android.media.browse.MediaBrowserService` de `MediaPlaybackService`. Il doit rester un simple foreground service sans visibilite Android Auto.
-
-### Fichiers impactes :
-- `android-auto/AndroidManifest-snippet.xml` (lignes 62-70)
-- `radiosphere_v2_4_7.ps1` (lignes 190-198)
-- `android-auto/MediaPlaybackService.java` (pas de changement Java necessaire, juste Manifest)
-
-### Avant :
-```xml
-<service android:name=".MediaPlaybackService"
-    android:exported="true"
-    android:foregroundServiceType="mediaPlayback">
-    <intent-filter>
-        <action android:name="android.media.browse.MediaBrowserService" />
-    </intent-filter>
-</service>
+### Nouveau root browse tree
+```text
+Root
+├── Favoris        (stations triees A-Z)
+├── Recents        (dernieres ecoutees)
+└── Top Stations   (top 25 par votes via API)
 ```
+La recherche reste accessible via le bouton micro Android Auto (deja implemente).
 
-### Apres :
-```xml
-<service android:name=".MediaPlaybackService"
-    android:exported="false"
-    android:foregroundServiceType="mediaPlayback" />
+### Tri favoris
+```java
+list.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
 ```
 
 ---
 
-## Probleme 2 : Conflit de MediaSession (cause potentielle de flux non lus)
+## Fichiers modifies
+1. `android-auto/RadioBrowserService.java` — Resolution URL, tri, top stations, feedback erreur
+2. `radiosphere_v2_4_7.ps1` — Meme code embarque mis a jour
 
-Les deux services creent une `MediaSessionCompat` avec le **meme tag** `"RadioSphereSession"`. Quand les deux services tournent simultanement, le systeme Android peut confondre les sessions, ce qui provoque :
-- Des commandes play/pause envoyees au mauvais service
-- Des etats de lecture incoherents
-- Des flux qui semblent "ne pas jouer" car le mauvais service recoit les commandes
-
-**Correction** : Changer le tag MediaSession de `MediaPlaybackService` en `"RadioSphereNotif"` pour le differencier.
-
-### Fichiers impactes :
-- `android-auto/MediaPlaybackService.java` (ligne 53)
-- `radiosphere_v2_4_7.ps1` (bloc MediaPlaybackService embeded)
-
----
-
-## Probleme 3 (verifie OK) : HTTP/HTTPS des flux
-
-L'audit confirme que la configuration reseau est correcte :
-- `network_security_config.xml` autorise le cleartext (`cleartextTrafficPermitted="true"`)
-- `usesCleartextTraffic="true"` est injecte dans le Manifest
-- `resolveStreamUrl` suit les redirects et parse m3u/pls correctement
-- `tryProtocolFallback` bascule HTTP↔HTTPS apres 10s de buffering
-- ExoPlayer recoit l'URL resolue sans forcer HTTPS
-
-**Conclusion** : Les flux HTTP devraient fonctionner. Si certains ne jouent toujours pas apres correction des problemes 1 et 2, c'est probablement le conflit de MediaSession qui envoyait les commandes au mauvais service.
-
----
-
-## Resume des changements
-
-### 1. `android-auto/AndroidManifest-snippet.xml`
-- Retirer l'intent-filter `MediaBrowserService` de `MediaPlaybackService`
-- Passer `exported="false"` (pas besoin d'etre expose)
-- Simplifier en tag auto-fermant
-
-### 2. `android-auto/MediaPlaybackService.java`
-- Changer le tag MediaSession de `"RadioSphereSession"` a `"RadioSphereNotif"`
-
-### 3. `radiosphere_v2_4_7.ps1`
-- Meme correction du Manifest (retirer intent-filter de MediaPlaybackService)
-- Meme correction du tag MediaSession dans le Java embarque
-
-### 4. Aucun changement cote frontend (`useCast.ts`, `PlayerContext`, etc.)
-
----
-
-## Verification apres patch
-
-1. Regenerer avec le script PS1 corrige
-2. `npx cap sync android` puis build
-3. Verifier dans Android Auto : **une seule entree** "Radio Sphere"
-4. Ouvrir → Favoris/Recents/Genres doivent s'afficher
-5. Lancer une station HTTP et une station HTTPS → les deux doivent jouer
+## Aucun changement frontend
+Tout est cote natif Java.
 
