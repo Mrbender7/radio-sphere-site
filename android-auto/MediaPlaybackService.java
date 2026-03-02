@@ -113,6 +113,10 @@ public class MediaPlaybackService extends Service {
                 // Re-post notification with artwork
                 updateSessionAndNotification(finalName, finalIsPlaying, cachedArtwork);
             }).start();
+        } else if (logo.isEmpty()) {
+            // Station has no logo — reset cache so we don't show the previous station's artwork
+            cachedLogoUrl = "";
+            cachedArtwork = null;
         }
 
         updateSessionAndNotification(name, isPlaying, cachedArtwork);

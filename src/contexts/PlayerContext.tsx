@@ -220,7 +220,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
   const updateMediaSession = useCallback((station: RadioStation, playing: boolean) => {
     if (!('mediaSession' in navigator)) return;
-    const artworkUrl = station.logo ? station.logo.replace('http://', 'https://') : 'https://placehold.co/512x512.png';
+    // Use the app's own station placeholder when no logo — ensures the notification always shows a consistent image
+    const artworkUrl = station.logo ? station.logo.replace('http://', 'https://') : new URL('/android-chrome-512x512.png', window.location.origin).href;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: station.name,
       artist: "Radio Sphere",
