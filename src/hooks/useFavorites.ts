@@ -35,10 +35,22 @@ export function useFavorites() {
   const importFavorites = useCallback((stations: RadioStation[]) => {
     let addedCount = 0;
     setFavorites(prev => {
-      const existingUrls = new Set(prev.map(s => s.streamUrl));
-      const newStations = stations.filter(s => !existingUrls.has(s.streamUrl));
-      addedCount = newStations.length;
-      return [...prev, ...newStations].sort((a, b) => a.name.localeCompare(b.name));
+      const existingUrls = new Map(prev.map(s => [s.streamUrl, s]));
+      const newStations: RadioStation[] = [];
+      for (const s of stations) {
+        const existing = existingUrls.get(s.streamUrl);
+        if (existing) {
+          // Update metadata if the incoming station has richer data (e.g. logo)
+          if (s.logo && !existing.logo) {
+            existingUrls.set(s.streamUrl, { ...existing, ...s, id: s.id || existing.id });
+          }
+        } else {
+          newStations.push(s);
+          addedCount++;
+        }
+      }
+      const updated = Array.from(existingUrls.values());
+      return [...updated, ...newStations].sort((a, b) => a.name.localeCompare(b.name));
     });
     return addedCount;
   }, []);

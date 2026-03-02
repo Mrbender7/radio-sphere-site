@@ -19,7 +19,18 @@ import { Share } from "@capacitor/share";
 import { UserGuideModal } from "@/components/UserGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import { searchStationByUrl } from "@/services/RadioService";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -100,6 +111,8 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const [codeError, setCodeError] = useState(false);
   const [radioBrowserOpen, setRadioBrowserOpen] = useState(false);
   const [customMinutes, setCustomMinutes] = useState("");
+  const [unavailableStations, setUnavailableStations] = useState<RadioStation[]>([]);
+  const [showUnavailableDialog, setShowUnavailableDialog] = useState(false);
   const premiumFeatures = [
     { icon: Moon, title: t("premium.sleepTimer"), desc: t("premium.sleepTimerDesc") },
     { icon: Car, title: t("premium.androidAuto"), desc: t("premium.androidAutoDesc") },
@@ -316,6 +329,35 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
                   }).filter(s => s.streamUrl);
                   const count = importFavorites(stations);
                   toast({ title: `✅ ${count} ${t("favorites.imported")}` });
+
+                  // Refresh metadata from Radio Browser for imported stations
+                  if (count > 0) {
+                    toast({ title: `🔄 ${t("favorites.refreshingMetadata")}` });
+                    (async () => {
+                      const notFound: RadioStation[] = [];
+                      for (const station of stations) {
+                        try {
+                          const found = await searchStationByUrl(station.streamUrl);
+                          if (found) {
+                            // Update the favorite in place with full metadata
+                            importFavorites([{
+                              ...found,
+                              id: found.id, // use the real Radio Browser UUID
+                            }]);
+                          } else {
+                            notFound.push(station);
+                          }
+                        } catch {
+                          notFound.push(station);
+                        }
+                      }
+                      toast({ title: `✅ ${t("favorites.metadataRefreshed")}` });
+                      if (notFound.length > 0) {
+                        setUnavailableStations(notFound);
+                        setShowUnavailableDialog(true);
+                      }
+                    })();
+                  }
                 } catch {
                   toast({ title: `❌ ${t("favorites.importError")}`, variant: "destructive" });
                 }
@@ -563,6 +605,36 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
 
       {/* App version */}
       <p className="text-center text-[10px] text-muted-foreground mb-6">Radio Sphere v2.4.8</p>
+
+      {/* Unavailable stations dialog after import */}
+      <Dialog open={showUnavailableDialog} onOpenChange={setShowUnavailableDialog}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-sm">{t("favorites.unavailableStations")}</DialogTitle>
+            <DialogDescription className="text-xs">
+              {t("favorites.unavailableDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-60">
+            <div className="space-y-2">
+              {unavailableStations.map((s, i) => (
+                <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50">
+                  <Wifi className="w-3.5 h-3.5 text-destructive shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium truncate">{s.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{s.streamUrl}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button size="sm" className="w-full text-xs">{t("favorites.understood")}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

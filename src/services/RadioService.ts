@@ -62,6 +62,20 @@ async function fetchWithMirrors(path: string, params?: Record<string, string>): 
   throw new Error("All Radio Browser mirrors failed");
 }
 
+/** Search station by exact stream URL — used to refresh metadata after CSV import */
+export async function searchStationByUrl(streamUrl: string): Promise<RadioStation | null> {
+  try {
+    const data = await fetchWithMirrors("stations/byurl", { url: streamUrl, limit: "1" });
+    if (data.length > 0) return normalizeStation(data[0]);
+    // Fallback: try searching by exact URL match
+    const data2 = await fetchWithMirrors("stations/search", { url: streamUrl, limit: "1" });
+    if (data2.length > 0) return normalizeStation(data2[0]);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** Notify Radio Browser that a station was clicked (community contribution) */
 export async function reportStationClick(stationuuid: string): Promise<void> {
   if (!stationuuid) return;
