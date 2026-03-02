@@ -279,12 +279,26 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
               reader.onload = (ev) => {
                 try {
                   const text = ev.target?.result as string;
-                  const lines = text.split("\n").filter(l => l.trim());
+              const lines = text.split("\n").filter(l => l.trim());
                   const dataLines = lines.slice(1);
                   const stations: RadioStation[] = dataLines.map((line, i) => {
-                    const cols = line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.map(c =>
-                      c.replace(/^"|"$/g, "").replace(/""/g, '"')
-                    ) || [];
+                    // Proper CSV parsing: split on commas respecting quoted fields
+                    const cols: string[] = [];
+                    let current = "";
+                    let inQuotes = false;
+                    for (let j = 0; j < line.length; j++) {
+                      const ch = line[j];
+                      if (inQuotes) {
+                        if (ch === '"' && line[j + 1] === '"') { current += '"'; j++; }
+                        else if (ch === '"') { inQuotes = false; }
+                        else { current += ch; }
+                      } else {
+                        if (ch === '"') { inQuotes = true; }
+                        else if (ch === ',') { cols.push(current); current = ""; }
+                        else { current += ch; }
+                      }
+                    }
+                    cols.push(current);
                     return {
                       id: `import-${Date.now()}-${i}`,
                       name: cols[0] || "Unknown",
