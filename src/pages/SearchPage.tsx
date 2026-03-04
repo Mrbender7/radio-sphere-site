@@ -372,6 +372,12 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         </button>
       )}
 
+      {!isLoading && allResults.length > 0 && (
+        <p className="text-xs text-muted-foreground mb-3">
+          {allResults.length} {t("search.resultsCount")}
+        </p>
+      )}
+
       {isLoading && (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
       )}
