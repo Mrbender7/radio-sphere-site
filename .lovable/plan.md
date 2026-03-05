@@ -1,36 +1,35 @@
 
 
-## Plan: Fix Android Auto foreground service + update PS1
+## Diagnostic et plan de correction
 
-### Problem
-`RadioBrowserService` never promotes itself to a foreground service during playback. Android 14+ blocks `requestAudioFocus()` for non-foreground services, so no station plays.
+### 3 problemes identifies
 
-### Changes
+**1. Toasts (sonner) apparaissent en bas, sous la barre de navigation Android**
+Le composant `Sonner` utilise la position par defaut (`bottom-right`). Sur APK, les toasts sont caches derriere la barre de navigation native.
 
-#### 1. `android-auto/AndroidManifest-snippet.xml`
-- Add `android:foregroundServiceType="mediaPlayback"` to the `RadioBrowserService` `<service>` declaration (line 48-57)
+**Correction** : Ajouter `position="top-center"` au composant `<Sonner>` dans `src/components/ui/sonner.tsx`.
 
-#### 2. `android-auto/RadioBrowserService.java`
-- Add imports: `NotificationChannel`, `NotificationManager`, `Notification`, `PendingIntent`, `NotificationCompat`, `MediaStyle`
-- Add constants: `CHANNEL_ID = "radio_auto_playback"`, `NOTIFICATION_ID = 3001`
-- In `onCreate()`: create `NotificationChannel` (IMPORTANCE_LOW, no badge, no vibration)
-- New method `startAsForeground(String stationName, boolean isPlaying)`: builds a `MediaStyle` notification with the MediaSession token, play/pause action, and calls `startForeground()`
-- In `playStation()`: call `startAsForeground()` **before** `requestAudioFocus()` so the service is already foreground when audio focus is requested
-- In `onStop()` callback: call `stopForeground(false)` before `stopSelf()`-like cleanup
-- Update notification on state changes (playing/paused) via `startAsForeground()` in `updatePlaybackState()`
-- Change `followRedirects()` to use `HEAD` instead of `GET`, with fallback to `GET` if the server returns an error
-- Add `onPrepare()` to the MediaSession callback (calls `onPlay()`)
+**2. Permissions jamais demandees au premier lancement**
+`requestAllPermissions()` est appelee dans le `useEffect` de `WelcomePage` avec un `setTimeout(800ms)`. Le probleme : sur Android, les demandes de permissions declenchees sans geste utilisateur direct sont souvent ignorees ou bloquees par le systeme. De plus, `window.hasOwnProperty("Capacitor")` peut etre `false` si Capacitor n'est pas encore initialise a 800ms.
 
-#### 3. `radiosphere_v2_5_0.ps1`
-- Update the manifest injection block (line 181-190): add `android:foregroundServiceType="mediaPlayback"` to RadioBrowserService
-- Replace the entire embedded `RadioBrowserService.java` (lines 718-1286) with the updated version matching the changes above
-- Update the version label from `v2.4.8` to `v2.5.0` in the generation log messages
-- Add a new line in the final summary about the foreground service fix for Android 14+
-- Add `NotificationChannel` creation for `radio_auto_playback` in the `MainActivity` patch (alongside the existing `radio_playback_v3` channel)
+**Correction** : Supprimer l'appel automatique dans `useEffect` de `WelcomePage`. A la place, declencher `requestAllPermissions()` sur le clic du bouton "Continuer" (`onComplete`), **avant** de naviguer. Cela garantit un geste utilisateur direct, requis par Android 13+ pour les notifications.
 
-### Technical Details
+**3. Sauvegarde et partage d'enregistrement echouent silencieusement**
 
-The foreground notification reuses the same `MediaStyle` pattern as `MediaPlaybackService` but with a distinct channel ID (`radio_auto_playback`) and notification ID (`3001`) to avoid conflicts. The notification displays the station name, a play/pause toggle, and is linked to the MediaSession token so Android Auto's UI stays in sync.
+- **Save** : `Directory.ExternalStorage` + path `Download/...` est bloque sur Android 10+ (scoped storage). L'erreur est attrapee par le catch exterieur mais le fallback browser (`<a>` download) ne fonctionne pas dans un WebView Capacitor.
+- **Share** : Le path `Cache/${fileName}` cree un dossier `Cache` dans le cache (double imbrication). De plus, les erreurs dans `reader.onload` (async callback) ne sont pas attrapees par le try/catch externe, donc le partage echoue silencieusement.
 
-The `followRedirects` change from `GET` to `HEAD` prevents the server from streaming audio data during redirect resolution, which wastes bandwidth and can cause timeouts on slow connections.
+**Corrections** :
+- Save : utiliser `Directory.Documents` sans prefixe de sous-dossier
+- Save : wrapper le contenu de `reader.onload` dans un try/catch avec `toast.error` en fallback
+- Share : changer le path de `Cache/${fileName}` a juste `${fileName}` (le Directory.Cache suffit)
+- Share : wrapper le contenu de `reader.onload` dans un try/catch
+
+### Fichiers a modifier
+
+| Fichier | Modification |
+|---|---|
+| `src/components/ui/sonner.tsx` | Ajouter `position="top-center"` au composant Sonner |
+| `src/pages/WelcomePage.tsx` | Supprimer le useEffect de permissions, appeler `requestAllPermissions()` dans le handler du bouton Continuer |
+| `src/components/FullScreenPlayer.tsx` | Fix save (Documents, try/catch dans onload), fix share (path + try/catch dans onload), augmenter padding bas a `+6rem` |
 
