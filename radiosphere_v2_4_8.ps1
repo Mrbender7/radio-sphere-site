@@ -476,6 +476,9 @@ public class MediaPlaybackService extends Service {
                 cachedArtwork = downloadBitmap(finalLogo);
                 updateSessionAndNotification(finalName, finalIsPlaying, cachedArtwork);
             }).start();
+        } else if (logo.isEmpty()) {
+            cachedLogoUrl = "";
+            cachedArtwork = null;
         }
         updateSessionAndNotification(name, isPlaying, cachedArtwork);
         return START_NOT_STICKY;
