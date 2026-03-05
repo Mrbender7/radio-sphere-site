@@ -1,6 +1,11 @@
 package com.radiosphere.app;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.AudioFocusRequest;
 import android.net.Uri;
@@ -16,7 +21,9 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 import androidx.media.MediaBrowserServiceCompat;
+import androidx.media.app.NotificationCompat.MediaStyle;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
@@ -37,11 +44,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * RadioBrowserService — Android Auto MediaBrowserService for RadioSphere.
+ * RadioBrowserService - Android Auto MediaBrowserService for RadioSphere.
  *
- * v2.4.8: User-Agent headers, Content-Type playlist detection, robust PLS parsing,
- *         alphabetical favorites sort, Top Stations replacing Genres, error feedback,
- *         increased timeouts.
+ * v2.5.0: Foreground service with MediaStyle notification for Android 14+ audio focus,
+ *         HEAD-based redirect resolution, onPrepare() support.
  */
 public class RadioBrowserService extends MediaBrowserServiceCompat {
 
@@ -61,6 +67,11 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     private static final int STREAM_BUFFER_TIMEOUT_MS = 8000;
     private static final int RESOLVE_TIMEOUT_MS = 8000;
     private static final int NETWORK_TIMEOUT_MS = 5000;
+
+    // Foreground service notification
+    private static final String AUTO_CHANNEL_ID = "radio_auto_playback";
+    private static final int AUTO_NOTIFICATION_ID = 3001;
+    private boolean foregroundStarted = false;
 
     private static final String[] API_MIRRORS = {
         "https://de1.api.radio-browser.info",
@@ -100,7 +111,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
     }
 
-    // ─── AudioFocus ─────────────────────────────────────────────────────
+    // --- AudioFocus ---
 
     private final AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = focusChange -> {
         switch (focusChange) {
@@ -141,11 +152,67 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
     }
 
-    // ─── Lifecycle ──────────────────────────────────────────────────────
+    // --- Foreground Service (Android 14+ requirement) ---
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                AUTO_CHANNEL_ID, "Android Auto Playback", NotificationManager.IMPORTANCE_LOW);
+            channel.setShowBadge(false);
+            channel.setDescription("Notification pour la lecture Android Auto");
+            channel.enableVibration(false);
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.createNotificationChannel(channel);
+        }
+    }
+
+    private void startAsForeground(String stationName, boolean isPlaying) {
+        Intent openIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+            openIntent != null ? openIntent : new Intent(),
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        int toggleIcon = isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play;
+        String toggleLabel = isPlaying ? "Pause" : "Play";
+
+        // Build a toggle PendingIntent that triggers MediaSession callback
+        Intent toggleIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        toggleIntent.setPackage(getPackageName());
+        PendingIntent togglePending = PendingIntent.getBroadcast(this, 1,
+            toggleIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Notification notification = new NotificationCompat.Builder(this, AUTO_CHANNEL_ID)
+            .setContentTitle(stationName != null ? stationName : "Radio Sphere")
+            .setContentText("Radio Sphere")
+            .setSubText("Live")
+            .setSmallIcon(getApplicationInfo().icon)
+            .setContentIntent(contentIntent)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(isPlaying)
+            .setShowWhen(false)
+            .addAction(toggleIcon, toggleLabel, togglePending)
+            .setStyle(new MediaStyle()
+                .setMediaSession(mediaSession.getSessionToken())
+                .setShowActionsInCompactView(0))
+            .build();
+
+        if (!foregroundStarted) {
+            startForeground(AUTO_NOTIFICATION_ID, notification);
+            foregroundStarted = true;
+            Log.d(TAG, "Started foreground service for Android Auto playback");
+        } else {
+            // Update existing notification
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.notify(AUTO_NOTIFICATION_ID, notification);
+        }
+    }
+
+    // --- Lifecycle ---
 
     @Override
     public void onCreate() {
         super.onCreate();
+        createNotificationChannel();
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         player = new ExoPlayer.Builder(this).build();
         player.addListener(playerListener);
@@ -164,16 +231,20 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     @Override
     public void onDestroy() {
         cancelBufferingTimeout();
-        playbackRequestSeq.incrementAndGet(); // invalidate pending async station switches
+        playbackRequestSeq.incrementAndGet();
         streamResolverExecutor.shutdownNow();
         handler.removeCallbacksAndMessages(null);
         abandonAudioFocus();
+        if (foregroundStarted) {
+            stopForeground(true);
+            foregroundStarted = false;
+        }
         player.release();
         mediaSession.release();
         super.onDestroy();
     }
 
-    // ─── Browse Tree ────────────────────────────────────────────────────
+    // --- Browse Tree ---
 
     @Nullable
     @Override
@@ -194,7 +265,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             }
             case FAVORITES_ID: {
                 List<StationData> stations = loadStations(KEY_FAVORITES);
-                // Sort favorites alphabetically
                 stations.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
                 currentStations = stations;
                 if (stations.isEmpty()) {
@@ -234,7 +304,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
     }
 
-    // ─── Voice Search ───────────────────────────────────────────────────
+    // --- Voice Search ---
 
     @Override
     public void onSearch(@NonNull String query, Bundle extras, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
@@ -246,7 +316,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }).start();
     }
 
-    // ─── MediaSession Callbacks ─────────────────────────────────────────
+    // --- MediaSession Callbacks ---
 
     private final MediaSessionCompat.Callback mediaSessionCallback = new MediaSessionCompat.Callback() {
         @Override
@@ -263,7 +333,17 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
 
         @Override
+        public void onPrepare() {
+            // AAOS may call onPrepare when media source changes
+            onPlay();
+        }
+
+        @Override
         public void onPlay() {
+            // Ensure foreground before requesting audio focus (Android 14+)
+            if (currentStation != null) {
+                startAsForeground(currentStation.name, true);
+            }
             if (requestAudioFocus()) {
                 player.play();
                 updatePlaybackState(PlaybackStateCompat.STATE_PLAYING);
@@ -274,6 +354,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         public void onPause() {
             player.pause();
             updatePlaybackState(PlaybackStateCompat.STATE_PAUSED);
+            if (currentStation != null) {
+                startAsForeground(currentStation.name, false);
+            }
         }
 
         @Override
@@ -281,6 +364,10 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             player.stop();
             abandonAudioFocus();
             updatePlaybackState(PlaybackStateCompat.STATE_STOPPED);
+            if (foregroundStarted) {
+                stopForeground(false);
+                foregroundStarted = false;
+            }
         }
 
         @Override
@@ -320,7 +407,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
     };
 
-    // ─── Player Listener ────────────────────────────────────────────────
+    // --- Player Listener ---
 
     private final Player.Listener playerListener = new Player.Listener() {
         @Override
@@ -339,6 +426,10 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
                     if (player.isPlaying()) {
                         updatePlaybackState(PlaybackStateCompat.STATE_PLAYING);
                         Log.d(TAG, "Stream is now playing");
+                        // Update notification to playing state
+                        if (currentStation != null) {
+                            startAsForeground(currentStation.name, true);
+                        }
                     }
                     break;
                 case Player.STATE_ENDED:
@@ -358,7 +449,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             cancelBufferingTimeout();
             Log.e(TAG, "ExoPlayer error: " + error.getMessage()
                 + " | errorCode=" + error.errorCode, error);
-            // Try protocol fallback on error
             if (!triedProtocolFallback && currentStation != null) {
                 tryProtocolFallback();
             } else {
@@ -369,15 +459,18 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         @Override
         public void onIsPlayingChanged(boolean isPlaying) {
             updatePlaybackState(isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED);
+            if (currentStation != null) {
+                startAsForeground(currentStation.name, isPlaying);
+            }
         }
     };
 
-    // ─── Buffering Timeout & Protocol Fallback ──────────────────────────
+    // --- Buffering Timeout & Protocol Fallback ---
 
     private void startBufferingTimeout() {
         cancelBufferingTimeout();
         bufferingTimeoutRunnable = () -> {
-            Log.w(TAG, "Buffering timeout (" + (STREAM_BUFFER_TIMEOUT_MS / 1000) + "s) — trying protocol fallback");
+            Log.w(TAG, "Buffering timeout (" + (STREAM_BUFFER_TIMEOUT_MS / 1000) + "s) - trying protocol fallback");
             if (currentStation != null && !triedProtocolFallback) {
                 tryProtocolFallback();
             }
@@ -445,13 +538,8 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
     }
 
-    // ─── Stream URL Resolution ──────────────────────────────────────────
+    // --- Stream URL Resolution ---
 
-    /**
-     * Resolves a stream URL by following redirects (up to 5 levels),
-     * detecting playlist type by Content-Type header AND file extension,
-     * and parsing .m3u / .pls playlists to get the actual stream URL.
-     */
     private String resolveStreamUrl(String urlStr) {
         Log.d(TAG, "resolveStreamUrl: " + urlStr);
         try {
@@ -501,6 +589,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
     }
 
+    /**
+     * Follow redirects using HEAD first (avoids streaming data), with GET fallback.
+     */
     private String followRedirects(String urlStr, int maxRedirects) throws Exception {
         String current = urlStr;
         for (int i = 0; i < maxRedirects; i++) {
@@ -508,14 +599,26 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             conn.setInstanceFollowRedirects(false);
             conn.setConnectTimeout(NETWORK_TIMEOUT_MS);
             conn.setReadTimeout(NETWORK_TIMEOUT_MS);
-            conn.setRequestMethod("GET");
+            conn.setRequestMethod("HEAD");
             conn.setRequestProperty("User-Agent", USER_AGENT);
-            int code = conn.getResponseCode();
+            int code;
+            try {
+                code = conn.getResponseCode();
+            } catch (Exception e) {
+                // Some servers reject HEAD, fallback to GET
+                conn.disconnect();
+                conn = (HttpURLConnection) new URL(current).openConnection();
+                conn.setInstanceFollowRedirects(false);
+                conn.setConnectTimeout(NETWORK_TIMEOUT_MS);
+                conn.setReadTimeout(NETWORK_TIMEOUT_MS);
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("User-Agent", USER_AGENT);
+                code = conn.getResponseCode();
+            }
             if (code >= 300 && code < 400) {
                 String location = conn.getHeaderField("Location");
                 conn.disconnect();
                 if (location == null || location.isEmpty()) break;
-                // Handle relative URLs
                 if (location.startsWith("/")) {
                     URL base = new URL(current);
                     location = base.getProtocol() + "://" + base.getHost() + location;
@@ -546,16 +649,12 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         return null;
     }
 
-    /**
-     * Parse PLS playlist — case-insensitive, supports any FileN= entry.
-     */
     private String parsePlsPlaylist(String urlStr) {
         try {
             String content = httpGet(urlStr);
             String[] lines = content.split("\n");
             for (String line : lines) {
                 line = line.trim();
-                // Match File1=, file2=, FILE3=, etc. (case-insensitive, any number)
                 if (line.toLowerCase().matches("^file\\d+=.*")) {
                     String url = line.substring(line.indexOf('=') + 1).trim();
                     if (!url.isEmpty()) return url;
@@ -567,7 +666,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         return null;
     }
 
-    // ─── Playback Helpers ───────────────────────────────────────────────
+    // --- Playback Helpers ---
 
     private void playStation(StationData station) {
         Log.d(TAG, "playStation: " + station.name + " | URL: " + station.streamUrl);
@@ -576,6 +675,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         cancelBufferingTimeout();
 
         final int requestSeq = playbackRequestSeq.incrementAndGet();
+
+        // CRITICAL: Start foreground BEFORE requesting audio focus (Android 14+ requirement)
+        startAsForeground(station.name, true);
 
         if (!requestAudioFocus()) {
             Log.w(TAG, "Could not get audio focus, aborting playback");
@@ -638,7 +740,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             .setActions(actions)
             .setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f);
 
-        // Add error message for user feedback on Android Auto
         if (state == PlaybackStateCompat.STATE_ERROR) {
             builder.setErrorMessage(PlaybackStateCompat.ERROR_CODE_APP_ERROR,
                 "Impossible de lire cette station");
@@ -647,7 +748,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         mediaSession.setPlaybackState(builder.build());
     }
 
-    // ─── Data Helpers ───────────────────────────────────────────────────
+    // --- Data Helpers ---
 
     private List<StationData> loadStations(String key) {
         String json = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(key, "[]");
@@ -757,7 +858,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         return list;
     }
 
-    // ─── MediaItem Builders ─────────────────────────────────────────────
+    // --- MediaItem Builders ---
 
     private List<MediaBrowserCompat.MediaItem> toMediaItems(List<StationData> stations) {
         List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
