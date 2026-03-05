@@ -1,21 +1,40 @@
 
 
-## Plan : Compteur de résultats dans la recherche
+## Diagnostic : Image "collante" dans la notification
 
-Ajouter un compteur affichant le nombre total de stations trouvées, positionné juste sous le bouton "Réinitialiser les filtres".
+### Problème identifié
 
-### Ce qui change
+Le bug se situe dans le script `radiosphere_v2_4_8.ps1`. Le fichier source `android-auto/MediaPlaybackService.java` contient bien le correctif (reset du cache quand une station n'a pas de logo), mais le **ps1 ne l'a pas** :
 
-**Fichier : `src/pages/SearchPage.tsx`**
-- Après le bouton `clearFilters` (ligne ~373), ajouter un texte discret affichant `allResults.length` stations trouvées (ex: "42 stations trouvées")
-- Le compteur n'apparaît que quand des résultats existent et que le chargement est terminé
-- Style : texte petit (`text-xs`), couleur `text-muted-foreground`, discret mais visible
+**Dans le ps1 (ligne ~473-480) — code actuel :**
+```java
+if (!logo.isEmpty() && !logo.equals(cachedLogoUrl)) {
+    cachedLogoUrl = logo;
+    new Thread(() -> {
+        cachedArtwork = downloadBitmap(finalLogo);
+        updateSessionAndNotification(finalName, finalIsPlaying, cachedArtwork);
+    }).start();
+}
+// ← manque le else if (logo.isEmpty()) { reset cache }
+updateSessionAndNotification(name, isPlaying, cachedArtwork);
+```
 
-**Fichier : `src/i18n/translations.ts`**
-- Ajouter la clé `search.resultsCount` dans toutes les langues (ex: FR "stations trouvées", EN "stations found", etc.)
+**Dans `MediaPlaybackService.java` (correct) :**
+```java
+if (!logo.isEmpty() && !logo.equals(cachedLogoUrl)) {
+    ...
+} else if (logo.isEmpty()) {
+    cachedLogoUrl = "";
+    cachedArtwork = null;   // ← reset propre
+}
+```
 
-### Comportement
-- Visible uniquement quand `allResults.length > 0` et `!isLoading`
-- Se met à jour automatiquement quand on charge plus de stations via "Plus de stations"
-- Disparaît quand les filtres sont vidés (pas de résultats)
+Sans ce `else if`, quand une station sans logo est jouée, `cachedArtwork` garde le bitmap de la station précédente et la notification affiche l'ancienne image.
+
+### Correction
+
+**Fichier : `radiosphere_v2_4_8.ps1`**
+- Ajouter le bloc `else if (logo.isEmpty())` manquant après le `if (!logo.isEmpty() && ...)` dans la section `MediaPlaybackService` du ps1, identique à ce qui existe déjà dans `android-auto/MediaPlaybackService.java`
+
+C'est une correction d'une seule ligne manquante dans le ps1 — aucun autre fichier n'est impacté. Les composants UI web (MiniPlayer, FullScreenPlayer, StationCard) gèrent déjà correctement le cas logo vide avec le placeholder.
 
