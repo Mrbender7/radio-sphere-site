@@ -1,95 +1,36 @@
 
 
-## Plan : Buffer 5 min + Enregistrement "Cassette" + Seek-back
+## Plan: Fix Android Auto foreground service + update PS1
 
-### Résumé
+### Problem
+`RadioBrowserService` never promotes itself to a foreground service during playback. Android 14+ blocks `requestAudioFocus()` for non-foreground services, so no station plays.
 
-Ajouter un buffer circulaire de 5 minutes qui capture le flux audio en parallèle, permettant de remonter dans le temps (scrub-back) et d'enregistrer des segments jusqu'à 10 minutes. Animation cassette rétro pendant l'enregistrement. Fonctionnalité Premium.
+### Changes
 
-### Architecture
+#### 1. `android-auto/AndroidManifest-snippet.xml`
+- Add `android:foregroundServiceType="mediaPlayback"` to the `RadioBrowserService` `<service>` declaration (line 48-57)
 
-```text
-StreamBufferContext (fetch parallèle du stream)
-  ├── Buffer circulaire ~5 min de chunks horodatés
-  ├── startRecording() / stopRecording() → concat chunks → Blob .mp3
-  ├── seekBack(seconds) → Blob URL → Audio.src
-  └── returnToLive() → remet Audio.src sur le stream live
+#### 2. `android-auto/RadioBrowserService.java`
+- Add imports: `NotificationChannel`, `NotificationManager`, `Notification`, `PendingIntent`, `NotificationCompat`, `MediaStyle`
+- Add constants: `CHANNEL_ID = "radio_auto_playback"`, `NOTIFICATION_ID = 3001`
+- In `onCreate()`: create `NotificationChannel` (IMPORTANCE_LOW, no badge, no vibration)
+- New method `startAsForeground(String stationName, boolean isPlaying)`: builds a `MediaStyle` notification with the MediaSession token, play/pause action, and calls `startForeground()`
+- In `playStation()`: call `startAsForeground()` **before** `requestAudioFocus()` so the service is already foreground when audio focus is requested
+- In `onStop()` callback: call `stopForeground(false)` before `stopSelf()`-like cleanup
+- Update notification on state changes (playing/paused) via `startAsForeground()` in `updatePlaybackState()`
+- Change `followRedirects()` to use `HEAD` instead of `GET`, with fallback to `GET` if the server returns an error
+- Add `onPrepare()` to the MediaSession callback (calls `onPlay()`)
 
-FullScreenPlayer
-  ├── Timeline scrub bar (-5:00 → LIVE)
-  ├── Bouton REC (cercle rouge / carré stop) + compteur
-  └── CassetteAnimation (remplace AudioVisualizer pendant REC)
-```
+#### 3. `radiosphere_v2_5_0.ps1`
+- Update the manifest injection block (line 181-190): add `android:foregroundServiceType="mediaPlayback"` to RadioBrowserService
+- Replace the entire embedded `RadioBrowserService.java` (lines 718-1286) with the updated version matching the changes above
+- Update the version label from `v2.4.8` to `v2.5.0` in the generation log messages
+- Add a new line in the final summary about the foreground service fix for Android 14+
+- Add `NotificationChannel` creation for `radio_auto_playback` in the `MainActivity` patch (alongside the existing `radio_playback_v3` channel)
 
-### Fichiers à créer
+### Technical Details
 
-**`src/contexts/StreamBufferContext.tsx`**
-- Nouveau contexte qui wrape le PlayerProvider
-- Quand `currentStation` change et `isPlaying` : ouvre un `fetch()` sur `streamUrl` avec `ReadableStream`, stocke les chunks dans un tableau circulaire (max ~5 min basé sur bitrate estimé, ~4.7 MB à 128 kbps)
-- Attend 3s avant de commencer à stocker (skip données parasites de connexion)
-- Vide le buffer au changement de station ou à l'arrêt
-- Le fetch continue en parallèle même pendant le seek-back
-- Expose : `bufferSeconds`, `isRecording`, `recordingDuration`, `startRecording()`, `stopRecording()` (retourne Blob + nom fichier), `seekBack(seconds)`, `returnToLive()`, `isLive`, `canSeekBack`
-- Limite d'enregistrement : 10 minutes max, auto-stop avec toast
-- Nom fichier : `RadioSphere_NomStation_2026-03-05_14h32.mp3`
-- Export via Capacitor Filesystem (save) + Capacitor Share (partage)
-- Format : sauvegarde directe des octets bruts du flux (la grande majorité des radios diffusent en MP3, donc le fichier est lisible tel quel par tout lecteur). Pas de transcodage dans cette v1 — on note le codec dans les métadonnées pour info
+The foreground notification reuses the same `MediaStyle` pattern as `MediaPlaybackService` but with a distinct channel ID (`radio_auto_playback`) and notification ID (`3001`) to avoid conflicts. The notification displays the station name, a play/pause toggle, and is linked to the MediaSession token so Android Auto's UI stays in sync.
 
-**`src/components/CassetteAnimation.tsx`**
-- Animation CSS pure de cassette audio rétro
-- Deux bobines qui tournent (vitesse proportionnelle : gauche ralentit, droite accélère avec le temps)
-- Bande magnétique entre les bobines
-- Style rétro : couleurs chaudes sur fond sombre, bords arrondis, effet plastique
-- Compteur de durée d'enregistrement intégré sous la cassette
-- Remplace l'AudioVisualizer dans le FullScreenPlayer quand `isRecording === true`
-
-### Fichiers à modifier
-
-**`src/components/FullScreenPlayer.tsx`**
-- Importer `StreamBufferContext` et `CassetteAnimation`
-- Ajouter la **timeline scrub bar** entre le play button et le volume slider :
-  - Slider de `-bufferSeconds` à `0` (LIVE)
-  - Label "LIVE" à droite, animé (pulse) quand en direct, grisé quand en différé
-  - Bouton "Retour au direct" quand pas en live
-- Ajouter le **bouton REC** à côté du bouton play :
-  - Cercle rouge quand inactif, carré stop quand actif
-  - Compteur durée à côté pendant l'enregistrement
-  - Vérifie `isPremium` avant d'activer
-- Remplacer `AudioVisualizer` par `CassetteAnimation` quand `isRecording`
-- Après stop recording : modal/sheet avec options "Sauvegarder sur le téléphone" et "Partager"
-
-**`src/contexts/PlayerContext.tsx`**
-- Exposer `streamUrl` de la station courante dans le contexte (déjà accessible via `currentStation.streamUrl`)
-- Aucune modification majeure nécessaire — le buffer fetch en parallèle, indépendamment du `<audio>` existant
-
-**`src/pages/Index.tsx`**
-- Wrapper `AppContentInner` avec `StreamBufferProvider`
-
-**`src/i18n/translations.ts`**
-- Ajouter les clés pour les 5 langues : `player.live`, `player.recording`, `player.recordingStarted`, `player.recordingStopped`, `player.recordingMaxReached`, `player.saveRecording`, `player.shareRecording`, `player.seekBack`, `player.returnToLive`, `player.recordPremiumOnly`, `player.fileSaved`
-
-**`src/index.css`**
-- Keyframes pour la rotation des bobines de cassette
-- Animation pulse pour le badge LIVE
-- Animation clignotement point rouge REC
-
-**`docs/PREMIUM_ROADMAP.md`**
-- Ajouter la feature "Enregistrement & Time-shift" dans les fonctionnalités Premium
-
-### Considérations techniques
-
-- **CORS** : `fetch()` sur les streams radio peut être bloqué en navigateur web classique, mais fonctionne dans le WebView Capacitor Android. Dans le preview web Lovable, le buffer ne fonctionnera probablement pas (CORS) — on gère gracieusement avec un try/catch et on désactive les contrôles si le buffer n'est pas disponible
-- **Mémoire** : 5 min à 128 kbps ≈ 4.7 MB, 10 min recording ≈ 9.4 MB — parfaitement gérable
-- **Seek-back** : on crée un `Blob` à partir des chunks du buffer, on génère un `URL.createObjectURL()`, on le pousse dans l'élément Audio. Le fetch parallèle continue d'alimenter le buffer pendant ce temps
-- **Retour au live** : on remet `audio.src` sur le `streamUrl` original
-
-### Ordre d'implémentation
-
-1. `StreamBufferContext` (cœur du système)
-2. `CassetteAnimation` (composant visuel indépendant)
-3. Modifications `FullScreenPlayer` (UI scrub + REC + cassette)
-4. Wrapper dans `Index.tsx`
-5. Traductions i18n
-6. CSS animations
-7. Mise à jour roadmap Premium
+The `followRedirects` change from `GET` to `HEAD` prevents the server from streaming audio data during redirect resolution, which wastes bandwidth and can cause timeouts on slow connections.
 
