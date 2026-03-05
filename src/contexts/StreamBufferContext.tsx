@@ -7,6 +7,7 @@ import { toast } from "sonner";
 interface TimestampedChunk {
   data: Uint8Array;
   time: number; // ms timestamp
+  byteOffset: number; // cumulative byte offset at start of this chunk
 }
 
 interface StreamBufferContextType {
@@ -17,6 +18,7 @@ interface StreamBufferContextType {
   canSeekBack: boolean;
   bufferAvailable: boolean;
   recordingAvailable: boolean;
+  currentSeekOffsetSeconds: number;
   startRecording: () => void;
   stopRecording: () => Promise<{ blob: Blob; fileName: string } | null>;
   seekBack: (seconds: number) => void;
@@ -34,7 +36,7 @@ export function useStreamBuffer() {
 const MAX_BUFFER_DURATION = 5 * 60;
 const MAX_RECORDING_DURATION = 10 * 60;
 const INITIAL_SKIP_MS = 3000;
-const MAX_BUFFER_BYTES = 5 * 60 * 16 * 1024;
+const MAX_BUFFER_BYTES = 5 * 60 * 20 * 1024; // ~6MB for 5 min
 
 // --- MIME type / extension mapping ---
 const MIME_TO_EXT: Record<string, string> = {
@@ -59,7 +61,7 @@ const CODEC_TO_MIME: Record<string, string> = {
   'OGG': 'audio/ogg',
   'FLAC': 'audio/flac',
   'OPUS': 'audio/ogg',
-  'WMA': 'audio/mpeg', // fallback
+  'WMA': 'audio/mpeg',
 };
 
 function getExtFromMime(mime: string): string {
@@ -72,6 +74,77 @@ function getMimeFromCodec(codec: string | undefined): string {
   return CODEC_TO_MIME[codec.toUpperCase()] || 'audio/mpeg';
 }
 
+// --- ICY metadata parser (stateful, handles cross-chunk boundaries) ---
+class IcyStripper {
+  private metaint: number;
+  private bytesUntilMeta: number;
+  private metaBytesRemaining: number;
+  private inMeta: boolean;
+
+  constructor(metaint: number) {
+    this.metaint = metaint;
+    this.bytesUntilMeta = metaint;
+    this.metaBytesRemaining = 0;
+    this.inMeta = false;
+  }
+
+  /** Strip ICY metadata from a raw chunk, returning only audio bytes */
+  strip(input: Uint8Array): Uint8Array {
+    const audioParts: Uint8Array[] = [];
+    let i = 0;
+
+    while (i < input.length) {
+      if (this.inMeta) {
+        // Still consuming metadata bytes
+        const skip = Math.min(this.metaBytesRemaining, input.length - i);
+        this.metaBytesRemaining -= skip;
+        i += skip;
+        if (this.metaBytesRemaining <= 0) {
+          this.inMeta = false;
+          this.bytesUntilMeta = this.metaint;
+        }
+      } else {
+        // Audio data
+        const audioBytes = Math.min(this.bytesUntilMeta, input.length - i);
+        audioParts.push(input.subarray(i, i + audioBytes));
+        this.bytesUntilMeta -= audioBytes;
+        i += audioBytes;
+
+        if (this.bytesUntilMeta <= 0) {
+          // Next byte is the metadata length indicator
+          if (i < input.length) {
+            const metaLen = input[i] * 16;
+            i++;
+            if (metaLen > 0) {
+              this.inMeta = true;
+              this.metaBytesRemaining = metaLen;
+            } else {
+              // No metadata, reset
+              this.bytesUntilMeta = this.metaint;
+            }
+          } else {
+            // Length byte is in the next chunk — we need to handle this
+            // Set a flag: next chunk starts with the meta length byte
+            this.bytesUntilMeta = 0; // will read length byte first next time
+          }
+        }
+      }
+    }
+
+    if (audioParts.length === 0) return new Uint8Array(0);
+    if (audioParts.length === 1) return audioParts[0];
+
+    const totalLen = audioParts.reduce((s, p) => s + p.length, 0);
+    const result = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const part of audioParts) {
+      result.set(part, offset);
+      offset += part.length;
+    }
+    return result;
+  }
+}
+
 export function StreamBufferProvider({ children }: { children: React.ReactNode }) {
   const { currentStation, isPlaying } = usePlayer();
   const { t } = useTranslation();
@@ -80,6 +153,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
   const chunksRef = useRef<TimestampedChunk[]>([]);
   const totalBytesRef = useRef(0);
+  const cumulativeBytesRef = useRef(0); // total bytes ever received (for byteOffset)
   const fetchControllerRef = useRef<AbortController | null>(null);
   const fetchStartTimeRef = useRef(0);
   const recordingStartIdxRef = useRef(-1);
@@ -91,6 +165,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const usingMediaRecorderRef = useRef(false);
   const streamMimeTypeRef = useRef<string>('audio/mpeg');
   const liveStreamUrlRef = useRef<string | null>(null);
+  const icyStripperRef = useRef<IcyStripper | null>(null);
+  const waitingMetaLengthRef = useRef(false);
 
   const [bufferSeconds, setBufferSeconds] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -98,17 +174,22 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const [isLive, setIsLive] = useState(true);
   const [bufferAvailable, setBufferAvailable] = useState(false);
   const [recordingAvailable, setRecordingAvailable] = useState(false);
+  const [currentSeekOffsetSeconds, setCurrentSeekOffsetSeconds] = useState(0);
 
   const clearBuffer = useCallback(() => {
     chunksRef.current = [];
     totalBytesRef.current = 0;
+    cumulativeBytesRef.current = 0;
     setBufferSeconds(0);
     setIsRecording(false);
     setRecordingDuration(0);
     setIsLive(true);
+    setCurrentSeekOffsetSeconds(0);
     setBufferAvailable(false);
     recordingStartIdxRef.current = -1;
     streamMimeTypeRef.current = 'audio/mpeg';
+    icyStripperRef.current = null;
+    waitingMetaLengthRef.current = false;
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
@@ -148,7 +229,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setBufferSeconds(Math.min(duration, MAX_BUFFER_DURATION));
   }, []);
 
-  // Start fetching stream in parallel — capture Content-Type
+  // Start fetching stream in parallel — capture Content-Type + ICY headers
   const startFetch = useCallback(async (streamUrl: string) => {
     stopFetch();
     clearBuffer();
@@ -159,9 +240,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     fetchStartTimeRef.current = Date.now();
 
     try {
+      // Request ICY metadata header
       const response = await fetch(streamUrl, {
         signal: controller.signal,
-        headers: { 'Accept': '*/*' },
+        headers: { 'Accept': '*/*', 'Icy-MetaData': '1' },
       });
 
       if (!response.ok || !response.body) {
@@ -176,9 +258,18 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
         streamMimeTypeRef.current = cleanType;
         console.log("[StreamBuffer] Detected stream MIME:", cleanType);
       } else if (currentStation?.codec) {
-        // Fallback to codec from station metadata
         streamMimeTypeRef.current = getMimeFromCodec(currentStation.codec);
         console.log("[StreamBuffer] Using codec fallback MIME:", streamMimeTypeRef.current);
+      }
+
+      // Check for ICY metaint
+      const icyMetaint = response.headers.get('icy-metaint');
+      if (icyMetaint) {
+        const metaintVal = parseInt(icyMetaint, 10);
+        if (metaintVal > 0) {
+          icyStripperRef.current = new IcyStripper(metaintVal);
+          console.log("[StreamBuffer] ICY metaint detected:", metaintVal);
+        }
       }
 
       setBufferAvailable(true);
@@ -190,12 +281,23 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
         if (Date.now() - fetchStartTimeRef.current < INITIAL_SKIP_MS) continue;
 
+        // Strip ICY metadata if present
+        let audioData: Uint8Array;
+        if (icyStripperRef.current) {
+          audioData = icyStripperRef.current.strip(value);
+          if (audioData.length === 0) continue;
+        } else {
+          audioData = value;
+        }
+
         const chunk: TimestampedChunk = {
-          data: value,
+          data: audioData,
           time: Date.now(),
+          byteOffset: cumulativeBytesRef.current,
         };
+        cumulativeBytesRef.current += audioData.byteLength;
         chunksRef.current.push(chunk);
-        totalBytesRef.current += value.byteLength;
+        totalBytesRef.current += audioData.byteLength;
         trimBuffer();
         updateBufferSeconds();
       }
@@ -311,16 +413,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
       if (recordedChunks.length === 0) return null;
 
-      const totalSize = recordedChunks.reduce((sum, c) => sum + c.data.byteLength, 0);
-      const result = new Uint8Array(totalSize);
-      let offset = 0;
-      for (const chunk of recordedChunks) {
-        result.set(chunk.data, offset);
-        offset += chunk.data.byteLength;
-      }
-
+      // Use BlobPart[] directly — avoids large memcpy
+      const parts = recordedChunks.map(c => c.data.buffer.slice(c.data.byteOffset, c.data.byteOffset + c.data.byteLength)) as ArrayBuffer[];
       const mime = streamMimeTypeRef.current;
-      blob = new Blob([result], { type: mime });
+      blob = new Blob(parts, { type: mime });
       ext = getExtFromMime(mime);
     }
 
@@ -338,14 +434,16 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   // --- Real seek-back: swap globalAudio.src to a blob URL from buffer ---
   const seekBack = useCallback((seconds: number) => {
     if (seconds <= 0) {
-      setIsLive(true);
+      returnToLiveInternal();
       return;
     }
 
     const chunks = chunksRef.current;
     if (chunks.length < 2) return;
 
-    const targetTime = Date.now() - seconds * 1000;
+    const now = Date.now();
+    const targetTime = now - seconds * 1000;
+
     // Find first chunk at or after targetTime
     let startIdx = 0;
     for (let i = 0; i < chunks.length; i++) {
@@ -355,19 +453,14 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       }
     }
 
+    // Use BlobPart[] directly to avoid large memcpy
     const selectedChunks = chunks.slice(startIdx);
     if (selectedChunks.length === 0) return;
 
+    const parts = selectedChunks.map(c => c.data.buffer.slice(c.data.byteOffset, c.data.byteOffset + c.data.byteLength)) as ArrayBuffer[];
     const totalSize = selectedChunks.reduce((sum, c) => sum + c.data.byteLength, 0);
-    const result = new Uint8Array(totalSize);
-    let offset = 0;
-    for (const chunk of selectedChunks) {
-      result.set(chunk.data, offset);
-      offset += chunk.data.byteLength;
-    }
-
     const mime = streamMimeTypeRef.current;
-    const blob = new Blob([result], { type: mime });
+    const blob = new Blob(parts, { type: mime });
 
     // Revoke previous seek blob URL
     if (seekBlobUrlRef.current) {
@@ -376,6 +469,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
     const blobUrl = URL.createObjectURL(blob);
     seekBlobUrlRef.current = blobUrl;
+
+    // Calculate actual offset applied
+    const actualOffset = (now - selectedChunks[0].time) / 1000;
+    setCurrentSeekOffsetSeconds(Math.round(actualOffset));
 
     // Swap audio source
     globalAudio.pause();
@@ -386,13 +483,11 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     });
 
     setIsLive(false);
-    console.log("[StreamBuffer] Seek-back to -" + seconds + "s, blob size:", totalSize, "mime:", mime);
+    console.log("[StreamBuffer] Seek-back to -" + Math.round(actualOffset) + "s, blob size:", totalSize, "mime:", mime, "chunks:", selectedChunks.length);
   }, []);
 
   // --- Return to live: restore original stream URL ---
-  const returnToLive = useCallback(() => {
-    if (isLive) return;
-
+  const returnToLiveInternal = useCallback(() => {
     if (seekBlobUrlRef.current) {
       URL.revokeObjectURL(seekBlobUrlRef.current);
       seekBlobUrlRef.current = null;
@@ -409,8 +504,14 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
 
     setIsLive(true);
+    setCurrentSeekOffsetSeconds(0);
     console.log("[StreamBuffer] Returned to live");
-  }, [isLive, currentStation?.streamUrl]);
+  }, [currentStation?.streamUrl]);
+
+  const returnToLive = useCallback(() => {
+    if (isLive) return;
+    returnToLiveInternal();
+  }, [isLive, returnToLiveInternal]);
 
   const canSeekBack = bufferAvailable && bufferSeconds > 2;
 
@@ -425,6 +526,18 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
   }, [bufferAvailable, isPlaying, hasMediaRecorder]);
 
+  // Auto-return to live when blob playback ends naturally
+  useEffect(() => {
+    const handleBlobEnded = () => {
+      if (!isLive && seekBlobUrlRef.current && globalAudio.src.startsWith('blob:')) {
+        console.log("[StreamBuffer] Blob playback ended naturally, returning to live");
+        returnToLiveInternal();
+      }
+    };
+    globalAudio.addEventListener('ended', handleBlobEnded);
+    return () => globalAudio.removeEventListener('ended', handleBlobEnded);
+  }, [isLive, returnToLiveInternal]);
+
   return (
     <StreamBufferContext.Provider value={{
       bufferSeconds,
@@ -434,6 +547,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       canSeekBack,
       bufferAvailable,
       recordingAvailable,
+      currentSeekOffsetSeconds,
       startRecording,
       stopRecording,
       seekBack,

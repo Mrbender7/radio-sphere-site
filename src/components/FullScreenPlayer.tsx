@@ -17,7 +17,8 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const { t } = useTranslation();
   const { isPremium } = usePremium();
-  const { bufferSeconds, isRecording, recordingDuration, isLive, canSeekBack, bufferAvailable, recordingAvailable, startRecording, stopRecording, seekBack, returnToLive } = useStreamBuffer();
+  const { bufferSeconds, isRecording, recordingDuration, isLive, canSeekBack, bufferAvailable, recordingAvailable, currentSeekOffsetSeconds, startRecording, stopRecording, seekBack, returnToLive } = useStreamBuffer();
+  const [seekDraft, setSeekDraft] = useState<number | null>(null);
 
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [lastRecording, setLastRecording] = useState<{ blob: Blob; fileName: string } | null>(null);
@@ -120,7 +121,13 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
     }
   };
 
-  const handleSeekChange = ([val]: number[]) => {
+  const handleSeekDrag = ([val]: number[]) => {
+    // UI only — just update the draft position while dragging
+    setSeekDraft(val);
+  };
+
+  const handleSeekCommit = ([val]: number[]) => {
+    setSeekDraft(null);
     if (val >= 0) {
       returnToLive();
     } else {
@@ -267,11 +274,12 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         {bufferAvailable && canSeekBack && (
           <div className="space-y-1">
             <Slider
-              value={[isLive ? 0 : -1]}
+              value={[seekDraft ?? (isLive ? 0 : -currentSeekOffsetSeconds)]}
               min={-Math.floor(bufferSeconds)}
               max={0}
               step={1}
-              onValueChange={handleSeekChange}
+              onValueChange={handleSeekDrag}
+              onValueCommit={handleSeekCommit}
               className="flex-1 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-[hsl(220,90%,60%)] [&_[role=slider]]:to-[hsl(280,80%,60%)] [&_[role=slider]]:border-0 [&_.absolute]:bg-gradient-to-r [&_.absolute]:from-[hsl(220,90%,60%)] [&_.absolute]:to-[hsl(280,80%,60%)]"
             />
             <div className="flex items-center justify-between">

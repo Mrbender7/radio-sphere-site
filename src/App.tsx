@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,21 +10,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useEffect(() => {
-    const initNative = async () => {
-      try {
-        if (window.hasOwnProperty('Capacitor')) {
-          const { LocalNotifications } = await import('@capacitor/local-notifications');
-          const perm = await LocalNotifications.checkPermissions();
-          if (perm.display !== 'granted') {
-            await LocalNotifications.requestPermissions();
-          }
-        }
-      } catch (e) { console.log("Capacitor not ready"); }
-    };
-    initNative();
-
-  }, []);
+  // Notification permissions are now handled by WelcomePage (user gesture)
+  // and UserGuideModal (re-request). No auto-prompt at startup.
 
   return (
     <QueryClientProvider client={queryClient}>

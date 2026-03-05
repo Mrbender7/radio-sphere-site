@@ -1,7 +1,8 @@
 import { toast } from "@/hooks/use-toast";
 
 /**
- * Re-requests all app permissions (notifications, storage).
+ * Re-requests app permissions (notifications only).
+ * Storage permission is NOT needed — recordings use Cache + Share sheet.
  * Location is handled by Cast plugin natively.
  */
 export async function requestAllPermissions() {
@@ -25,19 +26,7 @@ export async function requestAllPermissions() {
     console.log("[Permissions] Notification permission request failed");
   }
 
-  // Storage (Filesystem)
-  try {
-    total++;
-    if (window.hasOwnProperty("Capacitor")) {
-      const { Filesystem } = await import("@capacitor/filesystem");
-      const result = await Filesystem.requestPermissions();
-      if (result.publicStorage === "granted") granted++;
-    } else {
-      granted++; // Web doesn't need explicit storage permission
-    }
-  } catch {
-    console.log("[Permissions] Storage permission request failed");
-  }
+  // Storage permission removed — Cache + Share flow doesn't need it
 
   try {
     toast({

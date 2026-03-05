@@ -119,6 +119,9 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       const audio = audioRef.current;
       if (!isPlayingRef.current) return;
 
+      // Skip heartbeat reload when playing a time-shift blob
+      if (audio.src && audio.src.startsWith('blob:')) return;
+
       const isDead = audio.paused ||
         audio.networkState === 3 /* NETWORK_NO_SOURCE */ ||
         (audio.readyState < 2 && !audio.paused);
@@ -304,33 +307,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
   }, [handlePlay, handlePause]);
 
-  // Request notification permission at startup (native Android 13+ needs Capacitor API)
-  useEffect(() => {
-    if (notifPermissionAsked.current) return;
-    notifPermissionAsked.current = true;
-
-    const requestNotifPermission = async () => {
-      try {
-        // Try native Capacitor LocalNotifications first (triggers real Android dialog on API 33+)
-        const { LocalNotifications } = await import("@capacitor/local-notifications");
-        const permStatus = await LocalNotifications.checkPermissions();
-        console.log("[RadioSphere] Notification permission status:", permStatus.display);
-        if (permStatus.display === "prompt" || permStatus.display === "prompt-with-rationale") {
-          const result = await LocalNotifications.requestPermissions();
-          console.log("[RadioSphere] Notification permission result:", result.display);
-        }
-      } catch {
-        // Fallback: Web API (works in browser, not in Capacitor WebView for Android 13+)
-        if ("Notification" in window && Notification.permission === "default") {
-          Notification.requestPermission().then(p => {
-            console.log("[RadioSphere] Notification permission (web fallback):", p);
-          });
-        }
-      }
-    };
-
-    requestNotifPermission();
-  }, []);
+  // Notification permissions are now centralized in WelcomePage + UserGuideModal
+  // No auto-prompt here to avoid duplicate dialogs
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -347,8 +325,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     audio.addEventListener("error", handleError);
 
     // Stalled / ended listeners — auto-reload dead streams
+    // SKIP when playing a blob: URL (time-shift seek-back)
     const handleStalled = () => {
       if (!isPlayingRef.current) return;
+      if (audio.src && audio.src.startsWith('blob:')) return; // time-shift blob, don't interfere
       console.log("[RadioSphere] Stream stalled, scheduling reload in 2s");
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       retryTimerRef.current = setTimeout(() => {
@@ -359,6 +339,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
     const handleEnded = () => {
       if (!isPlayingRef.current) return;
+      if (audio.src && audio.src.startsWith('blob:')) return; // time-shift blob ended naturally
       console.log("[RadioSphere] Stream ended, reloading in 2s");
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       retryTimerRef.current = setTimeout(() => {

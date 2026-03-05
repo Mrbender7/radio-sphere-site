@@ -1,5 +1,6 @@
 # radiosphere_v2_5_0.ps1
-# v2.5.0 -- Magnetophone (recording + time-shift buffer), permissions flow, updated user guide
+# v2.5.1 -- Fixes: ICY metadata stripping, real seek-back with blob swap, onValueCommit slider,
+#            watchdog bypass for blob: playback, unified export via Cache+Share, storage permission removed
 $RepoUrl = "https://github.com/Mrbender7/remix-of-radio-sphere"
 $ProjectFolder = "remix-of-radio-sphere"
 $UTF8NoBOM = New-Object System.Text.UTF8Encoding($False)
@@ -123,9 +124,7 @@ if (Test-Path $ManifestPath) {
         "android.permission.ACCESS_WIFI_STATE",
         "android.permission.CHANGE_WIFI_MULTICAST_STATE",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE"
+        "android.permission.ACCESS_COARSE_LOCATION"
     )
     $PermsToAdd = ""
     foreach ($perm in $PermsList) {
