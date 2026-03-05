@@ -6,8 +6,8 @@ import { toast } from "sonner";
 
 interface TimestampedChunk {
   data: Uint8Array;
-  time: number; // ms timestamp
-  byteOffset: number; // cumulative byte offset at start of this chunk
+  time: number;
+  byteOffset: number;
 }
 
 interface StreamBufferContextType {
@@ -35,138 +35,22 @@ export function useStreamBuffer() {
 
 const MAX_BUFFER_DURATION = 5 * 60;
 const MAX_RECORDING_DURATION = 10 * 60;
-const INITIAL_SKIP_MS = 3000;
 const MAX_BUFFER_BYTES = 5 * 60 * 20 * 1024; // ~6MB for 5 min
-
-// --- MIME type / extension mapping ---
-const MIME_TO_EXT: Record<string, string> = {
-  'audio/mpeg': '.mp3',
-  'audio/mp3': '.mp3',
-  'audio/aac': '.aac',
-  'audio/aacp': '.aac',
-  'audio/x-aac': '.aac',
-  'audio/mp4': '.m4a',
-  'audio/x-m4a': '.m4a',
-  'audio/ogg': '.ogg',
-  'application/ogg': '.ogg',
-  'audio/flac': '.flac',
-  'audio/x-flac': '.flac',
-  'audio/x-mpegurl': '.mp3',
-};
-
-const CODEC_TO_MIME: Record<string, string> = {
-  'MP3': 'audio/mpeg',
-  'AAC': 'audio/aac',
-  'AAC+': 'audio/aac',
-  'OGG': 'audio/ogg',
-  'FLAC': 'audio/flac',
-  'OPUS': 'audio/ogg',
-  'WMA': 'audio/mpeg',
-};
-
-function getExtFromMime(mime: string): string {
-  const clean = mime.split(';')[0].trim().toLowerCase();
-  return MIME_TO_EXT[clean] || '.mp3';
-}
-
-function getMimeFromCodec(codec: string | undefined): string {
-  if (!codec) return 'audio/mpeg';
-  return CODEC_TO_MIME[codec.toUpperCase()] || 'audio/mpeg';
-}
-
-// --- ICY metadata parser (stateful, handles cross-chunk boundaries) ---
-class IcyStripper {
-  private metaint: number;
-  private bytesUntilMeta: number;
-  private metaBytesRemaining: number;
-  private inMeta: boolean;
-
-  constructor(metaint: number) {
-    this.metaint = metaint;
-    this.bytesUntilMeta = metaint;
-    this.metaBytesRemaining = 0;
-    this.inMeta = false;
-  }
-
-  /** Strip ICY metadata from a raw chunk, returning only audio bytes */
-  strip(input: Uint8Array): Uint8Array {
-    const audioParts: Uint8Array[] = [];
-    let i = 0;
-
-    while (i < input.length) {
-      if (this.inMeta) {
-        // Still consuming metadata bytes
-        const skip = Math.min(this.metaBytesRemaining, input.length - i);
-        this.metaBytesRemaining -= skip;
-        i += skip;
-        if (this.metaBytesRemaining <= 0) {
-          this.inMeta = false;
-          this.bytesUntilMeta = this.metaint;
-        }
-      } else {
-        // Audio data
-        const audioBytes = Math.min(this.bytesUntilMeta, input.length - i);
-        audioParts.push(input.subarray(i, i + audioBytes));
-        this.bytesUntilMeta -= audioBytes;
-        i += audioBytes;
-
-        if (this.bytesUntilMeta <= 0) {
-          // Next byte is the metadata length indicator
-          if (i < input.length) {
-            const metaLen = input[i] * 16;
-            i++;
-            if (metaLen > 0) {
-              this.inMeta = true;
-              this.metaBytesRemaining = metaLen;
-            } else {
-              // No metadata, reset
-              this.bytesUntilMeta = this.metaint;
-            }
-          } else {
-            // Length byte is in the next chunk — we need to handle this
-            // Set a flag: next chunk starts with the meta length byte
-            this.bytesUntilMeta = 0; // will read length byte first next time
-          }
-        }
-      }
-    }
-
-    if (audioParts.length === 0) return new Uint8Array(0);
-    if (audioParts.length === 1) return audioParts[0];
-
-    const totalLen = audioParts.reduce((s, p) => s + p.length, 0);
-    const result = new Uint8Array(totalLen);
-    let offset = 0;
-    for (const part of audioParts) {
-      result.set(part, offset);
-      offset += part.length;
-    }
-    return result;
-  }
-}
 
 export function StreamBufferProvider({ children }: { children: React.ReactNode }) {
   const { currentStation, isPlaying } = usePlayer();
   const { t } = useTranslation();
 
-  const hasMediaRecorder = typeof MediaRecorder !== 'undefined';
-
   const chunksRef = useRef<TimestampedChunk[]>([]);
   const totalBytesRef = useRef(0);
-  const cumulativeBytesRef = useRef(0); // total bytes ever received (for byteOffset)
-  const fetchControllerRef = useRef<AbortController | null>(null);
-  const fetchStartTimeRef = useRef(0);
+  const cumulativeBytesRef = useRef(0);
   const recordingStartIdxRef = useRef(-1);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const seekBlobUrlRef = useRef<string | null>(null);
   const stationIdRef = useRef<string | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaChunksRef = useRef<Blob[]>([]);
-  const usingMediaRecorderRef = useRef(false);
-  const streamMimeTypeRef = useRef<string>('audio/mpeg');
-  const liveStreamUrlRef = useRef<string | null>(null);
-  const icyStripperRef = useRef<IcyStripper | null>(null);
-  const waitingMetaLengthRef = useRef(false);
+  const captureRecorderRef = useRef<MediaRecorder | null>(null);
+  const webmHeaderRef = useRef<Uint8Array | null>(null);
+  const isFirstChunkRef = useRef(true);
 
   const [bufferSeconds, setBufferSeconds] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -187,9 +71,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setCurrentSeekOffsetSeconds(0);
     setBufferAvailable(false);
     recordingStartIdxRef.current = -1;
-    streamMimeTypeRef.current = 'audio/mpeg';
-    icyStripperRef.current = null;
-    waitingMetaLengthRef.current = false;
+    webmHeaderRef.current = null;
+    isFirstChunkRef.current = true;
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
@@ -197,13 +80,6 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     if (seekBlobUrlRef.current) {
       URL.revokeObjectURL(seekBlobUrlRef.current);
       seekBlobUrlRef.current = null;
-    }
-  }, []);
-
-  const stopFetch = useCallback(() => {
-    if (fetchControllerRef.current) {
-      fetchControllerRef.current.abort();
-      fetchControllerRef.current = null;
     }
   }, []);
 
@@ -229,170 +105,141 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setBufferSeconds(Math.min(duration, MAX_BUFFER_DURATION));
   }, []);
 
-  // Try fetching a stream URL, with CORS proxy fallback
-  const fetchWithCorsFallback = useCallback(async (streamUrl: string, signal: AbortSignal): Promise<Response> => {
-    try {
-      const response = await fetch(streamUrl, {
-        signal,
-        headers: { 'Accept': '*/*', 'Icy-MetaData': '1' },
-      });
-      if (response.ok && response.body) return response;
-      throw new Error('Response not ok or no body');
-    } catch (directError: any) {
-      if (directError?.name === 'AbortError') throw directError;
-      console.warn("[StreamBuffer] Direct fetch failed, trying CORS proxy:", directError?.message);
-      // Retry via CORS proxy
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(streamUrl)}`;
-      const response = await fetch(proxyUrl, {
-        signal,
-        headers: { 'Accept': '*/*', 'Icy-MetaData': '1' },
-      });
-      if (!response.ok || !response.body) throw new Error('Proxy fetch also failed');
-      console.log("[StreamBuffer] CORS proxy succeeded for:", streamUrl);
-      return response;
+  // --- Capture via MediaRecorder on globalAudio.captureStream() ---
+  const stopCapture = useCallback(() => {
+    if (captureRecorderRef.current) {
+      try {
+        if (captureRecorderRef.current.state !== 'inactive') {
+          captureRecorderRef.current.stop();
+        }
+      } catch (e) {
+        // ignore
+      }
+      captureRecorderRef.current = null;
     }
   }, []);
 
-  // Start fetching stream in parallel — capture Content-Type + ICY headers
-  const startFetch = useCallback(async (streamUrl: string) => {
-    stopFetch();
-    clearBuffer();
-    liveStreamUrlRef.current = streamUrl;
+  const startCapture = useCallback(() => {
+    stopCapture();
 
-    const controller = new AbortController();
-    fetchControllerRef.current = controller;
-    fetchStartTimeRef.current = Date.now();
+    const stream = (globalAudio as any).captureStream?.() || (globalAudio as any).mozCaptureStream?.();
+    if (!stream) {
+      console.warn("[StreamBuffer] captureStream not available");
+      setBufferAvailable(false);
+      setRecordingAvailable(false);
+      return;
+    }
 
     try {
-      const response = await fetchWithCorsFallback(streamUrl, controller.signal);
+      isFirstChunkRef.current = true;
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
 
-      // Capture Content-Type from response
-      const contentType = response.headers.get('Content-Type') || '';
-      const cleanType = contentType.split(';')[0].trim().toLowerCase();
-      if (cleanType && cleanType !== 'application/octet-stream' && cleanType.startsWith('audio/')) {
-        streamMimeTypeRef.current = cleanType;
-        console.log("[StreamBuffer] Detected stream MIME:", cleanType);
-      } else if (currentStation?.codec) {
-        streamMimeTypeRef.current = getMimeFromCodec(currentStation.codec);
-        console.log("[StreamBuffer] Using codec fallback MIME:", streamMimeTypeRef.current);
-      }
+      recorder.ondataavailable = async (e) => {
+        if (e.data.size === 0) return;
 
-      // Check for ICY metaint
-      const icyMetaint = response.headers.get('icy-metaint');
-      if (icyMetaint) {
-        const metaintVal = parseInt(icyMetaint, 10);
-        if (metaintVal > 0) {
-          icyStripperRef.current = new IcyStripper(metaintVal);
-          console.log("[StreamBuffer] ICY metaint detected:", metaintVal);
+        try {
+          const arrayBuf = await e.data.arrayBuffer();
+          const data = new Uint8Array(arrayBuf);
+
+          // Store WebM header from the first chunk
+          if (isFirstChunkRef.current) {
+            webmHeaderRef.current = data.slice();
+            isFirstChunkRef.current = false;
+          }
+
+          const chunk: TimestampedChunk = {
+            data,
+            time: Date.now(),
+            byteOffset: cumulativeBytesRef.current,
+          };
+          cumulativeBytesRef.current += data.byteLength;
+          chunksRef.current.push(chunk);
+          totalBytesRef.current += data.byteLength;
+
+          if (!bufferAvailable) setBufferAvailable(true);
+
+          trimBuffer();
+          updateBufferSeconds();
+        } catch (err) {
+          console.warn("[StreamBuffer] Error processing chunk:", err);
         }
-      }
+      };
 
-      setBufferAvailable(true);
-      const reader = response.body.getReader();
+      recorder.onerror = (e) => {
+        console.warn("[StreamBuffer] MediaRecorder error:", e);
+      };
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done || controller.signal.aborted) break;
-
-        if (Date.now() - fetchStartTimeRef.current < INITIAL_SKIP_MS) continue;
-
-        // Strip ICY metadata if present
-        let audioData: Uint8Array;
-        if (icyStripperRef.current) {
-          audioData = icyStripperRef.current.strip(value);
-          if (audioData.length === 0) continue;
-        } else {
-          audioData = value;
-        }
-
-        const chunk: TimestampedChunk = {
-          data: audioData,
-          time: Date.now(),
-          byteOffset: cumulativeBytesRef.current,
-        };
-        cumulativeBytesRef.current += audioData.byteLength;
-        chunksRef.current.push(chunk);
-        totalBytesRef.current += audioData.byteLength;
-        trimBuffer();
-        updateBufferSeconds();
-      }
-    } catch (e: any) {
-      if (e?.name !== 'AbortError') {
-        console.warn("[StreamBuffer] Fetch error (CORS or network):", e?.message);
-        setBufferAvailable(false);
-      }
+      recorder.start(1000); // 1s timeslice
+      captureRecorderRef.current = recorder;
+      console.log("[StreamBuffer] MediaRecorder capture started");
+    } catch (e) {
+      console.warn("[StreamBuffer] Failed to start MediaRecorder:", e);
+      setBufferAvailable(false);
+      setRecordingAvailable(false);
     }
-  }, [stopFetch, clearBuffer, trimBuffer, updateBufferSeconds, currentStation?.codec, fetchWithCorsFallback]);
+  }, [stopCapture, trimBuffer, updateBufferSeconds, bufferAvailable]);
 
-  // React to station/playing changes
+  // React to station/playing changes — start capture when audio is playing
   useEffect(() => {
-    const streamUrl = currentStation?.streamUrl;
     const stationId = currentStation?.id ?? null;
 
-    if (!streamUrl || !isPlaying) {
-      stopFetch();
+    if (!currentStation?.streamUrl || !isPlaying) {
+      stopCapture();
       clearBuffer();
       stationIdRef.current = null;
-      liveStreamUrlRef.current = null;
       return;
     }
 
     if (stationId !== stationIdRef.current) {
       stationIdRef.current = stationId;
-      liveStreamUrlRef.current = streamUrl;
-      startFetch(streamUrl);
+      clearBuffer();
+      // Wait for audio to actually be playing before capturing
+      const handlePlaying = () => {
+        startCapture();
+        globalAudio.removeEventListener('playing', handlePlaying);
+      };
+      // If already playing, start immediately
+      if (!globalAudio.paused && globalAudio.readyState >= 2) {
+        startCapture();
+      } else {
+        globalAudio.addEventListener('playing', handlePlaying);
+        return () => {
+          globalAudio.removeEventListener('playing', handlePlaying);
+        };
+      }
     }
-  }, [currentStation?.id, currentStation?.streamUrl, isPlaying, startFetch, stopFetch, clearBuffer]);
+  }, [currentStation?.id, currentStation?.streamUrl, isPlaying, startCapture, stopCapture, clearBuffer]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopFetch();
+      stopCapture();
       if (seekBlobUrlRef.current) URL.revokeObjectURL(seekBlobUrlRef.current);
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
     };
-  }, [stopFetch]);
+  }, [stopCapture]);
 
   const startRecording = useCallback(() => {
-    if (bufferAvailable && chunksRef.current.length > 0) {
-      usingMediaRecorderRef.current = false;
-      
-      if (!isLive && currentSeekOffsetSeconds > 0) {
-        // In seek-back: find chunk corresponding to current seek position
-        const now = Date.now();
-        const targetTime = now - currentSeekOffsetSeconds * 1000;
-        let startIdx = 0;
-        for (let i = 0; i < chunksRef.current.length; i++) {
-          if (chunksRef.current[i].time >= targetTime) {
-            startIdx = i;
-            break;
-          }
+    if (!bufferAvailable || chunksRef.current.length === 0) {
+      toast.error(t("player.recordingNotAvailable") || "Recording not available");
+      return;
+    }
+
+    if (!isLive && currentSeekOffsetSeconds > 0) {
+      // In seek-back: find chunk corresponding to current seek position
+      const now = Date.now();
+      const targetTime = now - currentSeekOffsetSeconds * 1000;
+      let startIdx = 0;
+      for (let i = 0; i < chunksRef.current.length; i++) {
+        if (chunksRef.current[i].time >= targetTime) {
+          startIdx = i;
+          break;
         }
-        recordingStartIdxRef.current = startIdx;
-        console.log("[StreamBuffer] Recording started from seek-back position, offset:", currentSeekOffsetSeconds, "s, startIdx:", startIdx);
-      } else {
-        recordingStartIdxRef.current = chunksRef.current.length - 1;
       }
+      recordingStartIdxRef.current = startIdx;
+      console.log("[StreamBuffer] Recording started from seek-back position, offset:", currentSeekOffsetSeconds, "s, startIdx:", startIdx);
     } else {
-      usingMediaRecorderRef.current = true;
-      try {
-        const stream = (globalAudio as any).captureStream?.() || (globalAudio as any).mozCaptureStream?.();
-        if (!stream) {
-          toast.error("Recording not available in this browser");
-          return;
-        }
-        mediaChunksRef.current = [];
-        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-        recorder.ondataavailable = (e) => {
-          if (e.data.size > 0) mediaChunksRef.current.push(e.data);
-        };
-        recorder.start(1000);
-        mediaRecorderRef.current = recorder;
-      } catch (e) {
-        console.warn("[StreamBuffer] MediaRecorder fallback failed:", e);
-        toast.error("Recording not available");
-        return;
-      }
+      recordingStartIdxRef.current = chunksRef.current.length - 1;
     }
 
     setIsRecording(true);
@@ -420,49 +267,40 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       recordingTimerRef.current = null;
     }
 
-    let blob: Blob;
-    let ext: string;
+    if (recordingStartIdxRef.current < 0) return null;
+    const chunks = chunksRef.current;
+    const startIdx = Math.max(0, recordingStartIdxRef.current);
+    const recordedChunks = chunks.slice(startIdx);
+    recordingStartIdxRef.current = -1;
 
-    if (usingMediaRecorderRef.current && mediaRecorderRef.current) {
-      const recorder = mediaRecorderRef.current;
-      await new Promise<void>((resolve) => {
-        recorder.onstop = () => resolve();
-        recorder.stop();
-      });
-      mediaRecorderRef.current = null;
+    if (recordedChunks.length === 0) return null;
 
-      if (mediaChunksRef.current.length === 0) return null;
-      blob = new Blob(mediaChunksRef.current, { type: 'audio/webm' });
-      mediaChunksRef.current = [];
-      ext = '.webm';
-    } else {
-      if (recordingStartIdxRef.current < 0) return null;
-      const chunks = chunksRef.current;
-      const startIdx = Math.max(0, recordingStartIdxRef.current);
-      const recordedChunks = chunks.slice(startIdx);
-      recordingStartIdxRef.current = -1;
+    // Build blob: prepend WebM header if the first recorded chunk isn't the header chunk
+    const parts: BlobPart[] = [];
 
-      if (recordedChunks.length === 0) return null;
-
-      // Use BlobPart[] directly — avoids large memcpy
-      const parts = recordedChunks.map(c => c.data.buffer.slice(c.data.byteOffset, c.data.byteOffset + c.data.byteLength)) as ArrayBuffer[];
-      const mime = streamMimeTypeRef.current;
-      blob = new Blob(parts, { type: mime });
-      ext = getExtFromMime(mime);
+    // Always include the WebM header at the beginning for a valid file
+    if (webmHeaderRef.current && startIdx > 0) {
+      parts.push(new Uint8Array(webmHeaderRef.current));
     }
+
+    for (const c of recordedChunks) {
+      parts.push(new Uint8Array(c.data));
+    }
+
+    const blob = new Blob(parts, { type: 'audio/webm' });
 
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10);
     const timeStr = `${String(now.getHours()).padStart(2, '0')}h${String(now.getMinutes()).padStart(2, '0')}`;
     const stationName = (currentStation?.name ?? 'Station').replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').replace(/\s+/g, '_').slice(0, 40);
-    const fileName = `RadioSphere_${stationName}_${dateStr}_${timeStr}${ext}`;
+    const fileName = `RadioSphere_${stationName}_${dateStr}_${timeStr}.webm`;
 
     toast.success(t("player.recordingStopped"));
     setRecordingDuration(0);
     return { blob, fileName };
   }, [isRecording, currentStation?.name, t]);
 
-  // --- Real seek-back: swap globalAudio.src to a blob URL from buffer ---
+  // --- Seek-back: build blob from buffer chunks with WebM header ---
   const seekBack = useCallback((seconds: number) => {
     if (seconds <= 0) {
       returnToLiveInternal();
@@ -475,7 +313,6 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     const now = Date.now();
     const targetTime = now - seconds * 1000;
 
-    // Find first chunk at or after targetTime
     let startIdx = 0;
     for (let i = 0; i < chunks.length; i++) {
       if (chunks[i].time >= targetTime) {
@@ -484,16 +321,22 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       }
     }
 
-    // Use BlobPart[] directly to avoid large memcpy
     const selectedChunks = chunks.slice(startIdx);
     if (selectedChunks.length === 0) return;
 
-    const parts = selectedChunks.map(c => c.data.buffer.slice(c.data.byteOffset, c.data.byteOffset + c.data.byteLength)) as ArrayBuffer[];
-    const totalSize = selectedChunks.reduce((sum, c) => sum + c.data.byteLength, 0);
-    const mime = streamMimeTypeRef.current;
-    const blob = new Blob(parts, { type: mime });
+    // Build blob with WebM header prepended for playability
+    const parts: BlobPart[] = [];
 
-    // Revoke previous seek blob URL
+    if (webmHeaderRef.current && startIdx > 0) {
+      parts.push(new Uint8Array(webmHeaderRef.current));
+    }
+
+    for (const c of selectedChunks) {
+      parts.push(new Uint8Array(c.data));
+    }
+
+    const blob = new Blob(parts, { type: 'audio/webm' });
+
     if (seekBlobUrlRef.current) {
       URL.revokeObjectURL(seekBlobUrlRef.current);
     }
@@ -501,11 +344,9 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     const blobUrl = URL.createObjectURL(blob);
     seekBlobUrlRef.current = blobUrl;
 
-    // Calculate actual offset applied
     const actualOffset = (now - selectedChunks[0].time) / 1000;
     setCurrentSeekOffsetSeconds(Math.round(actualOffset));
 
-    // Swap audio source
     globalAudio.pause();
     globalAudio.src = blobUrl;
     globalAudio.load();
@@ -514,7 +355,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     });
 
     setIsLive(false);
-    console.log("[StreamBuffer] Seek-back to -" + Math.round(actualOffset) + "s, blob size:", totalSize, "mime:", mime, "chunks:", selectedChunks.length);
+    console.log("[StreamBuffer] Seek-back to -" + Math.round(actualOffset) + "s, blob size:", blob.size, "chunks:", selectedChunks.length);
   }, []);
 
   // --- Return to live: restore original stream URL ---
@@ -524,7 +365,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       seekBlobUrlRef.current = null;
     }
 
-    const streamUrl = liveStreamUrlRef.current || currentStation?.streamUrl;
+    const streamUrl = currentStation?.streamUrl;
     if (streamUrl) {
       globalAudio.pause();
       globalAudio.src = streamUrl;
@@ -549,13 +390,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (bufferAvailable) {
       setRecordingAvailable(true);
-    } else if (isPlaying && hasMediaRecorder) {
-      const hasCapture = !!(globalAudio as any).captureStream || !!(globalAudio as any).mozCaptureStream;
-      setRecordingAvailable(hasCapture);
     } else {
       setRecordingAvailable(false);
     }
-  }, [bufferAvailable, isPlaying, hasMediaRecorder]);
+  }, [bufferAvailable]);
 
   // Auto-return to live when blob playback ends naturally OR errors out
   useEffect(() => {
