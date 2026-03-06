@@ -1,4 +1,4 @@
-package com.radiosphere.app;
+package com.fhm.radiosphere;
 
 import android.content.Context;
 import android.content.Intent;

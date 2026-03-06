@@ -1,4 +1,4 @@
-package com.radiosphere.app;
+package com.fhm.radiosphere;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

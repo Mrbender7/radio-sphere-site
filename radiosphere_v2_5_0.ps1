@@ -18,7 +18,7 @@ cd $ProjectFolder
 Write-Host ">>> Configuration Capacitor..." -ForegroundColor Yellow
 $ConfigJSON = @"
 {
-  "appId": "com.radiosphere.app",
+  "appId": "com.fhm.radiosphere",
   "appName": "Radio Sphere",
   "webDir": "dist",
   "server": { "androidScheme": "https", "allowNavigation": ["*"] }
@@ -218,7 +218,7 @@ if (Test-Path $ManifestPath) {
         android:name=".MediaToggleReceiver"
         android:exported="false">
         <intent-filter>
-            <action android:name="com.radiosphere.TOGGLE_PLAYBACK" />
+            <action android:name="com.fhm.radiosphere.TOGGLE_PLAYBACK" />
         </intent-filter>
     </receiver>
 "@
@@ -267,7 +267,7 @@ if (!(Test-Path $PackageDir)) {
     }
 }
 
-$ActualPackage = "com.radiosphere.app"
+$ActualPackage = "com.fhm.radiosphere"
 $MainActSearch = Get-ChildItem -Path $JavaSrcBase -Filter "MainActivity.*" -Recurse | Select-Object -First 1
 if ($MainActSearch) {
     $MainContent = Get-Content $MainActSearch.FullName -Raw
@@ -649,9 +649,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     private boolean foregroundStarted = false;
 
     // Mirror mode constants (replaces MediaPlaybackService)
-    public static final String ACTION_UPDATE = "com.radiosphere.ACTION_UPDATE_MEDIA";
-    public static final String ACTION_STOP = "com.radiosphere.ACTION_STOP_MEDIA";
-    public static final String BROADCAST_TOGGLE = "com.radiosphere.TOGGLE_PLAYBACK";
+    public static final String ACTION_UPDATE = "com.fhm.radiosphere.ACTION_UPDATE_MEDIA";
+    public static final String ACTION_STOP = "com.fhm.radiosphere.ACTION_STOP_MEDIA";
+    public static final String BROADCAST_TOGGLE = "com.fhm.radiosphere.TOGGLE_PLAYBACK";
 
     private Bitmap cachedMirrorArtwork;
     private String cachedMirrorLogoUrl = "";

@@ -1,4 +1,4 @@
-package com.radiosphere.app;
+package com.fhm.radiosphere;
 
 import android.content.Context;
 import com.google.android.gms.cast.CastMediaControlIntent;

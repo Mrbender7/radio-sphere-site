@@ -68,14 +68,14 @@
 <!-- 3. Chromecast — CastOptionsProvider (OBLIGATOIRE pour Cast SDK) -->
 <meta-data
     android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-    android:value="com.radiosphere.app.CastOptionsProvider" />
+    android:value="com.fhm.radiosphere.CastOptionsProvider" />
 
 <!-- 4. Broadcast receiver for notification toggle (unified) -->
 <receiver
     android:name=".MediaToggleReceiver"
     android:exported="false">
     <intent-filter>
-        <action android:name="com.radiosphere.TOGGLE_PLAYBACK" />
+        <action android:name="com.fhm.radiosphere.TOGGLE_PLAYBACK" />
     </intent-filter>
 </receiver>
 

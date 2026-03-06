@@ -60,8 +60,8 @@ Copiez les fichiers suivants dans votre projet Android :
 ```
 android-auto/RadioBrowserService.kt  →  android/app/src/main/java/app/lovable/radiosphere/RadioBrowserService.kt
 android-auto/RadioAutoPlugin.kt      →  android/app/src/main/java/app/lovable/radiosphere/RadioAutoPlugin.kt
-android-auto/CastPlugin.java         →  android/app/src/main/java/com/radiosphere/app/CastPlugin.java
-android-auto/CastOptionsProvider.java →  android/app/src/main/java/com/radiosphere/app/CastOptionsProvider.java
+android-auto/CastPlugin.java         →  android/app/src/main/java/com/fhm/radiosphere/CastPlugin.java
+android-auto/CastOptionsProvider.java →  android/app/src/main/java/com/fhm/radiosphere/CastOptionsProvider.java
 android-auto/res/xml/automotive_app_desc.xml  →  android/app/src/main/res/xml/automotive_app_desc.xml
 ```
 
@@ -86,7 +86,7 @@ Ajoutez à l'intérieur de la balise `<application>` :
 <!-- Chromecast — OBLIGATOIRE pour Cast SDK -->
 <meta-data
     android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
-    android:value="com.radiosphere.app.CastOptionsProvider" />
+    android:value="com.fhm.radiosphere.CastOptionsProvider" />
 ```
 
 ## Étape 5 : Enregistrer les plugins Capacitor
@@ -95,7 +95,7 @@ Dans `android/app/src/main/java/.../MainActivity.kt` :
 
 ```kotlin
 import app.lovable.radiosphere.RadioAutoPlugin
-import com.radiosphere.app.CastPlugin
+import com.fhm.radiosphere.CastPlugin
 
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

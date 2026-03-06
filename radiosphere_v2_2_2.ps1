@@ -13,7 +13,7 @@ cd $ProjectFolder
 Write-Host ">>> Configuration Capacitor..." -ForegroundColor Yellow
 $ConfigJSON = @"
 {
-  "appId": "com.radiosphere.app",
+  "appId": "com.fhm.radiosphere",
   "appName": "Radio Sphere",
   "webDir": "dist",
   "server": { "androidScheme": "https", "allowNavigation": ["*"] }

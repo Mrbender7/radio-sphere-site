@@ -1,4 +1,4 @@
-package com.radiosphere.app;
+package com.fhm.radiosphere;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -79,9 +79,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     private boolean foregroundStarted = false;
 
     // Mirror mode constants (replaces MediaPlaybackService)
-    public static final String ACTION_UPDATE = "com.radiosphere.ACTION_UPDATE_MEDIA";
-    public static final String ACTION_STOP = "com.radiosphere.ACTION_STOP_MEDIA";
-    public static final String BROADCAST_TOGGLE = "com.radiosphere.TOGGLE_PLAYBACK";
+    public static final String ACTION_UPDATE = "com.fhm.radiosphere.ACTION_UPDATE_MEDIA";
+    public static final String ACTION_STOP = "com.fhm.radiosphere.ACTION_STOP_MEDIA";
+    public static final String BROADCAST_TOGGLE = "com.fhm.radiosphere.TOGGLE_PLAYBACK";
 
     // Mirror mode artwork cache
     private Bitmap cachedMirrorArtwork;
