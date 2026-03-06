@@ -918,8 +918,8 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             case ROOT_ID: {
                 List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
                 items.add(buildBrowsableItem(TOP_STATIONS_ID, "Top Stations", "Les stations les plus populaires"));
-                items.add(buildBrowsableItem(FAVORITES_ID, "Mes Favoris", "Vos stations préférées"));
-                items.add(buildBrowsableItem(RECENTS_ID, "Récents", "Dernières stations écoutées"));
+                items.add(buildBrowsableItem(FAVORITES_ID, "Mes Favoris", "Vos stations pr\u00e9f\u00e9r\u00e9es"));
+                items.add(buildBrowsableItem(RECENTS_ID, "R\u00e9cents", "Derni\u00e8res stations \u00e9cout\u00e9es"));
                 result.sendResult(items);
                 break;
             }
@@ -1397,10 +1397,13 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     }
 
     private MediaBrowserCompat.MediaItem buildBrowsableItem(String mediaId, String title, String subtitle) {
-        Uri folderIcon = Uri.parse("android.resource://" + getPackageName() + "/drawable/station_placeholder");
-        MediaDescriptionCompat desc = new MediaDescriptionCompat.Builder()
-            .setMediaId(mediaId).setTitle(title).setSubtitle(subtitle).setIconUri(folderIcon).build();
-        return new MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
+        MediaDescriptionCompat.Builder builder = new MediaDescriptionCompat.Builder()
+            .setMediaId(mediaId).setTitle(title).setSubtitle(subtitle);
+        try {
+            Uri appIcon = Uri.parse("android.resource://" + getPackageName() + "/mipmap/ic_launcher");
+            builder.setIconUri(appIcon);
+        } catch (Exception e) { Log.w(TAG, "Could not set folder icon", e); }
+        return new MediaBrowserCompat.MediaItem(builder.build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
     }
 
     private MediaBrowserCompat.MediaItem buildInfoItem(String title, String subtitle) {
