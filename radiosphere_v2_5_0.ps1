@@ -1325,6 +1325,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         return null;
     }
 
+    private List<StationData> searchStations(String query, int limit) {
         List<StationData> nameResults = new ArrayList<>();
         List<StationData> tagResults = new ArrayList<>();
         for (String mirror : API_MIRRORS) {
