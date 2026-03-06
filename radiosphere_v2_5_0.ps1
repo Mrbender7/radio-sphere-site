@@ -577,8 +577,8 @@ $CastOptionsProviderJava = $CastOptionsProviderJava -replace '__PACKAGE__', $Act
 [System.IO.File]::WriteAllText((Join-Path $PackageDir "CastOptionsProvider.java"), $CastOptionsProviderJava, $UTF8NoBOM)
 Write-Host "    CastOptionsProvider.java genere avec succes (v2.4.7)" -ForegroundColor Green
 
-# --- RadioBrowserService.java (v2.5.1 -- unified service: Android Auto + notification mirror) ---
-Write-Host "    Generation RadioBrowserService.java (v2.5.1)..." -ForegroundColor DarkGray
+# --- RadioBrowserService.java (v2.5.2 -- unified service + favorites fix + onPlayFromMediaId fallback) ---
+Write-Host "    Generation RadioBrowserService.java (v2.5.2)..." -ForegroundColor DarkGray
 $RadioBrowserServiceJava = @'
 package __PACKAGE__;
 
