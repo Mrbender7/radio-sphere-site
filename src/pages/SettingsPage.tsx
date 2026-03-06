@@ -639,7 +639,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
       )}
 
       {/* App version */}
-      <p className="text-center text-[10px] text-muted-foreground mb-6">Radio Sphere v2.4.8</p>
+      <p className="text-center text-[10px] text-muted-foreground mb-6">Radio Sphere v1.0</p>
 
       {/* Unavailable stations dialog after import */}
       <Dialog open={showUnavailableDialog} onOpenChange={setShowUnavailableDialog}>
