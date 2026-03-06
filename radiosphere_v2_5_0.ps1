@@ -1396,8 +1396,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     }
 
     private MediaBrowserCompat.MediaItem buildBrowsableItem(String mediaId, String title, String subtitle) {
+        Uri folderIcon = Uri.parse("android.resource://" + getPackageName() + "/drawable/station_placeholder");
         MediaDescriptionCompat desc = new MediaDescriptionCompat.Builder()
-            .setMediaId(mediaId).setTitle(title).setSubtitle(subtitle).build();
+            .setMediaId(mediaId).setTitle(title).setSubtitle(subtitle).setIconUri(folderIcon).build();
         return new MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
     }
 
@@ -1410,7 +1411,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
 '@
 $RadioBrowserServiceJava = $RadioBrowserServiceJava -replace '__PACKAGE__', $ActualPackage
 [System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioBrowserService.java"), $RadioBrowserServiceJava, $UTF8NoBOM)
-Write-Host "    RadioBrowserService.java genere avec succes (v2.5.1)" -ForegroundColor Green
+Write-Host "    RadioBrowserService.java genere avec succes (v2.5.2)" -ForegroundColor Green
 
 Write-Host "    Tous les fichiers Java generes avec succes!" -ForegroundColor Green
 
