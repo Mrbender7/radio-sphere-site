@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Handles BOTH Android Auto (browse tree + ExoPlayer) AND standard notification
  * (mirror mode from WebView via RadioAutoPlugin intents).
  *
- * v2.5.1: Unified service — replaces MediaPlaybackService.
+ * v2.5.2: Fixed onPlayFromMediaId fallback + static updateFavorites for live sync.
  */
 public class RadioBrowserService extends MediaBrowserServiceCompat {
 
@@ -86,6 +86,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     // Mirror mode artwork cache
     private Bitmap cachedMirrorArtwork;
     private String cachedMirrorLogoUrl = "";
+
+    // Static instance for live favorites updates from Capacitor plugin
+    private static RadioBrowserService activeInstance;
 
     private static final String[] API_MIRRORS = {
         "https://de1.api.radio-browser.info",
@@ -122,6 +125,30 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             this.logo = logo;
             this.country = country;
             this.tags = tags;
+        }
+    }
+
+    // --- Static methods for live data sync from Capacitor plugin ---
+
+    /**
+     * Called by RadioAutoPlugin.syncFavorites() to notify the running service
+     * that favorites have been updated. Triggers a browse tree refresh.
+     */
+    public static void updateFavorites(String json) {
+        Log.d(TAG, "updateFavorites called, instance=" + (activeInstance != null));
+        if (activeInstance != null) {
+            activeInstance.notifyChildrenChanged(FAVORITES_ID);
+        }
+    }
+
+    /**
+     * Called by RadioAutoPlugin.syncRecents() to notify the running service
+     * that recents have been updated. Triggers a browse tree refresh.
+     */
+    public static void updateRecents(String json) {
+        Log.d(TAG, "updateRecents called, instance=" + (activeInstance != null));
+        if (activeInstance != null) {
+            activeInstance.notifyChildrenChanged(RECENTS_ID);
         }
     }
 
@@ -193,7 +220,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             foregroundStarted = true;
             Log.d(TAG, "Started foreground service for playback");
         } else {
-            // Update existing notification
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null) nm.notify(AUTO_NOTIFICATION_ID, notification);
         }
@@ -208,7 +234,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             openIntent != null ? openIntent : new Intent(),
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Toggle action via broadcast (captured by MediaToggleReceiver)
         Intent toggleIntent = new Intent(BROADCAST_TOGGLE);
         toggleIntent.setPackage(getPackageName());
         PendingIntent togglePendingIntent = PendingIntent.getBroadcast(this, 0,
@@ -248,6 +273,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     @Override
     public void onCreate() {
         super.onCreate();
+        activeInstance = this;
         createNotificationChannel();
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         player = new ExoPlayer.Builder(this).build();
@@ -291,7 +317,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             final String finalName = name;
             final boolean finalIsPlaying = isPlaying;
 
-            // Load artwork in background if URL changed
             if (!logo.isEmpty() && !logo.equals(cachedMirrorLogoUrl)) {
                 cachedMirrorLogoUrl = logo;
                 new Thread(() -> {
@@ -309,12 +334,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         return START_NOT_STICKY;
     }
 
-    /**
-     * Mirror mode: update MediaSession metadata + notification from WebView state.
-     * Uses the same MediaSession as Android Auto for unified control.
-     */
     private void updateMirrorSessionAndNotification(String name, boolean isPlaying, Bitmap artwork) {
-        // Metadata
         MediaMetadataCompat.Builder metaBuilder = new MediaMetadataCompat.Builder()
             .putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
             .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "Radio Sphere")
@@ -332,7 +352,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
         mediaSession.setMetadata(metaBuilder.build());
 
-        // Playback state
         int state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
         long actions = PlaybackStateCompat.ACTION_PLAY
             | PlaybackStateCompat.ACTION_PAUSE
@@ -343,7 +362,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             .setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
             .build());
 
-        // Build and show notification
         Notification notification = buildUnifiedNotification(name, isPlaying, artwork);
         if (!foregroundStarted) {
             if (Build.VERSION.SDK_INT >= 34) {
@@ -378,6 +396,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
 
     @Override
     public void onDestroy() {
+        activeInstance = null;
         cancelBufferingTimeout();
         playbackRequestSeq.incrementAndGet();
         streamResolverExecutor.shutdownNow();
@@ -397,17 +416,19 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     @Nullable
     @Override
     public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
+        Log.d(TAG, "onGetRoot called by: " + clientPackageName);
         return new BrowserRoot(ROOT_ID, null);
     }
 
     @Override
     public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+        Log.d(TAG, "onLoadChildren: " + parentId);
         switch (parentId) {
             case ROOT_ID: {
                 List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
-                items.add(buildBrowsableItem(FAVORITES_ID, "Favoris", "Vos stations preferees"));
-                items.add(buildBrowsableItem(RECENTS_ID, "Recents", "Dernieres stations ecoutees"));
                 items.add(buildBrowsableItem(TOP_STATIONS_ID, "Top Stations", "Les stations les plus populaires"));
+                items.add(buildBrowsableItem(FAVORITES_ID, "Mes Favoris", "Vos stations préférées"));
+                items.add(buildBrowsableItem(RECENTS_ID, "Récents", "Dernières stations écoutées"));
                 result.sendResult(items);
                 break;
             }
@@ -429,7 +450,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
                 currentStations = stations;
                 if (stations.isEmpty()) {
                     List<MediaBrowserCompat.MediaItem> empty = new ArrayList<>();
-                    empty.add(buildInfoItem("Aucune station recente", "Ecoutez une station pour la voir ici"));
+                    empty.add(buildInfoItem("Aucune station récente", "Écoutez une station pour la voir ici"));
                     result.sendResult(empty);
                 } else {
                     result.sendResult(toMediaItems(stations));
@@ -470,7 +491,12 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
             if (mediaId == null) return;
+            Log.d(TAG, "onPlayFromMediaId: " + mediaId);
+
+            // Strip "station:" prefix if present
             String stationId = mediaId.startsWith(STATION_PREFIX) ? mediaId.substring(STATION_PREFIX.length()) : mediaId;
+
+            // 1. Search in currentStations
             for (int i = 0; i < currentStations.size(); i++) {
                 if (currentStations.get(i).id.equals(stationId)) {
                     currentIndex = i;
@@ -478,17 +504,53 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
                     return;
                 }
             }
+
+            // 2. Fallback: search in favorites
+            List<StationData> favorites = loadStations(KEY_FAVORITES);
+            for (int i = 0; i < favorites.size(); i++) {
+                if (favorites.get(i).id.equals(stationId)) {
+                    currentStations = favorites;
+                    currentIndex = i;
+                    playStation(favorites.get(i));
+                    return;
+                }
+            }
+
+            // 3. Fallback: search in recents
+            List<StationData> recents = loadStations(KEY_RECENTS);
+            for (int i = 0; i < recents.size(); i++) {
+                if (recents.get(i).id.equals(stationId)) {
+                    currentStations = recents;
+                    currentIndex = i;
+                    playStation(recents.get(i));
+                    return;
+                }
+            }
+
+            // 4. Last resort: fetch station by UUID from API
+            Log.d(TAG, "Station not found locally, fetching from API: " + stationId);
+            new Thread(() -> {
+                StationData station = fetchStationByUuid(stationId);
+                if (station != null) {
+                    handler.post(() -> {
+                        currentStations = new ArrayList<>();
+                        currentStations.add(station);
+                        currentIndex = 0;
+                        playStation(station);
+                    });
+                } else {
+                    Log.w(TAG, "Station not found anywhere: " + stationId);
+                }
+            }).start();
         }
 
         @Override
         public void onPrepare() {
-            // AAOS may call onPrepare when media source changes
             onPlay();
         }
 
         @Override
         public void onPlay() {
-            // Ensure foreground before requesting audio focus (Android 14+)
             if (currentStation != null) {
                 startAsForeground(currentStation.name, true);
             }
@@ -692,7 +754,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         try {
             String resolved = followRedirects(urlStr, 5);
 
-            // Detect playlist type by Content-Type via HEAD request
             String contentType = "";
             try {
                 HttpURLConnection headConn = (HttpURLConnection) new URL(resolved).openConnection();
@@ -736,9 +797,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
     }
 
-    /**
-     * Follow redirects using HEAD first (avoids streaming data), with GET fallback.
-     */
     private String followRedirects(String urlStr, int maxRedirects) throws Exception {
         String current = urlStr;
         for (int i = 0; i < maxRedirects; i++) {
@@ -752,7 +810,6 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             try {
                 code = conn.getResponseCode();
             } catch (Exception e) {
-                // Some servers reject HEAD, fallback to GET
                 conn.disconnect();
                 conn = (HttpURLConnection) new URL(current).openConnection();
                 conn.setInstanceFollowRedirects(false);
@@ -851,7 +908,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             });
         }).start();
 
-        // Use local app icon as artwork fallback
+        // Artwork: use station logo or fallback to placeholder
         Uri artworkUri;
         if (station.logo != null && !station.logo.isEmpty()) {
             artworkUri = Uri.parse(station.logo.replace("http://", "https://"));
@@ -935,6 +992,21 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             } catch (Exception e) { /* next */ }
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * Fetch a single station by UUID from radio-browser API.
+     * Used as last-resort fallback in onPlayFromMediaId.
+     */
+    private StationData fetchStationByUuid(String uuid) {
+        for (String mirror : API_MIRRORS) {
+            try {
+                String url = mirror + "/json/stations/byuuid/" + Uri.encode(uuid);
+                List<StationData> results = parseApiResponse(httpGet(url));
+                if (!results.isEmpty()) return results.get(0);
+            } catch (Exception e) { /* next mirror */ }
+        }
+        return null;
     }
 
     private List<StationData> searchStations(String query, int limit) {
@@ -1032,10 +1104,12 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     }
 
     private MediaBrowserCompat.MediaItem buildBrowsableItem(String mediaId, String title, String subtitle) {
+        Uri folderIcon = Uri.parse("android.resource://" + getPackageName() + "/drawable/station_placeholder");
         MediaDescriptionCompat desc = new MediaDescriptionCompat.Builder()
             .setMediaId(mediaId)
             .setTitle(title)
             .setSubtitle(subtitle)
+            .setIconUri(folderIcon)
             .build();
         return new MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
     }

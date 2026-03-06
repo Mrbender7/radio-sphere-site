@@ -325,6 +325,7 @@ public class RadioAutoPlugin extends Plugin {
     public void syncFavorites(PluginCall call) {
         String stations = call.getString("stations", "[]");
         getPrefs().edit().putString(KEY_FAVORITES, stations).apply();
+        RadioBrowserService.updateFavorites(stations);
         call.resolve();
     }
 
@@ -332,6 +333,7 @@ public class RadioAutoPlugin extends Plugin {
     public void syncRecents(PluginCall call) {
         String stations = call.getString("stations", "[]");
         getPrefs().edit().putString(KEY_RECENTS, stations).apply();
+        RadioBrowserService.updateRecents(stations);
         call.resolve();
     }
 
@@ -575,8 +577,8 @@ $CastOptionsProviderJava = $CastOptionsProviderJava -replace '__PACKAGE__', $Act
 [System.IO.File]::WriteAllText((Join-Path $PackageDir "CastOptionsProvider.java"), $CastOptionsProviderJava, $UTF8NoBOM)
 Write-Host "    CastOptionsProvider.java genere avec succes (v2.4.7)" -ForegroundColor Green
 
-# --- RadioBrowserService.java (v2.5.1 -- unified service: Android Auto + notification mirror) ---
-Write-Host "    Generation RadioBrowserService.java (v2.5.1)..." -ForegroundColor DarkGray
+# --- RadioBrowserService.java (v2.5.2 -- unified service + favorites fix + onPlayFromMediaId fallback) ---
+Write-Host "    Generation RadioBrowserService.java (v2.5.2)..." -ForegroundColor DarkGray
 $RadioBrowserServiceJava = @'
 package __PACKAGE__;
 
@@ -654,6 +656,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     private Bitmap cachedMirrorArtwork;
     private String cachedMirrorLogoUrl = "";
 
+    // Static instance for live favorites/recents refresh
+    private static RadioBrowserService activeInstance;
+
     private static final String[] API_MIRRORS = {
         "https://de1.api.radio-browser.info",
         "https://fr1.api.radio-browser.info",
@@ -680,6 +685,16 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
             this.id = id; this.name = name; this.streamUrl = streamUrl;
             this.logo = logo; this.country = country; this.tags = tags;
         }
+    }
+
+    // Static methods for live browse tree refresh from Capacitor plugin
+    public static void updateFavorites(String json) {
+        Log.d(TAG, "updateFavorites called, instance=" + (activeInstance != null));
+        if (activeInstance != null) activeInstance.notifyChildrenChanged(FAVORITES_ID);
+    }
+    public static void updateRecents(String json) {
+        Log.d(TAG, "updateRecents called, instance=" + (activeInstance != null));
+        if (activeInstance != null) activeInstance.notifyChildrenChanged(RECENTS_ID);
     }
 
     private final AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = focusChange -> {
@@ -778,6 +793,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     @Override
     public void onCreate() {
         super.onCreate();
+        activeInstance = this;
         createNotificationChannel();
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         player = new ExoPlayer.Builder(this).build();
@@ -879,6 +895,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
 
     @Override
     public void onDestroy() {
+        activeInstance = null;
         cancelBufferingTimeout();
         playbackRequestSeq.incrementAndGet();
         streamResolverExecutor.shutdownNow();
@@ -900,9 +917,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         switch (parentId) {
             case ROOT_ID: {
                 List<MediaBrowserCompat.MediaItem> items = new ArrayList<>();
-                items.add(buildBrowsableItem(FAVORITES_ID, "Favoris", "Vos stations preferees"));
-                items.add(buildBrowsableItem(RECENTS_ID, "Recents", "Dernieres stations ecoutees"));
                 items.add(buildBrowsableItem(TOP_STATIONS_ID, "Top Stations", "Les stations les plus populaires"));
+                items.add(buildBrowsableItem(FAVORITES_ID, "Mes Favoris", "Vos stations préférées"));
+                items.add(buildBrowsableItem(RECENTS_ID, "Récents", "Dernières stations écoutées"));
                 result.sendResult(items);
                 break;
             }
@@ -956,12 +973,39 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     private final MediaSessionCompat.Callback mediaSessionCallback = new MediaSessionCompat.Callback() {
         @Override public void onPlayFromMediaId(String mediaId, Bundle extras) {
             if (mediaId == null) return;
+            Log.d(TAG, "onPlayFromMediaId: " + mediaId);
             String stationId = mediaId.startsWith(STATION_PREFIX) ? mediaId.substring(STATION_PREFIX.length()) : mediaId;
+            // 1. Search currentStations
             for (int i = 0; i < currentStations.size(); i++) {
                 if (currentStations.get(i).id.equals(stationId)) {
                     currentIndex = i; playStation(currentStations.get(i)); return;
                 }
             }
+            // 2. Fallback: favorites
+            List<StationData> favorites = loadStations(KEY_FAVORITES);
+            for (int i = 0; i < favorites.size(); i++) {
+                if (favorites.get(i).id.equals(stationId)) {
+                    currentStations = favorites; currentIndex = i; playStation(favorites.get(i)); return;
+                }
+            }
+            // 3. Fallback: recents
+            List<StationData> recents = loadStations(KEY_RECENTS);
+            for (int i = 0; i < recents.size(); i++) {
+                if (recents.get(i).id.equals(stationId)) {
+                    currentStations = recents; currentIndex = i; playStation(recents.get(i)); return;
+                }
+            }
+            // 4. Last resort: fetch by UUID from API
+            Log.d(TAG, "Station not found locally, fetching from API: " + stationId);
+            new Thread(() -> {
+                StationData station = fetchStationByUuid(stationId);
+                if (station != null) {
+                    handler.post(() -> {
+                        currentStations = new ArrayList<>(); currentStations.add(station);
+                        currentIndex = 0; playStation(station);
+                    });
+                } else { Log.w(TAG, "Station not found anywhere: " + stationId); }
+            }).start();
         }
         @Override public void onPrepare() { onPlay(); }
         @Override public void onPlay() {
@@ -1270,7 +1314,17 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         return new ArrayList<>();
     }
 
-    private List<StationData> searchStations(String query, int limit) {
+    private StationData fetchStationByUuid(String uuid) {
+        for (String mirror : API_MIRRORS) {
+            try {
+                String url = mirror + "/json/stations/byuuid/" + Uri.encode(uuid);
+                List<StationData> results = parseApiResponse(httpGet(url));
+                if (!results.isEmpty()) return results.get(0);
+            } catch (Exception e) { /* next mirror */ }
+        }
+        return null;
+    }
+
         List<StationData> nameResults = new ArrayList<>();
         List<StationData> tagResults = new ArrayList<>();
         for (String mirror : API_MIRRORS) {
@@ -1342,8 +1396,9 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     }
 
     private MediaBrowserCompat.MediaItem buildBrowsableItem(String mediaId, String title, String subtitle) {
+        Uri folderIcon = Uri.parse("android.resource://" + getPackageName() + "/drawable/station_placeholder");
         MediaDescriptionCompat desc = new MediaDescriptionCompat.Builder()
-            .setMediaId(mediaId).setTitle(title).setSubtitle(subtitle).build();
+            .setMediaId(mediaId).setTitle(title).setSubtitle(subtitle).setIconUri(folderIcon).build();
         return new MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_BROWSABLE);
     }
 
@@ -1356,7 +1411,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
 '@
 $RadioBrowserServiceJava = $RadioBrowserServiceJava -replace '__PACKAGE__', $ActualPackage
 [System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioBrowserService.java"), $RadioBrowserServiceJava, $UTF8NoBOM)
-Write-Host "    RadioBrowserService.java genere avec succes (v2.5.1)" -ForegroundColor Green
+Write-Host "    RadioBrowserService.java genere avec succes (v2.5.2)" -ForegroundColor Green
 
 Write-Host "    Tous les fichiers Java generes avec succes!" -ForegroundColor Green
 

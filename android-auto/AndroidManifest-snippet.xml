@@ -1,10 +1,12 @@
 <!--
   ══════════════════════════════════════════════════════════════════════
-  RadioSphere — AndroidManifest.xml Additions
+  RadioSphere — AndroidManifest.xml Additions (v2.5.2)
   ══════════════════════════════════════════════════════════════════════
 
   SECTION 1: Permissions (add at <manifest> level, before <application>)
   SECTION 2: Application components (add inside <application> tag)
+
+  IMPORTANT: <application> tag MUST include android:appCategory="audio"
 -->
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -35,6 +37,7 @@
 <!-- ═══════════════════════════════════════════════════════════════════
      SECTION 2: Inside <application> tag
      Add these attributes to the <application> tag:
+       android:appCategory="audio"
        android:allowBackup="false"
        android:fullBackupContent="false"
      ═══════════════════════════════════════════════════════════════════ -->
@@ -44,7 +47,7 @@
     android:name="com.google.android.gms.car.application"
     android:resource="@xml/automotive_app_desc" />
 
-<!-- 2. MediaBrowserService — the entry point for Android Auto -->
+<!-- 2. RadioBrowserService — UNIQUE service: Android Auto + notifications -->
 <service
     android:name=".RadioBrowserService"
     android:exported="true"
@@ -62,26 +65,27 @@
     android:name="com.google.android.gms.car.notification.SmallIcon"
     android:resource="@drawable/ic_notification" />
 
-<!-- 3. MediaPlaybackService — foreground notification only (NOT a MediaBrowserService) -->
-<service
-    android:name=".MediaPlaybackService"
-    android:exported="false"
-    android:foregroundServiceType="mediaPlayback" />
-
-<!-- 4. Chromecast — CastOptionsProvider (OBLIGATOIRE pour Cast SDK) -->
+<!-- 3. Chromecast — CastOptionsProvider (OBLIGATOIRE pour Cast SDK) -->
 <meta-data
     android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
     android:value="com.radiosphere.app.CastOptionsProvider" />
 
+<!-- 4. Broadcast receiver for notification toggle (unified) -->
+<receiver
+    android:name=".MediaToggleReceiver"
+    android:exported="false">
+    <intent-filter>
+        <action android:name="com.radiosphere.TOGGLE_PLAYBACK" />
+    </intent-filter>
+</receiver>
+
 <!--
   ══════════════════════════════════════════════════════════════════════
-  Also register plugins in your MainActivity.kt:
+  NOTE: MediaPlaybackService has been REMOVED (v2.5.2).
+  RadioBrowserService handles both Android Auto and standard notifications.
 
-  import app.lovable.radiosphere.RadioAutoPlugin
-  import com.radiosphere.app.CastPlugin
-
-  // Inside onCreate:
-  registerPlugin(RadioAutoPlugin::class.java)
-  registerPlugin(CastPlugin::class.java)
+  Register plugins in your MainActivity.kt/java:
+    registerPlugin(RadioAutoPlugin.class);
+    registerPlugin(CastPlugin.class);
   ══════════════════════════════════════════════════════════════════════
 -->
