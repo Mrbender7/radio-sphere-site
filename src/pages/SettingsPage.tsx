@@ -103,7 +103,7 @@ interface SettingsPageProps {
 
 export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps) {
   const { language, setLanguage, t } = useTranslation();
-  const { isPremium, unlockWithPassword, lockPremium } = usePremium();
+  const { isPremium, unlockWithPassword, lockPremium, restorePurchases } = usePremium();
   const { isActive, formattedTime, startTimer, cancelTimer } = useSleepTimer();
   const { favorites, importFavorites } = useFavoritesContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
