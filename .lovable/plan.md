@@ -1,37 +1,46 @@
 
 
-## Plan : Unification Android Auto + Nettoyage MediaPlaybackService — TERMINÉ ✅
+# Fix: Pause button unresponsive + auto-restart after minimize
 
-### Architecture finale
+## Root cause analysis
 
-**Un seul service media : `RadioBrowserService`**, qui fonctionne en deux modes :
-1. **Mode Android Auto** : Browse tree + ExoPlayer natif (inchangé)
-2. **Mode Notification (Mirror)** : Reçoit les updates de `RadioAutoPlugin` via Intent `ACTION_UPDATE`, met à jour sa MediaSession unique et affiche une notification MediaStyle unifiée
+Two bugs, both caused by the same mechanisms in `PlayerContext.tsx`:
 
-### v2.5.2 — Corrections favoris + navigation Android Auto
+### Bug 1: Pause requires 2 taps (dynamic content switching)
+- `isPlayingRef` is updated via `useEffect` (line 90-92), which is **asynchronous**
+- When user taps pause, `setState({isPlaying: false})` fires, but `isPlayingRef.current` remains `true` until the next React render cycle
+- Meanwhile, the `keepAlive` handler (lines 359-369) fires on `visibilitychange`/`blur`/`focus` events — which trigger when switching between dynamic content and the app
+- `keepAlive` checks `isPlayingRef.current` (still `true`), calls `audio.play()`, undoing the pause
+- User must tap pause a second time
 
-| Correction | Détail |
-|-----------|--------|
-| **onPlayFromMediaId** | Fallback en 4 étapes : currentStations → favorites → recents → API (fetchStationByUuid) |
-| **updateFavorites/updateRecents** | Méthodes statiques appelées par RadioAutoPlugin pour rafraîchir le browse tree en temps réel via `notifyChildrenChanged()` |
-| **fetchStationByUuid** | Nouvelle méthode pour récupérer une station par UUID depuis l'API radio-browser |
-| **buildBrowsableItem** | Ajout d'une icône placeholder pour les dossiers (pas de trou visuel) |
-| **Ordre des dossiers** | Top Stations → Mes Favoris → Récents |
-| **activeInstance** | Set dans onCreate, cleared dans onDestroy pour le pattern static |
+### Bug 2: Station restarts after minimize
+- Same `keepAlive` handler fires on `visibilitychange` when app goes to background
+- Since `isPlayingRef.current` is still `true` (async delay), it calls `audio.play()`
+- Additionally, the heartbeat (line 118-134) runs every 10s, detects `audio.paused === true`, considers the stream "dead", and calls `reloadStream()` — which fully restarts playback
 
-### Changements effectués
+## Fix plan
 
-| Fichier | Action |
-|---------|--------|
-| `android-auto/RadioBrowserService.java` | v2.5.2: onPlayFromMediaId fallback, updateFavorites/updateRecents static, fetchStationByUuid, folder icons |
-| `android-auto/RadioAutoPlugin.java` | v2.5.2: Appelle RadioBrowserService.updateFavorites/updateRecents après sync |
-| `android-auto/AndroidManifest-snippet.xml` | v2.5.2: Nettoyé, MediaPlaybackService supprimé |
-| `radiosphere_v2_5_0.ps1` | Templates inline mis à jour v2.5.2 |
-| `android-auto/MediaPlaybackService.java` | **Supprimé** (v2.5.1) |
+### 1. Update `isPlayingRef` synchronously (PlayerContext.tsx)
+In `togglePlay`, `handlePause`, and `handlePlay`: set `isPlayingRef.current` **directly** before or alongside `setState`, not via the async `useEffect`. This eliminates the race window.
 
-### Ce qui n'a pas changé
-- `CastPlugin.java`, `CastOptionsProvider.java` — déjà corrects
-- `PlayerContext.tsx`, `useCast.ts` — logique Cast déjà en place
-- `StationCard.tsx` — placeholder déjà géré
-- `MediaToggleReceiver.java` — inchangé (appelle RadioAutoPlugin)
-- Browse tree, ExoPlayer, audio focus, stream resolution
+Remove the `useEffect` at line 90-92 that syncs `isPlayingRef` — it becomes redundant.
+
+### 2. Fix `keepAlive` handler (PlayerContext.tsx, lines 359-369)
+Current code fires on `visibilitychange`, `blur`, AND `focus` — and unconditionally calls `audio.play()`.
+
+Change to:
+- Only act on `visibilitychange` when `document.visibilityState === 'visible'` (returning to foreground)
+- Remove `blur` listener entirely (it's counterproductive — fires when leaving the app)
+- Keep `focus` but only resume if not intentionally paused
+
+### 3. Heartbeat guard (PlayerContext.tsx, line 125)
+The heartbeat already checks `isPlayingRef.current`, but due to the async ref update, it can still trigger after an intentional pause. With the synchronous ref fix from step 1, this is automatically resolved.
+
+## Files modified
+- `src/contexts/PlayerContext.tsx` — all changes in one file
+
+## Summary of changes
+- Synchronous `isPlayingRef` updates in `togglePlay`, `handlePause`, `handlePlay`, `reloadStream`
+- `keepAlive` only resumes on visibility return (not blur/minimize)
+- Remove redundant `useEffect` ref sync
+
