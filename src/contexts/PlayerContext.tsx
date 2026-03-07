@@ -86,10 +86,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     isFullScreen: false,
   });
 
-  // Keep refs in sync with state
-  useEffect(() => {
-    isPlayingRef.current = state.isPlaying;
-  }, [state.isPlaying]);
+  // isPlayingRef is now updated synchronously in play/pause handlers — no useEffect needed
 
   useEffect(() => {
     currentStationRef.current = state.currentStation;
@@ -239,7 +236,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const handlePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !audio.src) return;
-    audio.play().catch(() => {});
+    isPlayingRef.current = true;
+    audio.play().catch(() => { isPlayingRef.current = false; });
     startSilentLoop();
     setState(s => {
       if (s.currentStation) notifyNativePlaybackState(s.currentStation, true);
@@ -252,6 +250,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const handlePause = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    isPlayingRef.current = false;
     audio.pause();
     stopSilentLoop();
     setState(s => {
@@ -357,7 +356,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     audio.addEventListener("ended", handleEnded);
 
     const keepAlive = () => {
-      if (isPlayingRef.current) {
+      // Only resume when returning to foreground AND we were intentionally playing
+      if (document.visibilityState === 'visible' && isPlayingRef.current) {
         audio.play().catch(() => {});
         startSilentLoop();
         requestWakeLock();
@@ -365,16 +365,12 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       }
     };
     document.addEventListener('visibilitychange', keepAlive);
-    window.addEventListener('blur', keepAlive);
-    window.addEventListener('focus', keepAlive);
 
     return () => {
       audio.removeEventListener("error", handleError);
       audio.removeEventListener("stalled", handleStalled);
       audio.removeEventListener("ended", handleEnded);
       document.removeEventListener('visibilitychange', keepAlive);
-      window.removeEventListener('blur', keepAlive);
-      window.removeEventListener('focus', keepAlive);
       stopHeartbeat();
       releaseWakeLock();
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
@@ -415,6 +411,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
 
       retryCountRef.current = 0;
+      isPlayingRef.current = false;
       setState(s => ({ ...s, currentStation: station, isBuffering: true, isPlaying: false }));
       const secureLogo = station.logo?.replace('http://', 'https://');
       updateMediaSession({ ...station, logo: secureLogo }, true);
@@ -427,6 +424,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         audio.play()
           .then(() => {
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+            isPlayingRef.current = true;
             setState(s => ({ ...s, isPlaying: true, isBuffering: false }));
             notifyNativePlaybackState(station, true);
             startSilentLoop();
@@ -440,6 +438,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
             stopHeartbeat();
             releaseWakeLock();
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+            isPlayingRef.current = false;
             setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
             toast({ title: t("player.streamError"), description: t("player.streamErrorDesc"), variant: "destructive" });
           });
@@ -511,6 +510,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     }
 
     if (state.isPlaying) {
+      isPlayingRef.current = false;
       audio.pause();
       stopSilentLoop();
       stopHeartbeat();
@@ -524,6 +524,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       audio.play().then(() => {
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         retryCountRef.current = 0;
+        isPlayingRef.current = true;
         setState(s => ({ ...s, isPlaying: true }));
         startSilentLoop();
         startHeartbeat();
