@@ -232,7 +232,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '', chunkCount: 0 }));
 
     const isFirefox = /firefox/i.test(navigator.userAgent);
-    const fetchUrl = buildBufferUrl(streamUrl);
+    const shouldBustCache = noChunkRetryRef.current > 0;
+    const fetchUrl = buildBufferUrl(streamUrl, shouldBustCache);
 
     // Watchdog: if no chunk arrives quickly, retry then fallback to moz-xhr on Firefox
     noChunkTimeoutRef.current = setTimeout(() => {
