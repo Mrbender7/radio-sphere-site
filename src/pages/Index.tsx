@@ -125,7 +125,9 @@ function AppContent() {
 
   return (
     <PlayerProvider onStationPlay={addRecent}>
-      <AppContentInner />
+      <StreamBufferProvider>
+        <AppContentInner />
+      </StreamBufferProvider>
     </PlayerProvider>
   );
 }
