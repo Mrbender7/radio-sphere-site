@@ -97,7 +97,7 @@ function extractDomain(homepage: string): string | null {
     return null;
   }
 }
-const BRANDFETCH_API_KEY = "jMd9rG1P6leKiThV1-l39e-bSBb58sbk-opFE4JxgvT_VSMpHdi7BD-JN8DKXfcfcipIeb7kiPxC9Wx174OfPw";
+const BRANDFETCH_API_KEY = "uy994hGSIB15nIu5lPKp3FQw6IMsaeC2qScvf9pN__baJvw-NC08JWVu4G_-_S5AGw6czXl9mbTK3xYrNCeEZQ";
 
 // Domain-level dedup for Brandfetch (avoid calling same domain multiple times)
 const brandfetchDomainCache = new Map<string, Promise<string | null>>();
