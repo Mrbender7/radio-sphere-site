@@ -50,11 +50,15 @@ function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
   return new Promise((resolve) => {
     if (!url) { resolve("ERROR"); return; }
 
-    const timeout = setTimeout(() => resolve("ERROR"), 6000);
+    const timeout = setTimeout(() => {
+      console.warn("[ArtworkCache] ⏱ Timeout validating:", url);
+      resolve("ERROR");
+    }, 8000);
 
-    // Try to get file size via HEAD request
-    const sizeCheck = fetch(url, { method: "HEAD", mode: "no-cors" })
+    // Try to get file size via HEAD (cors mode so we can read headers)
+    const sizeCheck = fetch(url, { method: "HEAD" })
       .then((r) => {
+        if (!r.ok) return null;
         const len = r.headers.get("content-length");
         if (len && parseInt(len, 10) < MIN_BYTES) return "LOW_QUALITY" as const;
         return null; // inconclusive
@@ -62,17 +66,27 @@ function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
       .catch(() => null);
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // Don't set crossOrigin — we only need dimensions, not canvas access
     img.onload = async () => {
       clearTimeout(timeout);
       if (img.naturalWidth < MIN_DIMENSION || img.naturalHeight < MIN_DIMENSION) {
+        console.debug("[ArtworkCache] 📐 LOW_QUALITY (dimensions):", url, img.naturalWidth, "x", img.naturalHeight);
         resolve("LOW_QUALITY");
         return;
       }
       const sizeResult = await sizeCheck;
+      if (sizeResult === "LOW_QUALITY") {
+        console.debug("[ArtworkCache] 📦 LOW_QUALITY (size):", url);
+      } else {
+        console.debug("[ArtworkCache] ✅ OK:", url);
+      }
       resolve(sizeResult === "LOW_QUALITY" ? "LOW_QUALITY" : "OK");
     };
-    img.onerror = () => { clearTimeout(timeout); resolve("ERROR"); };
+    img.onerror = () => {
+      clearTimeout(timeout);
+      console.warn("[ArtworkCache] ❌ Error loading:", url);
+      resolve("ERROR");
+    };
     img.src = url;
   });
 }
