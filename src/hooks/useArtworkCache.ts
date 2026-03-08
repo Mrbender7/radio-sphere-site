@@ -102,9 +102,11 @@ function extractDomain(homepage: string): string | null {
 
 async function tryClearbit(homepage: string): Promise<string | null> {
   const domain = extractDomain(homepage);
-  if (!domain) return null;
+  if (!domain) { console.debug("[ArtworkCache] Clearbit: no domain from", homepage); return null; }
   const url = `https://logo.clearbit.com/${domain}?size=512`;
+  console.debug("[ArtworkCache] 🔍 Trying Clearbit:", url);
   const result = await validateImage(url);
+  console.debug("[ArtworkCache] Clearbit result:", result, "for", domain);
   return result === "OK" ? url : null;
 }
 
