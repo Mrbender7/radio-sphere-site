@@ -433,6 +433,30 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
 
         </div>
       </CollapsibleSection>
+
+      {/* Replace low-quality artworks toggle */}
+      <div className="rounded-xl bg-accent p-4 mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <ImageOff className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">{t("settings.replaceLowQuality")}</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{t("settings.replaceLowQualityDesc")}</p>
+            </div>
+          </div>
+          <Switch
+            checked={replaceLowQuality}
+            onCheckedChange={(checked) => {
+              setReplaceLowQualityState(checked);
+              setReplaceLowQuality(checked);
+              // Purge cache to force re-evaluation
+              try { localStorage.removeItem(STORAGE_KEY); } catch {}
+              toast({ title: checked ? "🖼️ Artworks basse qualité remplacés" : "🖼️ Artworks originaux restaurés" });
+            }}
+          />
+        </div>
+      </div>
+
       <CollapsibleSection
         icon={Crown}
         title={t("premium.title")}
