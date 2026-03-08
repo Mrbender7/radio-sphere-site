@@ -210,7 +210,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.shareRecording": "Partager l'enregistrement",
     "player.returnToLive": "Retour au direct",
     "player.recordPremiumOnly": "L'enregistrement est une fonctionnalité Premium",
-    "player.fileSaved": "Fichier sauvegardé !",
+    "player.backInTime": "Retour dans le passé",
+    "player.bufferLoading": "Chargement du buffer...",
+    "player.recordingNotAvailable": "Enregistrement indisponible",
+    "player.recordingContinuesLive": "Retour au direct, enregistrement en cours...",
   },
   en: {
     "nav.home": "Home",
@@ -414,6 +417,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.returnToLive": "Back to live",
     "player.recordPremiumOnly": "Recording is a Premium feature",
     "player.fileSaved": "File saved!",
+    "player.backInTime": "Back in Time",
+    "player.bufferLoading": "Loading buffer...",
+    "player.recordingNotAvailable": "Recording not available",
+    "player.recordingContinuesLive": "Back to live, recording continues...",
   },
   es: {
     "nav.home": "Inicio",
@@ -617,6 +624,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.returnToLive": "Volver al directo",
     "player.recordPremiumOnly": "La grabación es una función Premium",
     "player.fileSaved": "¡Archivo guardado!",
+    "player.backInTime": "Volver al pasado",
+    "player.bufferLoading": "Cargando búfer...",
+    "player.recordingNotAvailable": "Grabación no disponible",
+    "player.recordingContinuesLive": "Volviendo al directo, grabación en curso...",
   },
   de: {
     "nav.home": "Startseite",
@@ -820,6 +831,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.returnToLive": "Zurück zum Live",
     "player.recordPremiumOnly": "Aufnahme ist eine Premium-Funktion",
     "player.fileSaved": "Datei gespeichert!",
+    "player.backInTime": "Zurück in die Vergangenheit",
+    "player.bufferLoading": "Puffer wird geladen...",
+    "player.recordingNotAvailable": "Aufnahme nicht verfügbar",
+    "player.recordingContinuesLive": "Zurück zum Live, Aufnahme läuft weiter...",
   },
   ja: {
     "nav.home": "ホーム",
@@ -1023,6 +1038,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.returnToLive": "ライブに戻る",
     "player.recordPremiumOnly": "録音はプレミアム機能です",
     "player.fileSaved": "ファイルを保存しました！",
+    "player.backInTime": "過去に戻る",
+    "player.bufferLoading": "バッファ読み込み中...",
+    "player.recordingNotAvailable": "録音は利用できません",
+    "player.recordingContinuesLive": "ライブに戻りました。録音は継続中...",
   },
 };
 
