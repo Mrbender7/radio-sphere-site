@@ -79,7 +79,13 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
     }
+    if (noChunkTimeoutRef.current) {
+      clearTimeout(noChunkTimeoutRef.current);
+      noChunkTimeoutRef.current = null;
+    }
+    noChunkRetryRef.current = 0;
     bufferAvailableRef.current = false;
+    setDebugInfo({ chunkCount: 0, fetchActive: false, lastError: '' });
     if (seekBlobUrlRef.current) {
       URL.revokeObjectURL(seekBlobUrlRef.current);
       seekBlobUrlRef.current = null;
