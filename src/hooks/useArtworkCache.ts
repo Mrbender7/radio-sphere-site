@@ -228,7 +228,7 @@ export function useArtworkCache(
   const getSnapshot = useCallback(() => {
     return memoryCache.get(stationId) ?? {
       status: "PENDING" as const,
-      resolvedUrl: originalUrl?.replace("http://", "https://") || stationPlaceholder,
+      resolvedUrl: originalUrl || stationPlaceholder,
       checked: false,
     };
   }, [stationId, originalUrl]);
