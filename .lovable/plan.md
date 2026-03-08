@@ -1,37 +1,76 @@
 
 
-## Plan : Unification Android Auto + Nettoyage MediaPlaybackService — TERMINÉ ✅
+# Timeback Machine - Plan de refonte
 
-### Architecture finale
+## Concept
 
-**Un seul service media : `RadioBrowserService`**, qui fonctionne en deux modes :
-1. **Mode Android Auto** : Browse tree + ExoPlayer natif (inchangé)
-2. **Mode Notification (Mirror)** : Reçoit les updates de `RadioAutoPlugin` via Intent `ACTION_UPDATE`, met à jour sa MediaSession unique et affiche une notification MediaStyle unifiée
+Remplacer le système actuel (barre de seek-back + bouton REC dans le fullplayer) par un écran dédié "Timeback Machine" avec une esthétique lecteur cassette rétro.
 
-### v2.5.2 — Corrections favoris + navigation Android Auto
+## Changements sur le FullScreenPlayer
 
-| Correction | Détail |
-|-----------|--------|
-| **onPlayFromMediaId** | Fallback en 4 étapes : currentStations → favorites → recents → API (fetchStationByUuid) |
-| **updateFavorites/updateRecents** | Méthodes statiques appelées par RadioAutoPlugin pour rafraîchir le browse tree en temps réel via `notifyChildrenChanged()` |
-| **fetchStationByUuid** | Nouvelle méthode pour récupérer une station par UUID depuis l'API radio-browser |
-| **buildBrowsableItem** | Ajout d'une icône placeholder pour les dossiers (pas de trou visuel) |
-| **Ordre des dossiers** | Top Stations → Mes Favoris → Récents |
-| **activeInstance** | Set dans onCreate, cleared dans onDestroy pour le pattern static |
+**Supprimer** du fullscreen player :
+- La barre de seek-back (Slider timeline, lignes 298-339)
+- Le bouton REC inline (lignes 245-261)
+- Le compteur de recording inline (lignes 272-279)
+- L'affichage de la CassetteAnimation dans le fullplayer (lignes 190-199)
 
-### Changements effectués
+**Conserver** :
+- Le badge "EN DIRECT" vert avec animation pulse (déjà présent)
 
-| Fichier | Action |
-|---------|--------|
-| `android-auto/RadioBrowserService.java` | v2.5.2: onPlayFromMediaId fallback, updateFavorites/updateRecents static, fetchStationByUuid, folder icons |
-| `android-auto/RadioAutoPlugin.java` | v2.5.2: Appelle RadioBrowserService.updateFavorites/updateRecents après sync |
-| `android-auto/AndroidManifest-snippet.xml` | v2.5.2: Nettoyé, MediaPlaybackService supprimé |
-| `radiosphere_v2_5_0.ps1` | Templates inline mis à jour v2.5.2 |
-| `android-auto/MediaPlaybackService.java` | **Supprimé** (v2.5.1) |
+**Ajouter** :
+- Un bouton animé "Timeback Machine" qui apparaît quand `bufferAvailable` est true, placé à côté ou sous le badge EN DIRECT
+- Style rétro : icône cassette animée, label "Retour dans le passé" / "Back in Time" etc.
+- Le bouton ouvre le nouvel écran TBM
 
-### Ce qui n'a pas changé
-- `CastPlugin.java`, `CastOptionsProvider.java` — déjà corrects
-- `PlayerContext.tsx`, `useCast.ts` — logique Cast déjà en place
-- `StationCard.tsx` — placeholder déjà géré
-- `MediaToggleReceiver.java` — inchangé (appelle RadioAutoPlugin)
-- Browse tree, ExoPlayer, audio focus, stream resolution
+## Nouvel écran : TimebackMachine.tsx
+
+Écran plein écran (z-index au-dessus du fullplayer) avec :
+
+### Header
+- Bouton retour (chevron down) pour fermer
+- Titre "Timeback Machine" en style rétro
+
+### Grande cassette audio
+- Réutilisation et agrandissement de `CassetteAnimation` (passer de w-56 à ~w-72/w-80)
+- Label sur la cassette : nom de la station (au lieu de "RadioSphere REC")
+- Logo de la station au centre de la cassette avec un filtre sépia/vieilli (CSS `sepia`, `brightness`, grain overlay)
+- Les bobines tournent quand on lit le buffer ou enregistre
+
+### Boutons transport rétro (sous la cassette)
+Boutons style lecteur K7 vintage avec effet 3D pressé :
+- **⏪ Rewind** : recule de 15s dans le buffer (appel `seekBack(currentOffset + 15)`)
+- **▶️ Play/Pause** : lecture/pause du flux (ou du buffer si pas en live)
+- **⏹ Stop** : arrête l'enregistrement si actif, sinon retour au live
+- **⏺ Record** : démarre/arrête l'enregistrement (premium only)
+- **⏩ Forward** : avance de 15s vers le live (appel `seekBack(currentOffset - 15)`)
+
+### Barre de progression du buffer
+- Barre horizontale montrant les chunks buffered (0 → bufferSeconds)
+- Marqueur de position courante avec affichage du temps
+- Si recording actif : zone colorée en rouge sur la portion enregistrée
+- Label temps à gauche (début buffer) et "LIVE" à droite
+
+### Footer
+- Bouton "Retour au direct" pour revenir en live et fermer
+
+## Fichiers à modifier/créer
+
+1. **Créer `src/components/TimebackMachine.tsx`** — Nouvel écran complet
+2. **Modifier `src/components/CassetteAnimation.tsx`** — Agrandir, ajouter props pour nom station + logo + mode idle/playing/recording
+3. **Modifier `src/components/FullScreenPlayer.tsx`** — Supprimer seek bar + REC, ajouter bouton TBM
+4. **Modifier `src/index.css`** — Ajouter animations (tape-wobble, boutons 3D pressés, filtre vintage)
+5. **Modifier `src/i18n/translations.ts`** — Ajouter clés TBM dans les 5 langues
+
+## Détail technique
+
+- Le `StreamBufferContext` reste inchangé — toute la logique existante (seekBack, startRecording, stopRecording, returnToLive) est réutilisée telle quelle
+- L'écran TBM est un state boolean dans `FullScreenPlayer` (`showTimeback`)
+- Les boutons rewind/forward appellent `seekBack()` avec des offsets calculés depuis `currentSeekOffsetSeconds`
+- La barre de progression utilise `bufferSeconds` et `currentSeekOffsetSeconds` pour le positionnement
+- L'export sheet après arrêt d'enregistrement reste identique (déjà dans FullScreenPlayer)
+
+## Traductions à ajouter (clés)
+- `player.timebackMachine` : "Timeback Machine"
+- `player.backInTime` : "Retour dans le passé" / "Back in Time" / etc.
+- `player.rewind` / `player.forward` : labels accessibilité
+
