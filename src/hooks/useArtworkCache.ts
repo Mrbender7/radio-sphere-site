@@ -169,12 +169,14 @@ async function resolveStation(
 ): Promise<string> {
   const secureUrl = originalUrl?.replace("http://", "https://") || "";
 
-  // 1. Already persisted?
+  // 1. Already persisted? (skip if it's the placeholder — re-check for better art)
   const persisted = loadPersistedCache();
-  if (persisted[stationId]) {
+  const persistedUrl = persisted[stationId];
+  if (persistedUrl && !persistedUrl.includes("station-placeholder")) {
+    console.debug("[ArtworkCache] 💾 Cache hit for", stationName || stationId, "→", persistedUrl);
     const entry: CacheEntry = {
       status: "RESOLVED",
-      resolvedUrl: persisted[stationId],
+      resolvedUrl: persistedUrl,
       checked: true,
     };
     memoryCache.set(stationId, entry);
