@@ -15,7 +15,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [sortMode, setSortMode] = useState<"name" | "country">("name");
+  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">("name");
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
