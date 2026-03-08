@@ -5,7 +5,9 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { CassetteAnimation } from "@/components/CassetteAnimation";
 import { ChevronDown, Play, Pause, Square, Circle, Rewind, FastForward, Radio } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
+
+const MAX_BUFFER_DISPLAY = 5 * 60; // 300s = 5 min max display
 
 interface TimebackMachineProps {
   onClose: () => void;
@@ -28,10 +30,13 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     returnToLive,
   } = useStreamBuffer();
 
-  const [seekDraft, setSeekDraft] = useState<number | null>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleRewind = () => {
-    const newOffset = Math.min(currentSeekOffsetSeconds + 15, Math.floor(bufferSeconds));
+    const totalBuffer = Math.floor(bufferSeconds);
+    if (totalBuffer < 2) return;
+    const newOffset = Math.min(currentSeekOffsetSeconds + 15, totalBuffer);
     seekBack(newOffset);
   };
 
@@ -72,14 +77,22 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     onClose();
   };
 
-  // Buffer timeline calculations
+  // --- Timeline calculations ---
   const totalBuffer = Math.floor(bufferSeconds);
-  const currentPos = isLive ? totalBuffer : totalBuffer - currentSeekOffsetSeconds;
-  const progressPct = totalBuffer > 0 ? (currentPos / totalBuffer) * 100 : 100;
+  // Buffer fill: how much of the max buffer (300s) is filled
+  const bufferFillPct = Math.min((totalBuffer / MAX_BUFFER_DISPLAY) * 100, 100);
+
+  // Cursor position within the filled buffer area
+  // When live: cursor at right edge of filled area
+  // When seeking: cursor offset from right edge
+  const cursorPosInBuffer = isLive ? totalBuffer : Math.max(0, totalBuffer - currentSeekOffsetSeconds);
+  const cursorPct = totalBuffer > 0
+    ? (cursorPosInBuffer / MAX_BUFFER_DISPLAY) * 100
+    : 0;
 
   // Recording zone on timeline
   const recStartPct = isRecording && recordingDuration > 0
-    ? Math.max(0, ((currentPos - recordingDuration) / totalBuffer) * 100)
+    ? Math.max(0, ((cursorPosInBuffer - recordingDuration) / MAX_BUFFER_DISPLAY) * 100)
     : 0;
 
   const formatTime = (s: number) => {
@@ -89,17 +102,47 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     return `${m}:${String(sec).padStart(2, "0")}`;
   };
 
-  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+  // --- Timeline interaction (click + touch drag) ---
+  const seekFromPosition = useCallback((clientX: number) => {
+    const el = timelineRef.current;
+    if (!el || totalBuffer < 2) return;
+    const rect = el.getBoundingClientRect();
+    const x = clientX - rect.left;
     const pct = Math.max(0, Math.min(1, x / rect.width));
-    const targetSeconds = Math.floor(pct * totalBuffer);
-    const offset = totalBuffer - targetSeconds;
-    if (offset <= 1) {
+    // Map click position to buffer time
+    // pct=0 → oldest buffered point, pct=bufferFillPct/100 → live
+    const maxPct = bufferFillPct / 100;
+    if (pct >= maxPct - 0.02) {
+      // Close enough to live edge
       returnToLive();
-    } else {
-      seekBack(offset);
+    } else if (pct <= maxPct) {
+      const targetSeconds = pct * MAX_BUFFER_DISPLAY;
+      const offset = totalBuffer - targetSeconds;
+      if (offset <= 1) {
+        returnToLive();
+      } else {
+        seekBack(Math.round(offset));
+      }
     }
+  }, [totalBuffer, bufferFillPct, seekBack, returnToLive]);
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    seekFromPosition(e.clientX);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    seekFromPosition(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    seekFromPosition(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
   };
 
   if (!currentStation) return null;
@@ -129,12 +172,21 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
           isRecording={isRecording}
         />
 
+        {/* Buffer status indicator */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+          <span className={`w-2 h-2 rounded-full ${totalBuffer > 2 ? 'bg-green-500' : 'bg-yellow-500 animate-pulse'}`} />
+          {totalBuffer > 2
+            ? `Buffer: ${formatTime(totalBuffer)} / 5:00`
+            : t("player.bufferLoading") || "Chargement du buffer..."
+          }
+        </div>
+
         {/* Transport controls */}
         <div className="flex items-center justify-center gap-3">
           {/* Rewind */}
           <button
             onClick={handleRewind}
-            disabled={!bufferSeconds || bufferSeconds < 2}
+            disabled={totalBuffer < 2}
             className="transport-btn w-12 h-12 rounded-lg bg-gradient-to-b from-[hsl(0,0%,22%)] to-[hsl(0,0%,14%)] border border-[hsl(0,0%,28%)] flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all disabled:opacity-30"
           >
             <Rewind className="w-5 h-5 text-foreground" />
@@ -185,31 +237,43 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
         {/* Buffer timeline */}
         <div className="w-full max-w-sm space-y-2">
           <div
-            className="relative h-3 rounded-full bg-[hsl(0,0%,12%)] border border-[hsl(0,0%,20%)] overflow-hidden cursor-pointer"
+            ref={timelineRef}
+            className="relative h-4 rounded-full bg-[hsl(0,0%,10%)] border border-[hsl(0,0%,18%)] overflow-hidden cursor-pointer touch-none"
             onClick={handleTimelineClick}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            {/* Buffered area */}
-            <div className="absolute inset-0 rounded-full bg-[hsl(0,0%,18%)]" />
+            {/* Background: total possible buffer (5 min) */}
+            <div className="absolute inset-0 rounded-full bg-[hsl(0,0%,10%)]" />
+
+            {/* Buffered area — grows as buffer fills */}
+            <div
+              className="absolute top-0 bottom-0 left-0 rounded-full bg-[hsl(0,0%,20%)] transition-all duration-1000 ease-linear"
+              style={{ width: `${bufferFillPct}%` }}
+            />
 
             {/* Recording zone (red) */}
             {isRecording && recordingDuration > 0 && (
               <div
                 className="absolute top-0 bottom-0 bg-red-500/30 rounded-full"
-                style={{ left: `${recStartPct}%`, width: `${progressPct - recStartPct}%` }}
+                style={{ left: `${recStartPct}%`, width: `${cursorPct - recStartPct}%` }}
               />
             )}
 
-            {/* Progress */}
+            {/* Played/position indicator */}
             <div
-              className="absolute top-0 bottom-0 left-0 rounded-full bg-gradient-to-r from-[hsl(35,80%,45%)] to-[hsl(25,70%,55%)] transition-all duration-200"
-              style={{ width: `${progressPct}%` }}
+              className="absolute top-0 bottom-0 left-0 rounded-full bg-gradient-to-r from-[hsl(35,80%,35%)] to-[hsl(35,80%,50%)] transition-all duration-300"
+              style={{ width: `${cursorPct}%` }}
             />
 
-            {/* Cursor */}
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[hsl(35,80%,55%)] border-2 border-[hsl(35,90%,70%)] shadow-[0_0_8px_rgba(200,150,50,0.5)] transition-all duration-200"
-              style={{ left: `calc(${progressPct}% - 8px)` }}
-            />
+            {/* Cursor thumb */}
+            {totalBuffer > 1 && (
+              <div
+                className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[hsl(35,80%,55%)] border-2 border-[hsl(35,90%,70%)] shadow-[0_0_10px_rgba(200,150,50,0.6)] transition-all duration-300 ${isDragging ? 'scale-125' : ''}`}
+                style={{ left: `calc(${cursorPct}% - 10px)` }}
+              />
+            )}
           </div>
 
           {/* Time labels */}
@@ -218,7 +282,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
               -{formatTime(totalBuffer)}
             </span>
 
-            {/* Current position */}
+            {/* Current offset when seeking */}
             {!isLive && (
               <span className="text-xs font-mono font-bold text-[hsl(35,80%,55%)]">
                 -{formatTime(currentSeekOffsetSeconds)}
