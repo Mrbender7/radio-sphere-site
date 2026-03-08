@@ -24,7 +24,6 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     recordingDuration,
     isLive,
     currentSeekOffsetSeconds,
-    debugInfo,
     startRecording,
     stopRecording,
     seekBack,
