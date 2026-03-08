@@ -46,41 +46,36 @@ function persistEntry(stationId: string, url: string) {
 }
 
 // ── Image validation ───────────────────────────────────────────────
+function isTrustedCdn(url: string): boolean {
+  return url.includes("cdn.brandfetch.io");
+}
+
 function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
   return new Promise((resolve) => {
     if (!url) { resolve("ERROR"); return; }
+
+    // Trust CDN sources — skip expensive HEAD + dimension checks
+    if (isTrustedCdn(url)) {
+      console.debug("[ArtworkCache] ✅ Trusted CDN, skipping validation:", url);
+      resolve("OK");
+      return;
+    }
 
     const timeout = setTimeout(() => {
       console.warn("[ArtworkCache] ⏱ Timeout validating:", url);
       resolve("ERROR");
     }, 8000);
 
-    // Try to get file size via HEAD (cors mode so we can read headers)
-    const sizeCheck = fetch(url, { method: "HEAD" })
-      .then((r) => {
-        if (!r.ok) return null;
-        const len = r.headers.get("content-length");
-        if (len && parseInt(len, 10) < MIN_BYTES) return "LOW_QUALITY" as const;
-        return null; // inconclusive
-      })
-      .catch(() => null);
-
     const img = new Image();
-    // Don't set crossOrigin — we only need dimensions, not canvas access
-    img.onload = async () => {
+    img.onload = () => {
       clearTimeout(timeout);
       if (img.naturalWidth < MIN_DIMENSION || img.naturalHeight < MIN_DIMENSION) {
         console.debug("[ArtworkCache] 📐 LOW_QUALITY (dimensions):", url, img.naturalWidth, "x", img.naturalHeight);
         resolve("LOW_QUALITY");
         return;
       }
-      const sizeResult = await sizeCheck;
-      if (sizeResult === "LOW_QUALITY") {
-        console.debug("[ArtworkCache] 📦 LOW_QUALITY (size):", url);
-      } else {
-        console.debug("[ArtworkCache] ✅ OK:", url);
-      }
-      resolve(sizeResult === "LOW_QUALITY" ? "LOW_QUALITY" : "OK");
+      console.debug("[ArtworkCache] ✅ OK:", url);
+      resolve("OK");
     };
     img.onerror = () => {
       clearTimeout(timeout);
