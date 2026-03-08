@@ -167,20 +167,23 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
           {t("player.live")}
         </div>
 
-        {bufferAvailable && (
-          <button
-            onClick={() => setShowTimeback(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[hsl(35,60%,20%)] to-[hsl(25,50%,18%)] border border-[hsl(35,50%,30%)] text-[hsl(35,80%,65%)] text-xs font-bold tracking-wide shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_12px_rgba(200,150,50,0.2)] transition-all active:scale-95"
-          >
-            {/* Mini cassette icon */}
-            <span className="relative flex items-center gap-1">
-              <span className="w-2.5 h-2.5 rounded-full border border-[hsl(35,50%,45%)] bg-[hsl(220,10%,12%)] inline-block cassette-reel-spin" style={{ animationDuration: '3s' }} />
-              <span className="w-2.5 h-2.5 rounded-full border border-[hsl(35,50%,45%)] bg-[hsl(220,10%,12%)] inline-block cassette-reel-spin" style={{ animationDuration: '2s' }} />
-            </span>
-            {t("player.backInTime")}
-            {isRecording && <span className="w-1.5 h-1.5 rounded-full bg-red-500 rec-blink" />}
-          </button>
-        )}
+        <button
+          onClick={() => setShowTimeback(true)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold tracking-wide shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-all active:scale-95 ${
+            bufferAvailable
+              ? "bg-gradient-to-r from-[hsl(35,60%,20%)] to-[hsl(25,50%,18%)] border-[hsl(35,50%,30%)] text-[hsl(35,80%,65%)] hover:shadow-[0_2px_12px_rgba(200,150,50,0.2)]"
+              : "bg-accent/50 border-border text-muted-foreground opacity-60"
+          }`}
+        >
+          {/* Mini cassette icon */}
+          <span className="relative flex items-center gap-1">
+            <span className={`w-2.5 h-2.5 rounded-full border border-[hsl(35,50%,45%)] bg-[hsl(220,10%,12%)] inline-block ${bufferAvailable ? 'cassette-reel-spin' : ''}`} style={{ animationDuration: '3s' }} />
+            <span className={`w-2.5 h-2.5 rounded-full border border-[hsl(35,50%,45%)] bg-[hsl(220,10%,12%)] inline-block ${bufferAvailable ? 'cassette-reel-spin' : ''}`} style={{ animationDuration: '2s' }} />
+          </span>
+          {t("player.backInTime")}
+          {isRecording && <span className="w-1.5 h-1.5 rounded-full bg-red-500 rec-blink" />}
+          {!bufferAvailable && <Loader2 className="w-3 h-3 animate-spin" />}
+        </button>
       </div>
 
        {/* Info & Controls — with vertical volume on the right */}
