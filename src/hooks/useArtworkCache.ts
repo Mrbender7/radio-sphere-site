@@ -411,7 +411,15 @@ async function resolveStation(
   if (quality === "OK") {
     finalUrl = workingUrl;
   } else {
-    finalUrl = await resolveHdArtwork(workingUrl, homepage, stationName);
+    const hdUrl = await resolveHdArtwork(workingUrl, homepage, stationName);
+    if (hdUrl) {
+      finalUrl = hdUrl;
+    } else if (quality === "LOW_QUALITY" && workingUrl) {
+      // Important: garder un favicon valide (même petit) plutôt qu'un placeholder générique
+      finalUrl = workingUrl;
+    } else {
+      finalUrl = stationPlaceholder;
+    }
   }
 
   // 4. Store
