@@ -115,6 +115,45 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setBufferSeconds(Math.min(duration, MAX_BUFFER_DURATION));
   }, []);
 
+  const buildBufferUrl = useCallback((url: string) => {
+    try {
+      const u = new URL(url);
+      u.searchParams.set('__tbm_fetch', String(Date.now()));
+      return u.toString();
+    } catch {
+      const sep = url.includes('?') ? '&' : '?';
+      return `${url}${sep}__tbm_fetch=${Date.now()}`;
+    }
+  }, []);
+
+  const processChunk = useCallback((value: Uint8Array) => {
+    if (!value || value.byteLength === 0) return;
+
+    if (noChunkTimeoutRef.current) {
+      clearTimeout(noChunkTimeoutRef.current);
+      noChunkTimeoutRef.current = null;
+    }
+    noChunkRetryRef.current = 0;
+
+    const chunk: TimestampedChunk = {
+      data: value,
+      time: Date.now(),
+      byteOffset: cumulativeBytesRef.current,
+    };
+    cumulativeBytesRef.current += value.byteLength;
+    chunksRef.current.push(chunk);
+    totalBytesRef.current += value.byteLength;
+
+    if (!bufferAvailableRef.current) {
+      bufferAvailableRef.current = true;
+      setBufferAvailable(true);
+    }
+
+    trimBuffer();
+    updateBufferSeconds();
+    setDebugInfo(d => ({ ...d, chunkCount: chunksRef.current.length }));
+  }, [trimBuffer, updateBufferSeconds]);
+
   // --- Stop fetch stream ---
   const stopFetch = useCallback(() => {
     if (noChunkTimeoutRef.current) {
@@ -125,8 +164,63 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       fetchControllerRef.current.abort();
       fetchControllerRef.current = null;
     }
+    if (xhrStreamRef.current) {
+      try { xhrStreamRef.current.abort(); } catch {}
+      xhrStreamRef.current = null;
+    }
     setDebugInfo(d => ({ ...d, fetchActive: false }));
   }, []);
+
+  const startFetchWithMozChunked = useCallback((streamUrl: string) => {
+    stopFetch();
+
+    const xhr = new XMLHttpRequest();
+    xhrStreamRef.current = xhr;
+    setDebugInfo(d => ({ ...d, fetchActive: true, chunkCount: 0, lastError: 'strategy: moz-xhr' }));
+
+    noChunkTimeoutRef.current = setTimeout(() => {
+      if (xhrStreamRef.current !== xhr) return;
+      if (chunksRef.current.length > 0) return;
+      setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'moz-xhr: no chunks' }));
+      try { xhr.abort(); } catch {}
+    }, 8000);
+
+    xhr.open('GET', buildBufferUrl(streamUrl), true);
+    xhr.setRequestHeader('Accept', '*/*');
+    xhr.responseType = 'moz-chunked-arraybuffer' as XMLHttpRequestResponseType;
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 2) {
+        const contentType = xhr.getResponseHeader('Content-Type') || 'audio/mpeg';
+        detectedMimeRef.current = contentType.split(';')[0].trim();
+      }
+    };
+
+    xhr.onprogress = () => {
+      try {
+        const arr = xhr.response ? new Uint8Array(xhr.response as ArrayBuffer) : null;
+        if (arr && arr.byteLength > 0) {
+          processChunk(arr);
+        }
+      } catch (err: any) {
+        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `moz-xhr progress: ${err?.message || err}` }));
+      }
+    };
+
+    xhr.onerror = () => {
+      setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'moz-xhr error' }));
+    };
+
+    xhr.onabort = () => {
+      setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'aborted' }));
+    };
+
+    xhr.onloadend = () => {
+      if (xhrStreamRef.current === xhr) xhrStreamRef.current = null;
+    };
+
+    xhr.send();
+  }, [buildBufferUrl, processChunk, stopFetch]);
 
   // --- Start fetch-based stream capture (no proxy, direct fetch) ---
   const startFetch = useCallback(async (streamUrl: string) => {
@@ -136,21 +230,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     fetchControllerRef.current = controller;
     setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '', chunkCount: 0 }));
 
-    // Force a dedicated request (avoid potential media cache/dedup behavior in preview browsers)
-    const buildBufferUrl = (url: string) => {
-      try {
-        const u = new URL(url);
-        u.searchParams.set('__tbm_fetch', String(Date.now()));
-        return u.toString();
-      } catch {
-        const sep = url.includes('?') ? '&' : '?';
-        return `${url}${sep}__tbm_fetch=${Date.now()}`;
-      }
-    };
-
+    const isFirefox = /firefox/i.test(navigator.userAgent);
     const fetchUrl = buildBufferUrl(streamUrl);
 
-    // Watchdog: if no chunk arrives quickly, retry a fresh connection (max 2 retries)
+    // Watchdog: if no chunk arrives quickly, retry then fallback to moz-xhr on Firefox
     noChunkTimeoutRef.current = setTimeout(() => {
       if (fetchControllerRef.current !== controller) return;
       if (chunksRef.current.length > 0) return;
@@ -161,6 +244,9 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
         setDebugInfo(d => ({ ...d, lastError: `no chunks, retry ${noChunkRetryRef.current}/2` }));
         stopFetch();
         setTimeout(() => startFetch(streamUrl), 150);
+      } else if (isFirefox) {
+        setDebugInfo(d => ({ ...d, lastError: 'fallback: moz-xhr' }));
+        setTimeout(() => startFetchWithMozChunked(streamUrl), 150);
       } else {
         setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'no chunks after retries' }));
       }
@@ -181,44 +267,11 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
         return;
       }
 
-      // Detect MIME type from Content-Type header
       const contentType = response.headers.get('Content-Type') || 'audio/mpeg';
       detectedMimeRef.current = contentType.split(';')[0].trim();
       console.log("[StreamBuffer] Fetch stream started, MIME:", detectedMimeRef.current);
 
-      // Strategy 1: Try pipeTo + WritableStream (more reliable in iframes)
-      // Strategy 2: Fallback to getReader().read() loop
-      const processChunk = (value: Uint8Array) => {
-        if (!value || value.byteLength === 0) return;
-
-        if (noChunkTimeoutRef.current) {
-          clearTimeout(noChunkTimeoutRef.current);
-          noChunkTimeoutRef.current = null;
-        }
-        noChunkRetryRef.current = 0;
-
-        const chunk: TimestampedChunk = {
-          data: value,
-          time: Date.now(),
-          byteOffset: cumulativeBytesRef.current,
-        };
-        cumulativeBytesRef.current += value.byteLength;
-        chunksRef.current.push(chunk);
-        totalBytesRef.current += value.byteLength;
-
-        if (!bufferAvailableRef.current) {
-          bufferAvailableRef.current = true;
-          setBufferAvailable(true);
-        }
-
-        trimBuffer();
-        updateBufferSeconds();
-        setDebugInfo(d => ({ ...d, chunkCount: chunksRef.current.length }));
-      };
-
-      // Try WritableStream approach first (works better in some iframe environments)
       if (typeof WritableStream !== 'undefined') {
-        console.log("[StreamBuffer] Using pipeTo + WritableStream strategy");
         setDebugInfo(d => ({ ...d, lastError: 'strategy: pipeTo' }));
 
         const writable = new WritableStream<Uint8Array>({
@@ -226,26 +279,18 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
             processChunk(chunk);
           },
           close() {
-            console.log("[StreamBuffer] Stream closed via pipeTo");
             setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'stream closed' }));
           },
           abort(reason) {
-            console.log("[StreamBuffer] Stream aborted via pipeTo:", reason);
             setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `pipeTo abort: ${reason}` }));
           }
         });
 
         response.body.pipeTo(writable, { signal: controller.signal }).catch((err: any) => {
-          if (err?.name === 'AbortError') {
-            console.log("[StreamBuffer] pipeTo aborted (normal)");
-          } else {
-            console.warn("[StreamBuffer] pipeTo error:", err);
-            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `pipeTo: ${err?.message || err}` }));
-          }
+          if (err?.name === 'AbortError') return;
+          setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `pipeTo: ${err?.message || err}` }));
         });
       } else {
-        // Fallback: getReader loop
-        console.log("[StreamBuffer] Using getReader loop strategy (no WritableStream)");
         setDebugInfo(d => ({ ...d, lastError: 'strategy: reader' }));
 
         const reader = response.body.getReader();
@@ -260,28 +305,25 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
               if (value) processChunk(value);
             }
           } catch (err: any) {
-            if (err?.name === 'AbortError') {
-              console.log("[StreamBuffer] Fetch aborted (normal)");
-            } else {
-              console.warn("[StreamBuffer] Fetch read error:", err);
-              setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `read: ${err?.message || err}` }));
-            }
+            if (err?.name === 'AbortError') return;
+            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `read: ${err?.message || err}` }));
           }
         };
         readLoop();
       }
     } catch (e: any) {
       if (e?.name === 'AbortError') {
-        console.log("[StreamBuffer] Fetch aborted (normal)");
         setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'aborted' }));
+      } else if (isFirefox) {
+        setDebugInfo(d => ({ ...d, lastError: 'fetch stalled -> fallback moz-xhr' }));
+        setTimeout(() => startFetchWithMozChunked(streamUrl), 150);
       } else {
-        console.warn("[StreamBuffer] Failed to fetch stream:", e);
         setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `fetch: ${e?.message || e}` }));
         setBufferAvailable(false);
         setRecordingAvailable(false);
       }
     }
-  }, [stopFetch, trimBuffer, updateBufferSeconds]);
+  }, [buildBufferUrl, processChunk, startFetchWithMozChunked, stopFetch]);
 
   // React to station/playing changes — start fetch when audio is playing
   useEffect(() => {
