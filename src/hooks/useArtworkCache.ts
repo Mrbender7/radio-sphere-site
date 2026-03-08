@@ -94,9 +94,32 @@ async function tryClearbit(homepage: string): Promise<string | null> {
   return result === "OK" ? url : null;
 }
 
+
+const LASTFM_API_KEY = "f0549ea17c34cc54c672676e791f616b";
+
+async function tryLastFm(stationName: string): Promise<string | null> {
+  try {
+    const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(stationName)}&api_key=${LASTFM_API_KEY}&format=json`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const images = data?.artist?.image;
+    if (!Array.isArray(images)) return null;
+    const mega = images.find((i: any) => i.size === "mega")?.["#text"];
+    const xl = images.find((i: any) => i.size === "extralarge")?.["#text"];
+    const candidate = mega || xl;
+    if (!candidate || candidate.includes("2a96cbd8b46e442fc41c2b86b821562f")) return null;
+    const result = await validateImage(candidate);
+    return result === "OK" ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 async function resolveHdArtwork(
   originalUrl: string,
   homepage: string,
+  stationName: string,
 ): Promise<string> {
   // Source A — Clearbit
   if (homepage) {
@@ -104,7 +127,13 @@ async function resolveHdArtwork(
     if (clearbitUrl) return clearbitUrl;
   }
 
-  // Source C — Local placeholder (always better than low-quality)
+  // Source B — Last.fm
+  if (stationName) {
+    const lastFmUrl = await tryLastFm(stationName);
+    if (lastFmUrl) return lastFmUrl;
+  }
+
+  // Source C — Local placeholder
   return stationPlaceholder;
 }
 
