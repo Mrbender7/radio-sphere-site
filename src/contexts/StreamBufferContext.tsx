@@ -60,6 +60,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const [bufferAvailable, setBufferAvailable] = useState(false);
   const [recordingAvailable, setRecordingAvailable] = useState(false);
   const [currentSeekOffsetSeconds, setCurrentSeekOffsetSeconds] = useState(0);
+  const [debugInfo, setDebugInfo] = useState<{ chunkCount: number; fetchActive: boolean; lastError: string }>({ chunkCount: 0, fetchActive: false, lastError: '' });
 
   const clearBuffer = useCallback(() => {
     chunksRef.current = [];
