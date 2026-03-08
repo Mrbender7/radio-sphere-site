@@ -167,7 +167,8 @@ async function resolveStation(
   homepage: string,
   stationName: string,
 ): Promise<string> {
-  const secureUrl = originalUrl?.replace("http://", "https://") || "";
+  // Keep original URL as-is (don't force https — breaks many radio favicons)
+  const workingUrl = originalUrl || "";
 
   // 1. Already persisted? (skip if it's the placeholder — re-check for better art)
   const persisted = loadPersistedCache();
@@ -185,17 +186,17 @@ async function resolveStation(
   }
 
   // 2. Mark as checking
-  memoryCache.set(stationId, { status: "CHECKING", resolvedUrl: secureUrl || stationPlaceholder, checked: false });
+  memoryCache.set(stationId, { status: "CHECKING", resolvedUrl: workingUrl || stationPlaceholder, checked: false });
   notify();
 
   // 3. Validate original
-  const quality = await validateImage(secureUrl);
+  const quality = await validateImage(workingUrl);
 
   let finalUrl: string;
   if (quality === "OK") {
-    finalUrl = secureUrl;
+    finalUrl = workingUrl;
   } else {
-    finalUrl = await resolveHdArtwork(secureUrl, homepage, stationName);
+    finalUrl = await resolveHdArtwork(workingUrl, homepage, stationName);
   }
 
   // 4. Store
@@ -227,7 +228,7 @@ export function useArtworkCache(
   const getSnapshot = useCallback(() => {
     return memoryCache.get(stationId) ?? {
       status: "PENDING" as const,
-      resolvedUrl: originalUrl?.replace("http://", "https://") || stationPlaceholder,
+      resolvedUrl: originalUrl || stationPlaceholder,
       checked: false,
     };
   }, [stationId, originalUrl]);
