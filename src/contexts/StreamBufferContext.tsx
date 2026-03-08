@@ -19,6 +19,7 @@ interface StreamBufferContextType {
   bufferAvailable: boolean;
   recordingAvailable: boolean;
   currentSeekOffsetSeconds: number;
+  debugInfo: { chunkCount: number; fetchActive: boolean; lastError: string };
   startRecording: () => void;
   stopRecording: () => Promise<{ blob: Blob; fileName: string } | null>;
   seekBack: (seconds: number) => void;
