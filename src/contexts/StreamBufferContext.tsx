@@ -120,7 +120,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
     const controller = new AbortController();
     fetchControllerRef.current = controller;
-    setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '' }));
+    setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '', chunkCount: 0 }));
 
     try {
       const response = await fetch(streamUrl, {
@@ -141,48 +141,84 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       detectedMimeRef.current = contentType.split(';')[0].trim();
       console.log("[StreamBuffer] Fetch stream started, MIME:", detectedMimeRef.current);
 
-      const reader = response.body.getReader();
+      // Strategy 1: Try pipeTo + WritableStream (more reliable in iframes)
+      // Strategy 2: Fallback to getReader().read() loop
+      const processChunk = (value: Uint8Array) => {
+        if (!value || value.byteLength === 0) return;
 
-      const readLoop = async () => {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'stream ended (done)' }));
-              break;
-            }
-            if (!value || value.byteLength === 0) continue;
+        const chunk: TimestampedChunk = {
+          data: value,
+          time: Date.now(),
+          byteOffset: cumulativeBytesRef.current,
+        };
+        cumulativeBytesRef.current += value.byteLength;
+        chunksRef.current.push(chunk);
+        totalBytesRef.current += value.byteLength;
 
-            const chunk: TimestampedChunk = {
-              data: value,
-              time: Date.now(),
-              byteOffset: cumulativeBytesRef.current,
-            };
-            cumulativeBytesRef.current += value.byteLength;
-            chunksRef.current.push(chunk);
-            totalBytesRef.current += value.byteLength;
-
-            if (!bufferAvailableRef.current) {
-              bufferAvailableRef.current = true;
-              setBufferAvailable(true);
-            }
-
-            trimBuffer();
-            updateBufferSeconds();
-            setDebugInfo(d => ({ ...d, chunkCount: chunksRef.current.length }));
-          }
-        } catch (err: any) {
-          if (err?.name === 'AbortError') {
-            console.log("[StreamBuffer] Fetch aborted (normal)");
-            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'aborted' }));
-          } else {
-            console.warn("[StreamBuffer] Fetch read error:", err);
-            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `read: ${err?.message || err}` }));
-          }
+        if (!bufferAvailableRef.current) {
+          bufferAvailableRef.current = true;
+          setBufferAvailable(true);
         }
+
+        trimBuffer();
+        updateBufferSeconds();
+        setDebugInfo(d => ({ ...d, chunkCount: chunksRef.current.length }));
       };
 
-      readLoop();
+      // Try WritableStream approach first (works better in some iframe environments)
+      if (typeof WritableStream !== 'undefined') {
+        console.log("[StreamBuffer] Using pipeTo + WritableStream strategy");
+        setDebugInfo(d => ({ ...d, lastError: 'strategy: pipeTo' }));
+        
+        const writable = new WritableStream<Uint8Array>({
+          write(chunk) {
+            processChunk(chunk);
+          },
+          close() {
+            console.log("[StreamBuffer] Stream closed via pipeTo");
+            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'stream closed' }));
+          },
+          abort(reason) {
+            console.log("[StreamBuffer] Stream aborted via pipeTo:", reason);
+            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `pipeTo abort: ${reason}` }));
+          }
+        });
+
+        response.body.pipeTo(writable, { signal: controller.signal }).catch((err: any) => {
+          if (err?.name === 'AbortError') {
+            console.log("[StreamBuffer] pipeTo aborted (normal)");
+          } else {
+            console.warn("[StreamBuffer] pipeTo error:", err);
+            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `pipeTo: ${err?.message || err}` }));
+          }
+        });
+      } else {
+        // Fallback: getReader loop
+        console.log("[StreamBuffer] Using getReader loop strategy (no WritableStream)");
+        setDebugInfo(d => ({ ...d, lastError: 'strategy: reader' }));
+        
+        const reader = response.body.getReader();
+        const readLoop = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'stream ended (done)' }));
+                break;
+              }
+              if (value) processChunk(value);
+            }
+          } catch (err: any) {
+            if (err?.name === 'AbortError') {
+              console.log("[StreamBuffer] Fetch aborted (normal)");
+            } else {
+              console.warn("[StreamBuffer] Fetch read error:", err);
+              setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `read: ${err?.message || err}` }));
+            }
+          }
+        };
+        readLoop();
+      }
     } catch (e: any) {
       if (e?.name === 'AbortError') {
         console.log("[StreamBuffer] Fetch aborted (normal)");
