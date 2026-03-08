@@ -19,6 +19,7 @@ interface StreamBufferContextType {
   bufferAvailable: boolean;
   recordingAvailable: boolean;
   currentSeekOffsetSeconds: number;
+  debugInfo: { chunkCount: number; fetchActive: boolean; lastError: string };
   startRecording: () => void;
   stopRecording: () => Promise<{ blob: Blob; fileName: string } | null>;
   seekBack: (seconds: number) => void;
@@ -59,6 +60,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const [bufferAvailable, setBufferAvailable] = useState(false);
   const [recordingAvailable, setRecordingAvailable] = useState(false);
   const [currentSeekOffsetSeconds, setCurrentSeekOffsetSeconds] = useState(0);
+  const [debugInfo, setDebugInfo] = useState<{ chunkCount: number; fetchActive: boolean; lastError: string }>({ chunkCount: 0, fetchActive: false, lastError: '' });
 
   const clearBuffer = useCallback(() => {
     chunksRef.current = [];
@@ -118,6 +120,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
     const controller = new AbortController();
     fetchControllerRef.current = controller;
+    setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '' }));
 
     try {
       const response = await fetch(streamUrl, {
@@ -127,6 +130,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
       if (!response.ok || !response.body) {
         console.warn("[StreamBuffer] Fetch failed or no body, status:", response.status);
+        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `HTTP ${response.status}, body=${!!response.body}` }));
         setBufferAvailable(false);
         setRecordingAvailable(false);
         return;
@@ -143,7 +147,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'stream ended (done)' }));
+              break;
+            }
             if (!value || value.byteLength === 0) continue;
 
             const chunk: TimestampedChunk = {
@@ -162,12 +169,15 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
             trimBuffer();
             updateBufferSeconds();
+            setDebugInfo(d => ({ ...d, chunkCount: chunksRef.current.length }));
           }
         } catch (err: any) {
           if (err?.name === 'AbortError') {
             console.log("[StreamBuffer] Fetch aborted (normal)");
+            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'aborted' }));
           } else {
             console.warn("[StreamBuffer] Fetch read error:", err);
+            setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `read: ${err?.message || err}` }));
           }
         }
       };
@@ -176,8 +186,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     } catch (e: any) {
       if (e?.name === 'AbortError') {
         console.log("[StreamBuffer] Fetch aborted (normal)");
+        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'aborted' }));
       } else {
         console.warn("[StreamBuffer] Failed to fetch stream:", e);
+        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `fetch: ${e?.message || e}` }));
         setBufferAvailable(false);
         setRecordingAvailable(false);
       }
@@ -421,6 +433,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       bufferAvailable,
       recordingAvailable,
       currentSeekOffsetSeconds,
+      debugInfo,
       startRecording,
       stopRecording,
       seekBack,
