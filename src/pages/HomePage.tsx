@@ -98,8 +98,8 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
 
       {/* Weekly discoveries */}
       {discoveries.length > 0 && (
-        <section className="mb-6">
-          <div className="flex items-center justify-between mb-3">
+        <section className="mb-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg font-heading font-semibold bg-gradient-to-r from-[hsl(280,80%,60%)] to-[hsl(340,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               {t("home.weeklyDiscoveries")}
