@@ -116,10 +116,15 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
   // --- Stop fetch stream ---
   const stopFetch = useCallback(() => {
+    if (noChunkTimeoutRef.current) {
+      clearTimeout(noChunkTimeoutRef.current);
+      noChunkTimeoutRef.current = null;
+    }
     if (fetchControllerRef.current) {
       fetchControllerRef.current.abort();
       fetchControllerRef.current = null;
     }
+    setDebugInfo(d => ({ ...d, fetchActive: false }));
   }, []);
 
   // --- Start fetch-based stream capture (no proxy, direct fetch) ---
