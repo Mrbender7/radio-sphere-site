@@ -419,17 +419,9 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
       </CollapsibleSection>
 
       {/* Replace low-quality artworks toggle */}
-      <div className="rounded-xl bg-accent p-4 mb-4">
+      <CollapsibleSection icon={ImageOff} title={t("settings.replaceLowQuality")}>
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-              <ImageOff className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">{t("settings.replaceLowQuality")}</h3>
-              <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{t("settings.replaceLowQualityDesc")}</p>
-            </div>
-          </div>
+          <p className="text-[10px] text-muted-foreground leading-relaxed flex-1">{t("settings.replaceLowQualityDesc")}</p>
           <Switch
             checked={replaceLowQuality}
             className="h-7 w-12 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] [&>span]:h-6 [&>span]:w-6 [&>span]:shadow-[0_2px_6px_rgba(0,0,0,0.5)] [&>span]:data-[state=checked]:translate-x-5 [&>span]:data-[state=checked]:shadow-[0_0_8px_hsla(var(--primary)/0.5),0_2px_6px_rgba(0,0,0,0.5)]"
@@ -441,7 +433,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
             }}
           />
         </div>
-      </div>
+      </CollapsibleSection>
 
       <CollapsibleSection
         icon={Crown}
