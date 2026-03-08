@@ -8,6 +8,7 @@ interface SmartArtworkProps {
   stationId: string;
   originalUrl?: string;
   homepage?: string;
+  stationName?: string;
   alt: string;
   className?: string;
 }
@@ -16,10 +17,11 @@ export function SmartArtwork({
   stationId,
   originalUrl = "",
   homepage = "",
+  stationName = "",
   alt,
   className,
 }: SmartArtworkProps) {
-  const { src, isLoading, isResolved } = useArtworkCache(stationId, originalUrl, homepage);
+  const { src, isLoading, isResolved } = useArtworkCache(stationId, originalUrl, homepage, stationName);
   const [imgLoaded, setImgLoaded] = useState(false);
   const isPlaceholder = !originalUrl && !isResolved;
 
