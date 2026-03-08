@@ -211,6 +211,7 @@ const translations: Record<Language, Record<string, string>> = {
     "player.returnToLive": "Retour au direct",
     "player.recordPremiumOnly": "L'enregistrement est une fonctionnalité Premium",
     "player.backInTime": "Retour dans le passé",
+    "player.bufferLoading": "Chargement du buffer...",
     "player.recordingNotAvailable": "Enregistrement indisponible",
     "player.recordingContinuesLive": "Retour au direct, enregistrement en cours...",
   },
