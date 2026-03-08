@@ -330,6 +330,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "Understood",
     "favorites.noFavoritesToExport": "No favorites to export",
     "favorites.refreshMetadata": "Refresh metadata",
+    "favorites.purgeArtworkCache": "Purge artwork cache",
     "settings.privacyPolicy": "Privacy Policy",
     "settings.reopenWelcome": "Reopen welcome page",
     "settings.resetApp": "Reset application",
