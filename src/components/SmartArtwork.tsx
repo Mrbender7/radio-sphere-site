@@ -8,6 +8,7 @@ interface SmartArtworkProps {
   stationId: string;
   originalUrl?: string;
   homepage?: string;
+  stationName?: string;
   alt: string;
   className?: string;
 }
