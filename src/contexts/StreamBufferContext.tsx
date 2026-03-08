@@ -135,10 +135,41 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     fetchControllerRef.current = controller;
     setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '', chunkCount: 0 }));
 
+    // Force a dedicated request (avoid potential media cache/dedup behavior in preview browsers)
+    const buildBufferUrl = (url: string) => {
+      try {
+        const u = new URL(url);
+        u.searchParams.set('__tbm_fetch', String(Date.now()));
+        return u.toString();
+      } catch {
+        const sep = url.includes('?') ? '&' : '?';
+        return `${url}${sep}__tbm_fetch=${Date.now()}`;
+      }
+    };
+
+    const fetchUrl = buildBufferUrl(streamUrl);
+
+    // Watchdog: if no chunk arrives quickly, retry a fresh connection (max 2 retries)
+    noChunkTimeoutRef.current = setTimeout(() => {
+      if (fetchControllerRef.current !== controller) return;
+      if (chunksRef.current.length > 0) return;
+
+      if (noChunkRetryRef.current < 2) {
+        noChunkRetryRef.current += 1;
+        console.warn(`[StreamBuffer] No chunks received, retry ${noChunkRetryRef.current}/2`);
+        setDebugInfo(d => ({ ...d, lastError: `no chunks, retry ${noChunkRetryRef.current}/2` }));
+        stopFetch();
+        setTimeout(() => startFetch(streamUrl), 150);
+      } else {
+        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'no chunks after retries' }));
+      }
+    }, 5000);
+
     try {
-      const response = await fetch(streamUrl, {
+      const response = await fetch(fetchUrl, {
         signal: controller.signal,
-        headers: { 'Accept': '*/*' },
+        headers: { 'Accept': '*/*', 'Cache-Control': 'no-cache' },
+        cache: 'no-store',
       });
 
       if (!response.ok || !response.body) {
@@ -158,6 +189,12 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       // Strategy 2: Fallback to getReader().read() loop
       const processChunk = (value: Uint8Array) => {
         if (!value || value.byteLength === 0) return;
+
+        if (noChunkTimeoutRef.current) {
+          clearTimeout(noChunkTimeoutRef.current);
+          noChunkTimeoutRef.current = null;
+        }
+        noChunkRetryRef.current = 0;
 
         const chunk: TimestampedChunk = {
           data: value,
@@ -182,7 +219,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       if (typeof WritableStream !== 'undefined') {
         console.log("[StreamBuffer] Using pipeTo + WritableStream strategy");
         setDebugInfo(d => ({ ...d, lastError: 'strategy: pipeTo' }));
-        
+
         const writable = new WritableStream<Uint8Array>({
           write(chunk) {
             processChunk(chunk);
@@ -209,7 +246,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
         // Fallback: getReader loop
         console.log("[StreamBuffer] Using getReader loop strategy (no WritableStream)");
         setDebugInfo(d => ({ ...d, lastError: 'strategy: reader' }));
-        
+
         const reader = response.body.getReader();
         const readLoop = async () => {
           try {
