@@ -173,10 +173,10 @@ async function resolveHdArtwork(
   homepage: string,
   stationName: string,
 ): Promise<string> {
-  // Source A — Clearbit
+  // Source A — Brandfetch
   if (homepage) {
-    const clearbitUrl = await tryClearbit(homepage);
-    if (clearbitUrl) return clearbitUrl;
+    const brandfetchUrl = await tryBrandfetch(homepage);
+    if (brandfetchUrl) return brandfetchUrl;
   }
 
   // Source B — Last.fm
