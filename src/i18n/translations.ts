@@ -732,6 +732,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "Verstanden",
     "favorites.noFavoritesToExport": "Keine Favoriten zum Exportieren",
     "favorites.refreshMetadata": "Metadaten aktualisieren",
+    "favorites.purgeArtworkCache": "Artwork-Cache leeren",
     "settings.privacyPolicy": "Datenschutzrichtlinie",
     "settings.reopenWelcome": "Willkommensseite erneut öffnen",
     "settings.resetApp": "App zurücksetzen",
