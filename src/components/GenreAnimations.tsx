@@ -3,322 +3,103 @@ interface GenreAnimationProps {
   genre: string;
 }
 
-const svgBase = "absolute right-2 top-1/2 -translate-y-1/2 w-16 h-16";
-const filterStyle: React.CSSProperties = { filter: "drop-shadow(0 0 3px rgba(255,255,255,0.8)) drop-shadow(0 0 6px rgba(255,255,255,0.4))" };
-const S = { strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" };
-const W = "white";
+const svgBase = "absolute right-2 top-1/2 -translate-y-1/2 w-14 h-14 opacity-90";
 
-function Vinyl() {
+const gradientDef = (
+  <defs>
+    <linearGradient id="genre-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="hsl(220,90%,70%)" />
+      <stop offset="100%" stopColor="hsl(280,80%,70%)" />
+    </linearGradient>
+  </defs>
+);
+
+const G = "url(#genre-grad)";
+const S = { strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none", stroke: G };
+
+function PeaceSign() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <circle cx="40" cy="40" r="32" stroke={W} strokeWidth="2.5" {...S} />
-      <circle cx="40" cy="40" r="22" stroke={W} strokeWidth="1.5" {...S} />
-      <circle cx="40" cy="40" r="12" stroke={W} strokeWidth="1.5" {...S} />
-      <circle cx="40" cy="40" r="5" stroke={W} strokeWidth="2.5" {...S} />
-      <circle cx="40" cy="40" r="27" stroke={W} strokeWidth="0.5" {...S} opacity="0.4" />
-      <circle cx="40" cy="40" r="17" stroke={W} strokeWidth="0.5" {...S} opacity="0.4" />
-      <g>
-        <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="6s" repeatCount="indefinite" />
-        <line x1="40" y1="8" x2="40" y2="14" stroke={W} strokeWidth="1" {...S} opacity="0.3" />
-      </g>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <circle cx="40" cy="40" r="26" strokeWidth="3" {...S} />
+      <line x1="40" y1="14" x2="40" y2="66" strokeWidth="3" {...S} />
+      <line x1="40" y1="40" x2="22" y2="58" strokeWidth="3" {...S} />
+      <line x1="40" y1="40" x2="58" y2="58" strokeWidth="3" {...S} />
     </svg>
   );
 }
 
-function NeonZigzag() {
+function Vinyl() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <polyline points="5,55 18,18 32,52 46,12 60,48 75,15" stroke={W} strokeWidth="3" {...S}>
-        <animate attributeName="opacity" values="0.5;1;0.5" dur="1.2s" repeatCount="indefinite" />
-      </polyline>
-      <polyline points="8,68 22,32 36,62 50,22 64,58 78,28" stroke={W} strokeWidth="2" {...S} opacity="0.4">
-        <animate attributeName="opacity" values="0.2;0.6;0.2" dur="1.8s" repeatCount="indefinite" />
-      </polyline>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <circle cx="40" cy="40" r="28" strokeWidth="2.5" {...S} />
+      <circle cx="40" cy="40" r="20" strokeWidth="1.5" {...S} opacity="0.5" />
+      <circle cx="40" cy="40" r="10" strokeWidth="2" {...S} />
+      <circle cx="40" cy="40" r="4" fill={G} />
+    </svg>
+  );
+}
+
+function Boombox() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <rect x="8" y="22" width="64" height="40" rx="6" strokeWidth="2.5" {...S} />
+      <circle cx="28" cy="46" r="10" strokeWidth="2.5" {...S} />
+      <circle cx="28" cy="46" r="4" strokeWidth="1.5" {...S} />
+      <circle cx="52" cy="46" r="10" strokeWidth="2.5" {...S} />
+      <circle cx="52" cy="46" r="4" strokeWidth="1.5" {...S} />
+      <rect x="22" y="26" width="36" height="8" rx="2" strokeWidth="1.5" {...S} />
+      <line x1="34" y1="18" x2="46" y2="8" strokeWidth="2" {...S} />
     </svg>
   );
 }
 
 function Equalizer() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <rect x="6" y="20" width="8" height="50" rx="2" stroke={W} strokeWidth="2" fill={W} fillOpacity="0.3">
-        <animate attributeName="height" values="50;20;40;50" dur="0.7s" repeatCount="indefinite" />
-        <animate attributeName="y" values="20;50;30;20" dur="0.7s" repeatCount="indefinite" />
-      </rect>
-      <rect x="19" y="10" width="8" height="60" rx="2" stroke={W} strokeWidth="2" fill={W} fillOpacity="0.3">
-        <animate attributeName="height" values="60;30;55;60" dur="0.5s" repeatCount="indefinite" />
-        <animate attributeName="y" values="10;40;15;10" dur="0.5s" repeatCount="indefinite" />
-      </rect>
-      <rect x="32" y="25" width="8" height="45" rx="2" stroke={W} strokeWidth="2" fill={W} fillOpacity="0.3">
-        <animate attributeName="height" values="45;15;50;45" dur="0.9s" repeatCount="indefinite" />
-        <animate attributeName="y" values="25;55;20;25" dur="0.9s" repeatCount="indefinite" />
-      </rect>
-      <rect x="45" y="15" width="8" height="55" rx="2" stroke={W} strokeWidth="2" fill={W} fillOpacity="0.3">
-        <animate attributeName="height" values="55;25;45;55" dur="0.6s" repeatCount="indefinite" />
-        <animate attributeName="y" values="15;45;25;15" dur="0.6s" repeatCount="indefinite" />
-      </rect>
-      <rect x="58" y="30" width="8" height="40" rx="2" stroke={W} strokeWidth="2" fill={W} fillOpacity="0.3">
-        <animate attributeName="height" values="40;18;48;40" dur="0.8s" repeatCount="indefinite" />
-        <animate attributeName="y" values="30;52;22;30" dur="0.8s" repeatCount="indefinite" />
-      </rect>
-      <rect x="71" y="20" width="8" height="50" rx="2" stroke={W} strokeWidth="2" fill={W} fillOpacity="0.3">
-        <animate attributeName="height" values="50;28;42;50" dur="0.55s" repeatCount="indefinite" />
-        <animate attributeName="y" values="20;42;28;20" dur="0.55s" repeatCount="indefinite" />
-      </rect>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      {[14, 26, 38, 50, 62].map((x, i) => {
+        const heights = [36, 48, 28, 42, 32];
+        const h = heights[i];
+        return <rect key={i} x={x} y={70 - h} width="8" height={h} rx="3" strokeWidth="2" {...S} fill={G} fillOpacity="0.2" />;
+      })}
     </svg>
   );
 }
 
-function ConcentricCircles() {
+function CloudWave() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      {[10, 20, 30].map((r, i) => (
-        <circle key={i} cx="40" cy="40" r={r} stroke={W} strokeWidth="2" {...S}>
-          <animate attributeName="r" values={`${r};${r + 4};${r}`} dur={`${3 + i}s`} repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.8;0.3;0.8" dur={`${3 + i}s`} repeatCount="indefinite" />
-        </circle>
-      ))}
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M8,50 Q20,20 40,40 Q60,60 72,30" strokeWidth="3" {...S} />
+      <path d="M8,58 Q24,34 40,50 Q56,66 72,42" strokeWidth="2" {...S} opacity="0.4" />
+      <circle cx="40" cy="40" r="3" fill={G} opacity="0.6" />
     </svg>
   );
 }
 
 function SineWave() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <path d="M2,40 Q20,15 40,40 T78,40" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="d" values="M2,40 Q20,15 40,40 T78,40;M2,40 Q20,60 40,40 T78,40;M2,40 Q20,15 40,40 T78,40" dur="3.5s" repeatCount="indefinite" />
-      </path>
-      <path d="M2,52 Q20,28 40,52 T78,52" stroke={W} strokeWidth="1.5" {...S} opacity="0.5">
-        <animate attributeName="d" values="M2,52 Q20,28 40,52 T78,52;M2,52 Q20,70 40,52 T78,52;M2,52 Q20,28 40,52 T78,52" dur="4.5s" repeatCount="indefinite" />
-      </path>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M4,40 Q20,10 40,40 Q60,70 76,40" strokeWidth="3" {...S} />
+      <path d="M4,50 Q20,24 40,50 Q60,76 76,50" strokeWidth="2" {...S} opacity="0.35" />
     </svg>
   );
 }
 
-function GrandPiano() {
+function Piano() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <path d="M20,55 L20,25 C20,15 35,8 50,12 C62,15 68,25 68,35 L68,55 C68,58 65,60 62,60 L26,60 C23,60 20,58 20,55Z" stroke={W} strokeWidth="2.5" {...S} />
-      <line x1="44" y1="15" x2="44" y2="58" stroke={W} strokeWidth="1.5" {...S} opacity="0.5" />
-      <rect x="22" y="54" width="44" height="5" rx="1" stroke={W} strokeWidth="1.5" {...S} />
-      {[28, 34, 44, 50, 56].map((x, i) => (
-        <line key={i} x1={x} y1="54" x2={x} y2="57" stroke={W} strokeWidth="1.5" {...S} />
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <rect x="10" y="20" width="60" height="44" rx="4" strokeWidth="2.5" {...S} />
+      {[22, 32, 42, 52, 62].map((x, i) => (
+        <line key={i} x1={x} y1="20" x2={x} y2="64" strokeWidth="1.5" {...S} opacity="0.4" />
       ))}
-      <g>
-        <circle cx="14" cy="20" r="2.5" stroke={W} strokeWidth="1.5" {...S}>
-          <animate attributeName="cy" values="22;14;22" dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite" />
-        </circle>
-        <line x1="16.5" y1="20" x2="16.5" y2="12" stroke={W} strokeWidth="1" {...S}>
-          <animate attributeName="y1" values="22;14;22" dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="y2" values="14;6;14" dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite" />
-        </line>
-      </g>
-      <g>
-        <circle cx="72" cy="18" r="2" stroke={W} strokeWidth="1.5" {...S}>
-          <animate attributeName="cy" values="20;12;20" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite" />
-        </circle>
-        <line x1="74" y1="18" x2="74" y2="10" stroke={W} strokeWidth="1" {...S}>
-          <animate attributeName="y1" values="20;12;20" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="y2" values="12;4;12" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite" />
-        </line>
-      </g>
-    </svg>
-  );
-}
-
-function ElectricCircuit() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <polyline points="5,40 20,40 25,15 35,65 45,25 55,55 60,40 75,40" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="stroke-dashoffset" values="200;0" dur="2s" repeatCount="indefinite" />
-      </polyline>
-      <circle cx="40" cy="40" r="5" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="r" values="4;9;4" dur="1.5s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite" />
-      </circle>
-    </svg>
-  );
-}
-
-function Microphone() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <rect x="30" y="10" width="20" height="32" rx="10" stroke={W} strokeWidth="2.5" {...S} />
-      {[18, 24, 30].map((y, i) => (
-        <line key={i} x1="33" x2="47" y1={y} y2={y} stroke={W} strokeWidth="1" {...S} opacity="0.4" />
-      ))}
-      <line x1="40" y1="42" x2="40" y2="60" stroke={W} strokeWidth="2.5" {...S} />
-      <line x1="28" y1="60" x2="52" y2="60" stroke={W} strokeWidth="2.5" {...S} />
-      {[16, 22, 28].map((r, i) => (
-        <path key={i} d={`M${40 - r},30 A${r},${r} 0 0,0 ${40 + r},30`} stroke={W} strokeWidth="1.5" {...S}>
-          <animate attributeName="opacity" values="0.1;0.8;0.1" dur={`${1.2 + i * 0.3}s`} repeatCount="indefinite" />
-        </path>
-      ))}
-    </svg>
-  );
-}
-
-function Saxophone() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <path d="M22,8 L28,8 L30,14" stroke={W} strokeWidth="2.5" {...S} />
-      <path d="M30,14 L32,28" stroke={W} strokeWidth="2.5" {...S} />
-      <path d="M32,28 C32,34 34,40 38,46 C42,52 46,56 46,62 C46,68 42,72 36,72 C30,72 26,68 26,62" stroke={W} strokeWidth="3" {...S} />
-      <path d="M24,58 C22,62 22,68 26,72 C30,76 38,76 42,72 C46,68 48,64 48,60" stroke={W} strokeWidth="2" {...S} opacity="0.6" />
-      <circle cx="34" cy="34" r="2" stroke={W} strokeWidth="1.5" {...S} />
-      <circle cx="36" cy="42" r="2" stroke={W} strokeWidth="1.5" {...S} />
-      <circle cx="40" cy="50" r="2" stroke={W} strokeWidth="1.5" {...S} />
-      <g>
-        <ellipse cx="58" cy="20" rx="3" ry="2.5" stroke={W} strokeWidth="1.5" {...S}>
-          <animate attributeName="cy" values="22;12;22" dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite" />
-        </ellipse>
-        <line x1="61" y1="20" x2="61" y2="10" stroke={W} strokeWidth="1" {...S}>
-          <animate attributeName="y1" values="22;12;22" dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="y2" values="12;2;12" dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite" />
-        </line>
-      </g>
-      <g>
-        <ellipse cx="64" cy="36" rx="2.5" ry="2" stroke={W} strokeWidth="1.5" {...S}>
-          <animate attributeName="cy" values="38;28;38" dur="3.2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3.2s" repeatCount="indefinite" />
-        </ellipse>
-        <line x1="66.5" y1="36" x2="66.5" y2="26" stroke={W} strokeWidth="1" {...S}>
-          <animate attributeName="y1" values="38;28;38" dur="3.2s" repeatCount="indefinite" />
-          <animate attributeName="y2" values="28;18;28" dur="3.2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3.2s" repeatCount="indefinite" />
-        </line>
-      </g>
-    </svg>
-  );
-}
-
-function RadioWaves() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <line x1="36" y1="68" x2="40" y2="28" stroke={W} strokeWidth="2.5" {...S} />
-      <circle cx="40" cy="26" r="3" stroke={W} strokeWidth="2.5" {...S} />
-      <line x1="26" y1="68" x2="46" y2="68" stroke={W} strokeWidth="2.5" {...S} />
-      {[14, 22, 30].map((r, i) => (
-        <path key={i} d={`M${40 - r},26 A${r},${r} 0 0,1 ${40 + r},26`} stroke={W} strokeWidth="2" {...S}>
-          <animate attributeName="opacity" values="0.2;1;0.2" dur={`${1 + i * 0.4}s`} repeatCount="indefinite" />
-        </path>
-      ))}
-    </svg>
-  );
-}
-
-function Star() {
-  const points = "40,8 47,28 68,28 51,42 57,62 40,50 23,62 29,42 12,28 33,28";
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <polygon points={points} stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
-      </polygon>
-      {[{x: 16, y: 16}, {x: 68, y: 14}, {x: 65, y: 56}, {x: 10, y: 52}].map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="1.5" stroke={W} strokeWidth="1.5" {...S}>
-          <animate attributeName="r" values="0.5;3;0.5" dur={`${1.2 + i * 0.3}s`} repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0;1;0" dur={`${1.2 + i * 0.3}s`} repeatCount="indefinite" />
-        </circle>
-      ))}
-    </svg>
-  );
-}
-
-function HeartPulse() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <path d="M40,65 C25,50 8,40 8,26 C8,16 16,10 26,13 C33,15 37,20 40,25 C43,20 47,15 54,13 C64,10 72,16 72,26 C72,40 55,50 40,65Z" stroke={W} strokeWidth="2.5" {...S}>
-        <animateTransform attributeName="transform" type="scale" values="1;1.08;1" dur="1s" repeatCount="indefinite" additive="sum" />
-      </path>
-    </svg>
-  );
-}
-
-function RockDevil() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      {/* Face ronde */}
-      <circle cx="40" cy="44" r="22" stroke={W} strokeWidth="2.5" {...S} />
-      {/* Cornes gauche */}
-      <path d="M22,30 L14,10 L28,24" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="d" values="M22,30 L14,10 L28,24;M22,30 L12,8 L28,24;M22,30 L14,10 L28,24" dur="1.5s" repeatCount="indefinite" />
-      </path>
-      {/* Cornes droite */}
-      <path d="M58,30 L66,10 L52,24" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="d" values="M58,30 L66,10 L52,24;M58,30 L68,8 L52,24;M58,30 L66,10 L52,24" dur="1.5s" repeatCount="indefinite" />
-      </path>
-      {/* Yeux */}
-      <circle cx="32" cy="40" r="3" fill={W} stroke="none">
-        <animate attributeName="r" values="3;3.5;3" dur="2s" repeatCount="indefinite" />
-      </circle>
-      <circle cx="48" cy="40" r="3" fill={W} stroke="none">
-        <animate attributeName="r" values="3;3.5;3" dur="2s" repeatCount="indefinite" begin="0.2s" />
-      </circle>
-      {/* Sourire diabolique */}
-      <path d="M30,52 Q35,60 40,56 Q45,60 50,52" stroke={W} strokeWidth="2" {...S}>
-        <animate attributeName="d" values="M30,52 Q35,60 40,56 Q45,60 50,52;M30,51 Q35,62 40,55 Q45,62 50,51;M30,52 Q35,60 40,56 Q45,60 50,52" dur="3s" repeatCount="indefinite" />
-      </path>
-      {/* Sourcils malicieux */}
-      <line x1="26" y1="34" x2="35" y2="35" stroke={W} strokeWidth="2" {...S}>
-        <animate attributeName="y1" values="34;32;34" dur="2s" repeatCount="indefinite" />
-      </line>
-      <line x1="54" y1="34" x2="45" y2="35" stroke={W} strokeWidth="2" {...S}>
-        <animate attributeName="y1" values="34;32;34" dur="2s" repeatCount="indefinite" />
-      </line>
-      {/* Petite queue pointue */}
-      <path d="M62,50 Q72,48 68,38 L70,36" stroke={W} strokeWidth="2" {...S}>
-        <animate attributeName="d" values="M62,50 Q72,48 68,38 L70,36;M62,50 Q74,46 69,36 L72,34;M62,50 Q72,48 68,38 L70,36" dur="2s" repeatCount="indefinite" />
-      </path>
-    </svg>
-  );
-}
-
-function Flame() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <path d="M40,8 C46,22 62,32 58,52 C55,64 30,68 26,54 C24,44 34,44 37,50 C40,42 28,28 40,8Z" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="d" values="M40,8 C46,22 62,32 58,52 C55,64 30,68 26,54 C24,44 34,44 37,50 C40,42 28,28 40,8Z;M40,10 C50,20 60,36 55,52 C52,65 32,65 28,54 C26,45 36,46 38,52 C42,40 30,26 40,10Z;M40,8 C46,22 62,32 58,52 C55,64 30,68 26,54 C24,44 34,44 37,50 C40,42 28,28 40,8Z" dur="2.5s" repeatCount="indefinite" />
-      </path>
-      <path d="M40,28 C44,36 50,42 48,52 C46,58 36,58 35,52 C34,48 38,48 40,28Z" stroke={W} strokeWidth="1.5" {...S} opacity="0.5">
-        <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite" />
-      </path>
-    </svg>
-  );
-}
-
-function PeaceFlower() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <circle cx="40" cy="40" r="18" stroke={W} strokeWidth="2.5" {...S} />
-      <line x1="40" y1="22" x2="40" y2="58" stroke={W} strokeWidth="2" {...S} />
-      <line x1="40" y1="40" x2="27" y2="53" stroke={W} strokeWidth="2" {...S} />
-      <line x1="40" y1="40" x2="53" y2="53" stroke={W} strokeWidth="2" {...S} />
-      {[0, 60, 120, 180, 240, 300].map((a, i) => (
-        <ellipse key={i} cx="40" cy="14" rx="5" ry="10" stroke={W} strokeWidth="1.5" {...S} transform={`rotate(${a} 40 40)`}>
-          <animate attributeName="ry" values="10;13;10" dur={`${2 + i * 0.2}s`} repeatCount="indefinite" />
-        </ellipse>
-      ))}
-    </svg>
-  );
-}
-
-function BluesGuitar() {
-  return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <ellipse cx="30" cy="55" rx="18" ry="16" stroke={W} strokeWidth="2.5" {...S} />
-      <circle cx="30" cy="55" r="5" stroke={W} strokeWidth="1.5" {...S} />
-      <line x1="48" y1="48" x2="70" y2="10" stroke={W} strokeWidth="3" {...S} />
-      <rect x="66" y="6" width="10" height="8" rx="2" stroke={W} strokeWidth="2" {...S} />
-      {[26, 30, 34].map((x, i) => (
-        <line key={i} x1={x} y1="39" x2={x + 15} y2="15" stroke={W} strokeWidth="1" {...S} opacity="0.5">
-          <animate attributeName="x1" values={`${x};${x + 1};${x - 1};${x}`} dur={`${0.3 + i * 0.1}s`} repeatCount="indefinite" />
-        </line>
+      {[26, 36, 50, 56].map((x, i) => (
+        <rect key={i} x={x} y="20" width="5" height="26" rx="1" strokeWidth="1.5" {...S} fill={G} fillOpacity="0.25" />
       ))}
     </svg>
   );
@@ -326,184 +107,232 @@ function BluesGuitar() {
 
 function CowboyHat() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <g>
-        <animateTransform attributeName="transform" type="rotate" values="-3 40 50;3 40 50;-3 40 50" dur="3s" repeatCount="indefinite" />
-        {/* Bord du chapeau - large brim */}
-        <path d="M5,60 C16,53 25,50 40,50 C55,50 64,53 75,60 C64,66 55,69 40,69 C25,69 16,66 5,60Z" stroke={W} strokeWidth="2.5" {...S} />
-        {/* Calotte haute */}
-        <path d="M25,50 C22,44 22,28 28,22 C33,17 36,19 40,19 C44,19 47,17 52,22 C58,28 58,44 55,50" stroke={W} strokeWidth="2.5" {...S} />
-        {/* Ligne centrale de la calotte */}
-        <line x1="40" y1="19" x2="40" y2="38" stroke={W} strokeWidth="1.5" {...S} opacity="0.5">
-          <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.5s" repeatCount="indefinite" />
-        </line>
-        {/* Bande du chapeau */}
-        <path d="M24,44 L56,44" stroke={W} strokeWidth="2" {...S} opacity="0.6">
-          <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2s" repeatCount="indefinite" />
-        </path>
-        {/* Étoile de shérif */}
-        <polygon points="40,43 41.2,45 43.5,45 41.8,46.5 42.5,48.8 40,47.2 37.5,48.8 38.2,46.5 36.5,45 38.8,45" fill={W} stroke="none" opacity="0.8">
-          <animate attributeName="opacity" values="0.5;1;0.5" dur="1.5s" repeatCount="indefinite" />
-        </polygon>
-      </g>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M6,56 C18,48 28,46 40,46 C52,46 62,48 74,56" strokeWidth="2.5" {...S} />
+      <path d="M6,56 C18,62 28,64 40,64 C52,64 62,62 74,56" strokeWidth="2.5" {...S} />
+      <path d="M24,46 C22,38 22,26 28,20 C34,14 40,16 40,16 C40,16 46,14 52,20 C58,26 58,38 56,46" strokeWidth="2.5" {...S} />
+      <line x1="26" y1="40" x2="54" y2="40" strokeWidth="1.5" {...S} opacity="0.5" />
     </svg>
   );
 }
 
-function FunkBass() {
+function Circuit() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <path d="M5,40 C12,20 20,60 30,30 C40,55 50,15 60,45 C65,55 70,25 78,40" stroke={W} strokeWidth="3" {...S}>
-        <animate attributeName="d" values="M5,40 C12,20 20,60 30,30 C40,55 50,15 60,45 C65,55 70,25 78,40;M5,40 C12,55 20,20 30,50 C40,25 50,60 60,30 C65,20 70,55 78,40;M5,40 C12,20 20,60 30,30 C40,55 50,15 60,45 C65,55 70,25 78,40" dur="1.5s" repeatCount="indefinite" />
-      </path>
-      <path d="M5,55 C15,45 25,65 35,50 C45,60 55,40 65,55 C70,60 75,45 78,55" stroke={W} strokeWidth="1.5" {...S} opacity="0.4">
-        <animate attributeName="d" values="M5,55 C15,45 25,65 35,50 C45,60 55,40 65,55 C70,60 75,45 78,55;M5,55 C15,65 25,45 35,60 C45,45 55,65 65,50 C70,45 75,60 78,55;M5,55 C15,45 25,65 35,50 C45,60 55,40 65,55 C70,60 75,45 78,55" dur="2s" repeatCount="indefinite" />
-      </path>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <circle cx="40" cy="40" r="6" strokeWidth="2.5" {...S} fill={G} fillOpacity="0.2" />
+      <line x1="40" y1="10" x2="40" y2="34" strokeWidth="2" {...S} />
+      <line x1="40" y1="46" x2="40" y2="70" strokeWidth="2" {...S} />
+      <line x1="10" y1="40" x2="34" y2="40" strokeWidth="2" {...S} />
+      <line x1="46" y1="40" x2="70" y2="40" strokeWidth="2" {...S} />
+      <circle cx="40" cy="10" r="3" fill={G} />
+      <circle cx="40" cy="70" r="3" fill={G} />
+      <circle cx="10" cy="40" r="3" fill={G} />
+      <circle cx="70" cy="40" r="3" fill={G} />
+    </svg>
+  );
+}
+
+function FunkGroove() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M8,50 C16,30 24,55 32,35 C40,55 48,25 56,45 C64,60 72,30 76,40" strokeWidth="3" {...S} />
+      <circle cx="20" cy="42" r="4" fill={G} fillOpacity="0.3" strokeWidth="1.5" {...S} />
+      <circle cx="56" cy="38" r="4" fill={G} fillOpacity="0.3" strokeWidth="1.5" {...S} />
+    </svg>
+  );
+}
+
+function Microphone() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <rect x="30" y="12" width="20" height="30" rx="10" strokeWidth="2.5" {...S} />
+      <line x1="40" y1="42" x2="40" y2="58" strokeWidth="2.5" {...S} />
+      <line x1="28" y1="58" x2="52" y2="58" strokeWidth="2.5" {...S} />
+      <path d="M22,34 Q22,52 40,52 Q58,52 58,34" strokeWidth="2" {...S} />
+    </svg>
+  );
+}
+
+function Saxophone() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M24,10 L28,10 L30,16" strokeWidth="2.5" {...S} />
+      <path d="M30,16 L32,30" strokeWidth="2.5" {...S} />
+      <path d="M32,30 C32,36 34,42 38,48 C42,54 46,58 46,64 C46,70 42,74 36,74 C30,74 26,70 26,64" strokeWidth="2.5" {...S} />
+      <circle cx="34" cy="36" r="2" fill={G} />
+      <circle cx="36" cy="44" r="2" fill={G} />
+      <circle cx="40" cy="52" r="2" fill={G} />
     </svg>
   );
 }
 
 function Maracas() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <g>
-        <animateTransform attributeName="transform" type="rotate" values="-8 30 50;8 30 50;-8 30 50" dur="0.5s" repeatCount="indefinite" />
-        <ellipse cx="30" cy="22" rx="12" ry="16" stroke={W} strokeWidth="2.5" {...S} />
-        <line x1="30" y1="38" x2="30" y2="68" stroke={W} strokeWidth="2.5" {...S} />
-        <circle cx="26" cy="18" r="1.5" fill={W} opacity="0.5" />
-        <circle cx="34" cy="24" r="1.5" fill={W} opacity="0.5" />
-        <circle cx="28" cy="28" r="1" fill={W} opacity="0.4" />
-      </g>
-      <g>
-        <animateTransform attributeName="transform" type="rotate" values="8 55 50;-8 55 50;8 55 50" dur="0.5s" repeatCount="indefinite" />
-        <ellipse cx="55" cy="25" rx="10" ry="14" stroke={W} strokeWidth="2" {...S} />
-        <line x1="55" y1="39" x2="55" y2="65" stroke={W} strokeWidth="2" {...S} />
-        <circle cx="52" cy="22" r="1.5" fill={W} opacity="0.4" />
-        <circle cx="58" cy="28" r="1" fill={W} opacity="0.4" />
-      </g>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <ellipse cx="28" cy="24" rx="11" ry="15" strokeWidth="2.5" {...S} />
+      <line x1="28" y1="39" x2="28" y2="66" strokeWidth="2.5" {...S} />
+      <ellipse cx="54" cy="28" rx="9" ry="13" strokeWidth="2" {...S} />
+      <line x1="54" y1="41" x2="54" y2="64" strokeWidth="2" {...S} />
+      <circle cx="25" cy="20" r="1.5" fill={G} opacity="0.6" />
+      <circle cx="31" cy="26" r="1.5" fill={G} opacity="0.6" />
+      <circle cx="52" cy="24" r="1.5" fill={G} opacity="0.5" />
     </svg>
   );
 }
 
 function Lightning() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <polygon points="45,5 25,38 38,38 32,75 60,32 46,32" stroke={W} strokeWidth="2.5" fill={W} fillOpacity="0.15" strokeLinejoin="round">
-        <animate attributeName="opacity" values="0.6;1;0.4;1;0.6" dur="0.8s" repeatCount="indefinite" />
-      </polygon>
-      <polygon points="55,15 42,38 50,38 46,62 65,30 56,30" stroke={W} strokeWidth="1.5" fill={W} fillOpacity="0.1" strokeLinejoin="round" opacity="0.5">
-        <animate attributeName="opacity" values="0.2;0.7;0.1;0.6;0.2" dur="0.6s" repeatCount="indefinite" />
-      </polygon>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <polygon points="44,6 22,40 36,40 30,74 58,34 44,34" strokeWidth="2.5" {...S} fill={G} fillOpacity="0.15" />
     </svg>
   );
 }
 
-function RastaFace() {
+function Antenna() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      {/* Visage rond */}
-      <circle cx="40" cy="42" r="20" stroke={W} strokeWidth="2.5" {...S} />
-      {/* Lunettes de soleil rondes */}
-      <circle cx="33" cy="40" r="5" stroke={W} strokeWidth="2" {...S} />
-      <circle cx="47" cy="40" r="5" stroke={W} strokeWidth="2" {...S} />
-      <line x1="38" y1="40" x2="42" y2="40" stroke={W} strokeWidth="1.5" {...S} />
-      {/* Sourire détendu */}
-      <path d="M34,50 Q40,56 46,50" stroke={W} strokeWidth="2" {...S}>
-        <animate attributeName="d" values="M34,50 Q40,56 46,50;M34,49 Q40,57 46,49;M34,50 Q40,56 46,50" dur="4s" repeatCount="indefinite" />
-      </path>
-      {/* Dreadlocks gauche */}
-      <path d="M22,34 Q16,40 14,54" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="d" values="M22,34 Q16,40 14,54;M22,34 Q14,42 12,56;M22,34 Q16,40 14,54" dur="3s" repeatCount="indefinite" />
-      </path>
-      <path d="M24,30 Q20,38 20,56" stroke={W} strokeWidth="2" {...S} opacity="0.7">
-        <animate attributeName="d" values="M24,30 Q20,38 20,56;M24,30 Q18,40 18,58;M24,30 Q20,38 20,56" dur="3.5s" repeatCount="indefinite" />
-      </path>
-      <path d="M26,27 Q24,36 25,54" stroke={W} strokeWidth="1.5" {...S} opacity="0.5">
-        <animate attributeName="d" values="M26,27 Q24,36 25,54;M26,27 Q22,38 23,56;M26,27 Q24,36 25,54" dur="4s" repeatCount="indefinite" />
-      </path>
-      {/* Dreadlocks droite */}
-      <path d="M58,34 Q64,40 66,54" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="d" values="M58,34 Q64,40 66,54;M58,34 Q66,42 68,56;M58,34 Q64,40 66,54" dur="3.2s" repeatCount="indefinite" />
-      </path>
-      <path d="M56,30 Q60,38 60,56" stroke={W} strokeWidth="2" {...S} opacity="0.7">
-        <animate attributeName="d" values="M56,30 Q60,38 60,56;M56,30 Q62,40 62,58;M56,30 Q60,38 60,56" dur="3.7s" repeatCount="indefinite" />
-      </path>
-      <path d="M54,27 Q56,36 55,54" stroke={W} strokeWidth="1.5" {...S} opacity="0.5">
-        <animate attributeName="d" values="M54,27 Q56,36 55,54;M54,27 Q58,38 57,56;M54,27 Q56,36 55,54" dur="4.2s" repeatCount="indefinite" />
-      </path>
-      {/* Bonnet rasta (petit arc au sommet) */}
-      <path d="M26,28 Q33,14 40,16 Q47,14 54,28" stroke={W} strokeWidth="2.5" {...S} />
-      <line x1="30" y1="22" x2="50" y2="22" stroke={W} strokeWidth="1" {...S} opacity="0.4" />
-      <line x1="28" y1="25" x2="52" y2="25" stroke={W} strokeWidth="1" {...S} opacity="0.3" />
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <line x1="40" y1="68" x2="40" y2="30" strokeWidth="2.5" {...S} />
+      <circle cx="40" cy="28" r="3" fill={G} />
+      <line x1="28" y1="68" x2="52" y2="68" strokeWidth="2.5" {...S} />
+      {[12, 20, 28].map((r, i) => (
+        <path key={i} d={`M${40 - r},28 A${r},${r} 0 0,1 ${40 + r},28`} strokeWidth="2" {...S} opacity={1 - i * 0.25} />
+      ))}
     </svg>
   );
 }
 
-function TechnoWave() {
+function Star() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <polyline points="5,40 5,20 15,20 15,60 25,60 25,20 35,20 35,60 45,60 45,20 55,20 55,60 65,60 65,20 75,20 75,40" stroke={W} strokeWidth="2.5" {...S}>
-        <animate attributeName="stroke-dashoffset" values="300;0" dur="2s" repeatCount="indefinite" />
-      </polyline>
-      <polyline points="5,50 10,30 15,50 20,30 25,50 30,30 35,50 40,30 45,50 50,30 55,50 60,30 65,50 70,30 75,50" stroke={W} strokeWidth="1.5" {...S} opacity="0.35" />
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <polygon points="40,8 47,30 70,30 52,44 58,66 40,52 22,66 28,44 10,30 33,30" strokeWidth="2.5" {...S} fill={G} fillOpacity="0.15" />
     </svg>
   );
 }
 
-function TranceSpiral() {
+function Heart() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <path d="M40,40 C40,30 50,25 55,35 C60,45 50,55 40,50 C30,45 25,35 35,25 C45,15 60,20 62,38 C64,56 48,65 35,58 C22,51 18,32 30,20" stroke={W} strokeWidth="2.5" {...S}>
-        <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="8s" repeatCount="indefinite" />
-      </path>
-      <circle cx="40" cy="40" r="4" stroke={W} strokeWidth="2" {...S}>
-        <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
-      </circle>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M40,65 C25,50 8,40 8,26 C8,16 16,10 26,13 C33,15 37,20 40,25 C43,20 47,15 54,13 C64,10 72,16 72,26 C72,40 55,50 40,65Z" strokeWidth="2.5" {...S} fill={G} fillOpacity="0.1" />
+    </svg>
+  );
+}
+
+function RastaHat() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <circle cx="40" cy="42" r="18" strokeWidth="2.5" {...S} />
+      <circle cx="33" cy="40" r="4.5" strokeWidth="2" {...S} />
+      <circle cx="47" cy="40" r="4.5" strokeWidth="2" {...S} />
+      <line x1="37.5" y1="40" x2="42.5" y2="40" strokeWidth="1.5" {...S} />
+      <path d="M34,50 Q40,56 46,50" strokeWidth="2" {...S} />
+      <path d="M26,30 Q33,16 40,18 Q47,16 54,30" strokeWidth="2.5" {...S} />
+      <line x1="28" y1="24" x2="52" y2="24" strokeWidth="1.5" {...S} opacity="0.5" />
+    </svg>
+  );
+}
+
+function Skull() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M20,42 C20,24 28,12 40,12 C52,12 60,24 60,42 C60,52 56,56 52,58 L52,66 L28,66 L28,58 C24,56 20,52 20,42Z" strokeWidth="2.5" {...S} />
+      <circle cx="32" cy="38" r="5" fill={G} fillOpacity="0.2" strokeWidth="2" {...S} />
+      <circle cx="48" cy="38" r="5" fill={G} fillOpacity="0.2" strokeWidth="2" {...S} />
+      <line x1="36" y1="66" x2="36" y2="60" strokeWidth="1.5" {...S} />
+      <line x1="44" y1="66" x2="44" y2="60" strokeWidth="1.5" {...S} />
+      <path d="M36,50 L40,54 L44,50" strokeWidth="2" {...S} />
+    </svg>
+  );
+}
+
+function Flame() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M40,10 C48,24 62,34 58,52 C55,64 30,66 26,54 C24,44 34,44 37,50 C40,42 28,28 40,10Z" strokeWidth="2.5" {...S} fill={G} fillOpacity="0.1" />
+      <path d="M40,30 C44,38 50,44 48,52 C46,58 36,58 35,52 C34,48 38,48 40,30Z" strokeWidth="1.5" {...S} opacity="0.5" />
+    </svg>
+  );
+}
+
+function SquareWave() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <polyline points="4,50 4,20 16,20 16,60 28,60 28,20 40,20 40,60 52,60 52,20 64,20 64,60 76,60 76,30" strokeWidth="2.5" {...S} />
+    </svg>
+  );
+}
+
+function Spiral() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <path d="M40,40 C40,32 48,26 54,34 C60,42 50,52 40,48 C30,44 26,34 34,24 C42,14 58,18 62,36 C66,54 50,66 34,60 C18,54 14,34 26,18" strokeWidth="2.5" {...S} />
+      <circle cx="40" cy="40" r="3" fill={G} />
     </svg>
   );
 }
 
 function Globe() {
   return (
-    <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-      <circle cx="40" cy="40" r="28" stroke={W} strokeWidth="2.5" {...S} />
-      <ellipse cx="40" cy="40" rx="12" ry="28" stroke={W} strokeWidth="1.5" {...S} />
-      <ellipse cx="40" cy="40" rx="22" ry="28" stroke={W} strokeWidth="1" {...S} opacity="0.4" />
-      <line x1="12" y1="30" x2="68" y2="30" stroke={W} strokeWidth="1.5" {...S} opacity="0.5" />
-      <line x1="12" y1="50" x2="68" y2="50" stroke={W} strokeWidth="1.5" {...S} opacity="0.5" />
-      <g>
-        <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="20s" repeatCount="indefinite" />
-        <circle cx="40" cy="12" r="2" fill={W} opacity="0.6" />
-      </g>
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <circle cx="40" cy="40" r="26" strokeWidth="2.5" {...S} />
+      <ellipse cx="40" cy="40" rx="12" ry="26" strokeWidth="1.5" {...S} />
+      <line x1="14" y1="30" x2="66" y2="30" strokeWidth="1.5" {...S} opacity="0.5" />
+      <line x1="14" y1="50" x2="66" y2="50" strokeWidth="1.5" {...S} opacity="0.5" />
+    </svg>
+  );
+}
+
+function Guitar() {
+  return (
+    <svg viewBox="0 0 80 80" className={svgBase}>
+      {gradientDef}
+      <ellipse cx="30" cy="54" rx="16" ry="14" strokeWidth="2.5" {...S} />
+      <circle cx="30" cy="54" r="4" fill={G} fillOpacity="0.3" strokeWidth="1.5" {...S} />
+      <line x1="46" y1="46" x2="68" y2="12" strokeWidth="3" {...S} />
+      <rect x="64" y="8" width="10" height="8" rx="2" strokeWidth="2" {...S} />
     </svg>
   );
 }
 
 const GENRE_MAP: Record<string, () => JSX.Element> = {
-  "60s": PeaceFlower,
+  "60s": PeaceSign,
   "70s": Vinyl,
-  "80s": NeonZigzag,
+  "80s": Boombox,
   "90s": Equalizer,
-  ambient: ConcentricCircles,
-  blues: BluesGuitar,
+  ambient: CloudWave,
+  blues: Guitar,
   chillout: SineWave,
-  classical: GrandPiano,
+  classical: Piano,
   country: CowboyHat,
-  electronic: ElectricCircuit,
-  funk: FunkBass,
+  electronic: Circuit,
+  funk: FunkGroove,
   hiphop: Microphone,
   jazz: Saxophone,
   latin: Maracas,
   metal: Lightning,
-  news: RadioWaves,
+  news: Antenna,
   pop: Star,
-  "r&b": HeartPulse,
-  reggae: RastaFace,
-  rock: RockDevil,
+  "r&b": Heart,
+  reggae: RastaHat,
+  rock: Skull,
   soul: Flame,
-  techno: TechnoWave,
-  trance: TranceSpiral,
+  techno: SquareWave,
+  trance: Spiral,
   world: Globe,
 };
 
@@ -511,11 +340,9 @@ export function GenreAnimation({ genre }: GenreAnimationProps) {
   const Component = GENRE_MAP[genre.toLowerCase()];
   if (!Component) {
     return (
-      <svg viewBox="0 0 80 80" className={svgBase} style={filterStyle}>
-        <circle cx="40" cy="40" r="20" stroke={W} strokeWidth="2.5" fill="none" strokeLinecap="round">
-          <animate attributeName="r" values="18;26;18" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite" />
-        </circle>
+      <svg viewBox="0 0 80 80" className={svgBase}>
+        {gradientDef}
+        <circle cx="40" cy="40" r="20" strokeWidth="2.5" {...S} />
       </svg>
     );
   }
