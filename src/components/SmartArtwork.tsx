@@ -23,23 +23,21 @@ export function SmartArtwork({
 }: SmartArtworkProps) {
   const { src: resolvedSrc } = useArtworkCache(stationId, originalUrl, homepage, stationName);
 
-  // The "visible" src: starts with original, only swaps once HD is preloaded
-  const immediateSrc = originalUrl?.replace("http://", "https://") || stationPlaceholder;
+  // Always show something: original URL as-is (no forced https), or placeholder
+  const immediateSrc = originalUrl || stationPlaceholder;
   const [displaySrc, setDisplaySrc] = useState(immediateSrc);
   const [swapping, setSwapping] = useState(false);
   const preloadRef = useRef<HTMLImageElement | null>(null);
 
-  // When the resolved HD src changes, preload it invisibly, then swap
+  // When the resolved HD src arrives, preload it invisibly, then swap
   useEffect(() => {
     if (!resolvedSrc || resolvedSrc === displaySrc) return;
 
-    // Preload the new image in memory before showing it
     const img = new Image();
     preloadRef.current = img;
     img.onload = () => {
-      if (preloadRef.current !== img) return; // stale
+      if (preloadRef.current !== img) return;
       setSwapping(true);
-      // Small delay so AnimatePresence can animate
       requestAnimationFrame(() => {
         setDisplaySrc(resolvedSrc);
       });
@@ -49,9 +47,7 @@ export function SmartArtwork({
     };
     img.src = resolvedSrc;
 
-    return () => {
-      preloadRef.current = null;
-    };
+    return () => { preloadRef.current = null; };
   }, [resolvedSrc]);
 
   return (
@@ -69,7 +65,11 @@ export function SmartArtwork({
           className="w-full h-full object-cover"
           onLoad={() => setSwapping(false)}
           onError={(e) => {
-            (e.target as HTMLImageElement).src = stationPlaceholder;
+            // If this image fails too, show placeholder
+            const target = e.target as HTMLImageElement;
+            if (target.src !== stationPlaceholder) {
+              target.src = stationPlaceholder;
+            }
           }}
         />
       </AnimatePresence>
