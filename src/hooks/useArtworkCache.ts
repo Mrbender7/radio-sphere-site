@@ -87,9 +87,12 @@ function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
 }
 
 // ── Fallback chain ─────────────────────────────────────────────────
+const STRIP_PREFIXES = /^(www\.|radios?\.|stream\.|live\.|icecast\.|player\.|listen\.|webradio\.|audio\.)/;
+
 function extractDomain(homepage: string): string | null {
   try {
-    return new URL(homepage).hostname.replace(/^www\./, "");
+    const hostname = new URL(homepage).hostname;
+    return hostname.replace(STRIP_PREFIXES, "");
   } catch {
     return null;
   }
@@ -121,7 +124,6 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
       const data = await res.json();
       const logos = data?.logos ?? [];
       let bestUrl: string | null = null;
-      // Prefer icon (square), then logo; prefer png/jpeg over svg for <img> display
       for (const type of ["icon", "logo"]) {
         const logo = logos.find((l: any) => l.type === type);
         if (logo?.formats?.length) {
@@ -135,7 +137,7 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
       }
       if (!bestUrl) { console.debug("[ArtworkCache] Brandfetch: no logo for", domain); return null; }
       console.debug("[ArtworkCache] ✅ Brandfetch found:", bestUrl);
-      return bestUrl; // Trusted CDN — no validation needed
+      return bestUrl;
     } catch (e) {
       console.warn("[ArtworkCache] Brandfetch error:", e);
       return null;
