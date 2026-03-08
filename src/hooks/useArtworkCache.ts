@@ -123,7 +123,7 @@ function extractDomain(homepage: string): string | null {
   }
 }
 
-const BRANDFETCH_CLIENT_ID = "1id5XcSnoYOwSwkrsun";
+const BRANDFETCH_CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID || "";
 
 // Domain-level dedup for Brandfetch (avoid calling same domain multiple times)
 const brandfetchDomainCache = new Map<string, Promise<string | null>>();
