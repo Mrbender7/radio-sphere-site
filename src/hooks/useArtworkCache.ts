@@ -123,7 +123,7 @@ function extractDomain(homepage: string): string | null {
   }
 }
 
-const BRANDFETCH_API_KEY = "1id5XcSnoYOwSwkrsun";
+const BRANDFETCH_CLIENT_ID = "1id5XcSnoYOwSwkrsun";
 
 // Domain-level dedup for Brandfetch (avoid calling same domain multiple times)
 const brandfetchDomainCache = new Map<string, Promise<string | null>>();
@@ -176,10 +176,12 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
     try {
       if (isBrandfetchCoolingDown()) return null;
 
-      const url = `https://api.brandfetch.io/v2/brands/${domain}`;
-      console.debug("[ArtworkCache] 🔍 Trying Brandfetch API:", domain);
-      const res = await fetch(url, {
-        headers: { "Authorization": `Bearer ${BRANDFETCH_API_KEY}` },
+      // Logo API (CDN) — uses Client ID, returns image directly
+      const cdnUrl = `https://cdn.brandfetch.io/${domain}?c=${BRANDFETCH_CLIENT_ID}`;
+      console.debug("[ArtworkCache] 🔍 Trying Brandfetch CDN:", domain);
+
+      const res = await fetch(cdnUrl, {
+        method: "HEAD",
         signal: AbortSignal.timeout(6000),
       });
 
@@ -190,40 +192,31 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
           : BRANDFETCH_COOLDOWN_MS;
 
         brandfetchCooldownUntil = Date.now() + waitMs;
-        shouldKeepDomainCache = false; // 429 = transitoire, autoriser un retry futur
+        shouldKeepDomainCache = false;
         console.warn("[ArtworkCache] ⛔ Brandfetch rate-limited — cooldown", Math.round(waitMs / 1000), "s");
         return null;
       }
 
       if (!res.ok) {
-        console.debug("[ArtworkCache] Brandfetch HTTP", res.status, "for", domain);
+        console.debug("[ArtworkCache] Brandfetch CDN HTTP", res.status, "for", domain);
         return null;
       }
 
-      const data = await res.json();
-      const logos = data?.logos ?? [];
-      let bestUrl: string | null = null;
-
-      // Prefer icon (square), then logo; prefer png/jpeg over svg
-      for (const type of ["icon", "logo"]) {
-        const logo = logos.find((l: any) => l.type === type);
-        if (logo?.formats?.length) {
-          const sorted = [...logo.formats].sort((a: any, b: any) => {
-            const order: Record<string, number> = { png: 0, jpeg: 1, jpg: 1, svg: 2 };
-            return (order[a.format] ?? 9) - (order[b.format] ?? 9);
-          });
-          bestUrl = sorted[0]?.src ?? null;
-          if (bestUrl) break;
-        }
-      }
-
-      if (!bestUrl) {
-        console.debug("[ArtworkCache] Brandfetch: no logo for", domain);
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.startsWith("image/")) {
+        console.debug("[ArtworkCache] Brandfetch CDN non-image response for", domain, contentType);
         return null;
       }
 
-      console.debug("[ArtworkCache] ✅ Brandfetch found:", bestUrl);
-      return bestUrl;
+      // Validate the image actually loads and has decent dimensions
+      const valid = await validateImage(cdnUrl);
+      if (valid !== "OK") {
+        console.debug("[ArtworkCache] Brandfetch CDN image validation failed for", domain, valid);
+        return null;
+      }
+
+      console.debug("[ArtworkCache] ✅ Brandfetch CDN found:", cdnUrl);
+      return cdnUrl;
     } catch (e) {
       console.warn("[ArtworkCache] Brandfetch error:", e);
       return null;
