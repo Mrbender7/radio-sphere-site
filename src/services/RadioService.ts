@@ -242,8 +242,8 @@ export const radioBrowserProvider: RadioProvider = {
     };
     if (params.name) query.name = params.name;
     if (params.country) query.country = params.country;
-    if (params.tag) query.tag = params.tag;
-    if (params.tagList) query.tagList = params.tagList;
+    if (params.tag) query.tag = params.tag.toLowerCase();
+    if (params.tagList) query.tagList = params.tagList.toLowerCase();
     if (params.language) query.language = params.language;
 
     const data = await fetchWithMirrors("stations/search", query, params.signal);
