@@ -4,10 +4,10 @@ import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { usePremium } from "@/contexts/PremiumContext";
 import { useStreamBuffer } from "@/contexts/StreamBufferContext";
-import { Play, Pause, ChevronDown, Volume2, Heart, Loader2, Share2, Cast, Circle, Square, Radio, Download } from "lucide-react";
+import { Play, Pause, ChevronDown, Volume2, Heart, Loader2, Share2, Cast, Radio, Download } from "lucide-react";
 import { CastButton } from "@/components/CastButton";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
-import { CassetteAnimation } from "@/components/CassetteAnimation";
+import { TimebackMachine } from "@/components/TimebackMachine";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import stationPlaceholder from "@/assets/station-placeholder.png";
@@ -17,9 +17,9 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const { t } = useTranslation();
   const { isPremium } = usePremium();
-  const { bufferSeconds, isRecording, recordingDuration, isLive, canSeekBack, bufferAvailable, recordingAvailable, currentSeekOffsetSeconds, startRecording, stopRecording, seekBack, returnToLive } = useStreamBuffer();
-  const [seekDraft, setSeekDraft] = useState<number | null>(null);
+  const { isRecording, isLive, bufferAvailable, recordingAvailable } = useStreamBuffer();
 
+  const [showTimeback, setShowTimeback] = useState(false);
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [lastRecording, setLastRecording] = useState<{ blob: Blob; fileName: string } | null>(null);
 
@@ -61,23 +61,11 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
     }
   };
 
-  const handleRecToggle = async () => {
-    if (!isPremium) {
-      toast.error(t("player.recordPremiumOnly"));
-      return;
-    }
-    if (isRecording) {
-      const result = await stopRecording();
-      if (result) {
-        setLastRecording(result);
-        setShowSaveSheet(true);
-      }
-    } else {
-      startRecording();
-    }
+  const handleRecordingResult = (result: { blob: Blob; fileName: string }) => {
+    setLastRecording(result);
+    setShowSaveSheet(true);
   };
 
-  // Unified export: save to cache, then open share sheet
   const handleExportRecording = async () => {
     if (!lastRecording) return;
     try {
@@ -108,7 +96,6 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
       };
       reader.readAsDataURL(lastRecording.blob);
     } catch {
-      // Fallback: browser download
       const url = URL.createObjectURL(lastRecording.blob);
       const a = document.createElement("a");
       a.href = url;
@@ -119,27 +106,6 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
       setShowSaveSheet(false);
       setLastRecording(null);
     }
-  };
-
-  const handleSeekDrag = ([val]: number[]) => {
-    // UI only — just update the draft position while dragging
-    setSeekDraft(val);
-  };
-
-  const handleSeekCommit = ([val]: number[]) => {
-    setSeekDraft(null);
-    if (val >= 0) {
-      returnToLive();
-    } else {
-      seekBack(Math.abs(val));
-    }
-  };
-
-  const formatSeekTime = (s: number) => {
-    const abs = Math.abs(Math.round(s));
-    const m = Math.floor(abs / 60);
-    const sec = abs % 60;
-    return `-${m}:${String(sec).padStart(2, "0")}`;
   };
 
   return (
@@ -166,9 +132,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
       {/* Artwork */}
       <div className="flex-1 flex items-center justify-center px-10">
         <div
-          className={`aspect-square rounded-2xl bg-accent shadow-2xl flex items-center justify-center overflow-hidden transition-all duration-700 ease-in-out ${
-            isRecording ? "w-full max-w-[150px]" : "w-full max-w-[300px]"
-          }`}
+          className="aspect-square rounded-2xl bg-accent shadow-2xl flex items-center justify-center overflow-hidden w-full max-w-[300px]"
           style={{ boxShadow: '0 20px 60px -10px hsla(250, 80%, 50%, 0.5), 0 10px 30px -5px hsla(220, 90%, 60%, 0.3)' }}
         >
           {currentStation.logo ? (
@@ -187,16 +151,37 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         </div>
       )}
 
-      {/* Audio Visualizer or Cassette Animation */}
+      {/* Audio Visualizer */}
       {isPlaying && (
-        <div className={`flex justify-center py-3 ${isRecording ? "animate-fade-in" : ""}`}>
-          {isRecording ? (
-            <CassetteAnimation duration={recordingDuration} maxDuration={600} />
-          ) : (
-            <AudioVisualizer size="large" />
-          )}
+        <div className="flex justify-center py-3">
+          <AudioVisualizer size="large" />
         </div>
       )}
+
+      {/* LIVE badge + Timeback Machine button */}
+      <div className="flex items-center justify-center gap-3 py-2">
+        <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+          isLive ? "text-green-400 live-pulse" : "text-muted-foreground"
+        }`}>
+          <Radio className="w-3 h-3" />
+          {t("player.live")}
+        </div>
+
+        {bufferAvailable && (
+          <button
+            onClick={() => setShowTimeback(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[hsl(35,60%,20%)] to-[hsl(25,50%,18%)] border border-[hsl(35,50%,30%)] text-[hsl(35,80%,65%)] text-xs font-bold tracking-wide shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_12px_rgba(200,150,50,0.2)] transition-all active:scale-95"
+          >
+            {/* Mini cassette icon */}
+            <span className="relative flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full border border-[hsl(35,50%,45%)] bg-[hsl(220,10%,12%)] inline-block cassette-reel-spin" style={{ animationDuration: '3s' }} />
+              <span className="w-2.5 h-2.5 rounded-full border border-[hsl(35,50%,45%)] bg-[hsl(220,10%,12%)] inline-block cassette-reel-spin" style={{ animationDuration: '2s' }} />
+            </span>
+            {t("player.backInTime")}
+            {isRecording && <span className="w-1.5 h-1.5 rounded-full bg-red-500 rec-blink" />}
+          </button>
+        )}
+      </div>
 
        {/* Info & Controls — with vertical volume on the right */}
        <div className="px-6 pb-[calc(max(env(safe-area-inset-bottom,16px),1rem)+6rem)] space-y-4">
@@ -239,44 +224,14 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
                </div>
              )}
 
-             {/* Play + REC buttons */}
+             {/* Play button */}
              <div className="flex items-center justify-center gap-6">
-               {/* REC button */}
-               {recordingAvailable && (
-                 <button
-                   onClick={handleRecToggle}
-                   className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                     isRecording
-                       ? "bg-red-600 shadow-lg shadow-red-500/40"
-                       : "bg-accent hover:bg-red-600/20 border border-red-500/30"
-                   }`}
-                   title={isRecording ? t("player.recording") : "REC"}
-                 >
-                   {isRecording ? (
-                     <Square className="w-5 h-5 text-white" />
-                   ) : (
-                     <Circle className="w-5 h-5 text-red-500 fill-red-500" />
-                   )}
-                 </button>
-               )}
-
-               {/* Play button */}
                <button
                  onClick={togglePlay}
                  className={`w-16 h-16 rounded-full bg-gradient-to-b from-primary to-primary/80 border-t border-white/20 flex items-center justify-center text-primary-foreground active:shadow-sm active:translate-y-0.5 transition-all ${isPlaying ? "animate-play-breathe" : "shadow-lg shadow-primary/50"}`}
                >
                  {isBuffering ? <Loader2 className="w-7 h-7 animate-spin" /> : isPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
                </button>
-
-               {/* Recording duration counter */}
-               {isRecording && (
-                 <div className="flex items-center gap-1.5">
-                   <div className="w-2 h-2 rounded-full bg-red-500 rec-blink" />
-                   <span className="text-sm font-mono text-red-400 font-semibold">
-                     {Math.floor(recordingDuration / 60)}:{String(recordingDuration % 60).padStart(2, "0")}
-                   </span>
-                 </div>
-               )}
              </div>
            </div>
 
@@ -293,50 +248,6 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
              />
            </div>
          </div>
-
-         {/* Scrub / Timeline bar */}
-         {bufferAvailable && canSeekBack && (
-           <div className="space-y-1">
-           <div className="relative">
-             <Slider
-               value={[seekDraft ?? (isLive ? 0 : -currentSeekOffsetSeconds)]}
-               min={-Math.floor(bufferSeconds)}
-               max={0}
-               step={1}
-               onValueChange={handleSeekDrag}
-               onValueCommit={handleSeekCommit}
-               className="flex-1 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-[hsl(220,90%,60%)] [&_[role=slider]]:to-[hsl(280,80%,60%)] [&_[role=slider]]:border-0 [&_.absolute]:bg-gradient-to-r [&_.absolute]:from-[hsl(220,90%,60%)] [&_.absolute]:to-[hsl(280,80%,60%)]"
-             />
-             {seekDraft !== null && (
-               <div
-                 className="absolute -top-7 pointer-events-none"
-                 style={{
-                   left: `${((seekDraft - (-Math.floor(bufferSeconds))) / (0 - (-Math.floor(bufferSeconds)))) * 100}%`,
-                   transform: 'translateX(-50%)',
-                 }}
-               >
-                 <span className="px-1.5 py-0.5 rounded bg-primary text-primary-foreground text-[10px] font-mono font-bold shadow-lg">
-                   {formatSeekTime(Math.abs(seekDraft))}
-                 </span>
-               </div>
-             )}
-           </div>
-             <div className="flex items-center justify-between">
-               <span className="text-[10px] text-muted-foreground">{formatSeekTime(bufferSeconds)}</span>
-               <button
-                 onClick={returnToLive}
-                 className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${
-                   isLive
-                     ? "text-green-400 live-pulse"
-                     : "text-muted-foreground bg-accent hover:text-green-400"
-                 }`}
-               >
-                 <Radio className="w-3 h-3" />
-                 {t("player.live")}
-               </button>
-             </div>
-           </div>
-         )}
 
          {/* Codec / Bitrate / Language info */}
          <div className="grid grid-cols-3 gap-3 py-4 px-4 rounded-xl bg-accent/50">
@@ -362,7 +273,15 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
 
         </div>
 
-      {/* Export Sheet (unified save/share) */}
+      {/* Timeback Machine overlay */}
+      {showTimeback && (
+        <TimebackMachine
+          onClose={() => setShowTimeback(false)}
+          onRecordingResult={handleRecordingResult}
+        />
+      )}
+
+      {/* Export Sheet */}
       {showSaveSheet && lastRecording && (
         <div className="fixed inset-0 z-[60] bg-black/60 flex items-start justify-center" style={{ paddingTop: "max(env(safe-area-inset-top, 24px), 2rem)" }} onClick={() => { setShowSaveSheet(false); setLastRecording(null); }}>
           <div className="w-full max-w-md mx-4 bg-card rounded-2xl p-6 space-y-4 animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
