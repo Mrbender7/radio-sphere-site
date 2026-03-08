@@ -416,6 +416,9 @@ const translations: Record<Language, Record<string, string>> = {
     "player.returnToLive": "Back to live",
     "player.recordPremiumOnly": "Recording is a Premium feature",
     "player.fileSaved": "File saved!",
+    "player.backInTime": "Back in Time",
+    "player.recordingNotAvailable": "Recording not available",
+    "player.recordingContinuesLive": "Back to live, recording continues...",
   },
   es: {
     "nav.home": "Inicio",
