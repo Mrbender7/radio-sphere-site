@@ -414,34 +414,20 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
             {t("favorites.refreshMetadata")}
           </Button>
 
-          <Button
-            onClick={() => {
-              try {
-                localStorage.removeItem("radiosphere_artwork_cache");
-                toast({ title: "🖼️ Cache artworks vidé ! Les images seront re-vérifiées." });
-              } catch {
-                toast({ title: "❌ Erreur", variant: "destructive" });
-              }
-            }}
-            variant="outline"
-            size="sm"
-            className="w-full rounded-lg text-xs gap-1.5 border-amber-500/30 text-amber-400"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            {t("favorites.purgeArtworkCache")}
-          </Button>
 
         </div>
       </CollapsibleSection>
 
       {/* Replace low-quality artworks toggle */}
-      <div className="rounded-xl bg-accent p-4 mb-4">
+      <div className="rounded-xl bg-gradient-to-r from-primary/10 to-accent border border-primary/20 p-4 mb-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-1">
-            <ImageOff className="w-5 h-5 text-amber-400 shrink-0" />
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <ImageOff className="w-5 h-5 text-primary" />
+            </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground">{t("settings.replaceLowQuality")}</h3>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{t("settings.replaceLowQualityDesc")}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{t("settings.replaceLowQualityDesc")}</p>
             </div>
           </div>
           <Switch
@@ -449,7 +435,6 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
             onCheckedChange={(checked) => {
               setReplaceLowQualityState(checked);
               setReplaceLowQuality(checked);
-              // Purge cache to force re-evaluation
               try { localStorage.removeItem("radiosphere_artwork_cache"); localStorage.removeItem("radiosphere_artwork_quality"); } catch {}
               toast({ title: checked ? "🖼️ Artworks basse qualité remplacés" : "🖼️ Artworks originaux restaurés" });
             }}
