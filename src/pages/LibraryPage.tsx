@@ -15,7 +15,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [sortMode, setSortMode] = useState<"name" | "country">("name");
+  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">("name");
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -37,6 +37,21 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([country, stations]) => ({
         country,
+        stations: stations.sort((a, b) => a.name.localeCompare(b.name)),
+      }));
+  }, [favorites, t]);
+
+  const groupedByGenre = useMemo(() => {
+    const groups: Record<string, RadioStation[]> = {};
+    for (const s of favorites) {
+      const genre = s.tags[0]?.toLowerCase() || t("favorites.unknownGenre");
+      if (!groups[genre]) groups[genre] = [];
+      groups[genre].push(s);
+    }
+    return Object.entries(groups)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([genre, stations]) => ({
+        genre: genre.charAt(0).toUpperCase() + genre.slice(1),
         stations: stations.sort((a, b) => a.name.localeCompare(b.name)),
       }));
   }, [favorites, t]);
@@ -74,6 +89,17 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
           >
             {t("favorites.sortCountry")}
           </button>
+          <button
+            onClick={() => setSortMode("genre")}
+            className={cn(
+              "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
+              sortMode === "genre"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent"
+            )}
+          >
+            {t("favorites.sortGenre")}
+          </button>
         </div>
       )}
 
@@ -89,11 +115,24 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
             <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
           ))}
         </div>
-      ) : (
+      ) : sortMode === "country" ? (
         <div className="space-y-4">
           {groupedByCountry.map(({ country, stations }) => (
             <div key={country}>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{country}</h3>
+              <div className="space-y-1">
+                {stations.map(s => (
+                  <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {groupedByGenre.map(({ genre, stations }) => (
+            <div key={genre}>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{genre}</h3>
               <div className="space-y-1">
                 {stations.map(s => (
                   <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
