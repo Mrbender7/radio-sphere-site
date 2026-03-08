@@ -23,15 +23,17 @@ export function SmartArtwork({
 }: SmartArtworkProps) {
   const { src: resolvedSrc } = useArtworkCache(stationId, originalUrl, homepage, stationName);
 
-  // Always show something: original URL as-is (no forced https), or placeholder
+  // Always show something: original URL as-is, or placeholder
   const immediateSrc = originalUrl || stationPlaceholder;
   const [displaySrc, setDisplaySrc] = useState(immediateSrc);
   const [swapping, setSwapping] = useState(false);
   const preloadRef = useRef<HTMLImageElement | null>(null);
+  const failedUrls = useRef(new Set<string>());
 
   // When the resolved HD src arrives, preload it invisibly, then swap
   useEffect(() => {
     if (!resolvedSrc || resolvedSrc === displaySrc) return;
+    if (failedUrls.current.has(resolvedSrc)) return;
 
     const img = new Image();
     preloadRef.current = img;
@@ -43,7 +45,7 @@ export function SmartArtwork({
       });
     };
     img.onerror = () => {
-      // HD failed to load — keep current image
+      failedUrls.current.add(resolvedSrc);
     };
     img.src = resolvedSrc;
 
@@ -64,11 +66,11 @@ export function SmartArtwork({
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full h-full object-cover"
           onLoad={() => setSwapping(false)}
-          onError={(e) => {
-            // If this image fails too, show placeholder
-            const target = e.target as HTMLImageElement;
-            if (target.src !== stationPlaceholder) {
-              target.src = stationPlaceholder;
+          onError={() => {
+            // Current image failed — always fall back to placeholder
+            failedUrls.current.add(displaySrc);
+            if (displaySrc !== stationPlaceholder) {
+              setDisplaySrc(stationPlaceholder);
             }
           }}
         />
