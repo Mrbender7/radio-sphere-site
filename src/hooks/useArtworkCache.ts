@@ -150,11 +150,16 @@ function releaseBrandfetchSlot() {
   }
 }
 
-// Global flag: once we get a 429, stop all Brandfetch calls for this session
-let brandfetchQuotaExhausted = false;
+// Backoff global: après un 429, pause temporaire au lieu de désactiver toute la session
+const BRANDFETCH_COOLDOWN_MS = 60_000;
+let brandfetchCooldownUntil = 0;
+
+function isBrandfetchCoolingDown(): boolean {
+  return Date.now() < brandfetchCooldownUntil;
+}
 
 async function tryBrandfetch(homepage: string): Promise<string | null> {
-  if (brandfetchQuotaExhausted) return null;
+  if (isBrandfetchCoolingDown()) return null;
 
   const domain = extractDomain(homepage);
   if (!domain) return null;
@@ -164,10 +169,12 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
     return brandfetchDomainCache.get(domain)!;
   }
 
+  let shouldKeepDomainCache = true;
+
   const promise = (async (): Promise<string | null> => {
     await acquireBrandfetchSlot();
     try {
-      if (brandfetchQuotaExhausted) return null;
+      if (isBrandfetchCoolingDown()) return null;
 
       const url = `https://api.brandfetch.io/v2/brands/${domain}`;
       console.debug("[ArtworkCache] 🔍 Trying Brandfetch API:", domain);
@@ -177,8 +184,14 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
       });
 
       if (res.status === 429) {
-        console.warn("[ArtworkCache] ⛔ Brandfetch quota exhausted — disabling for session");
-        brandfetchQuotaExhausted = true;
+        const retryAfterSec = Number(res.headers.get("retry-after") || "0");
+        const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+          ? retryAfterSec * 1000
+          : BRANDFETCH_COOLDOWN_MS;
+
+        brandfetchCooldownUntil = Date.now() + waitMs;
+        shouldKeepDomainCache = false; // 429 = transitoire, autoriser un retry futur
+        console.warn("[ArtworkCache] ⛔ Brandfetch rate-limited — cooldown", Math.round(waitMs / 1000), "s");
         return null;
       }
 
@@ -220,6 +233,12 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
   })();
 
   brandfetchDomainCache.set(domain, promise);
+  promise.finally(() => {
+    if (!shouldKeepDomainCache) {
+      brandfetchDomainCache.delete(domain);
+    }
+  });
+
   return promise;
 }
 
@@ -286,7 +305,28 @@ function buildLastFmCandidates(stationName: string): string[] {
     .replace(/\s{2,}/g, " ")
     .trim();
 
-  return [...new Set([fullName, cleaned].filter(Boolean))];
+  const canonical = cleaned
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b\d{2,3}(?:\.\d+)?\b/g, " ")
+    .replace(/\s*-\s*[^|]+$/g, " ")
+    .replace(/\b(?:fm|radio|webradio|stream|live|official|belgium|belgië)\b/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  const firstSegment = cleaned.split(" - ")[0]?.trim() ?? "";
+  const brandHints: string[] = [];
+
+  if (/classic\s*21/i.test(fullName)) {
+    brandHints.push("Classic 21", "RTBF Classic 21");
+  }
+  if (/\brtbf\b/i.test(fullName)) {
+    brandHints.push("RTBF");
+  }
+  if (/\bnrj\b/i.test(fullName)) {
+    brandHints.push("NRJ");
+  }
+
+  return [...new Set([fullName, cleaned, canonical, firstSegment, ...brandHints].filter(Boolean))];
 }
 
 async function tryLastFm(stationName: string): Promise<string | null> {
@@ -318,7 +358,7 @@ async function resolveHdArtwork(
   originalUrl: string,
   homepage: string,
   stationName: string,
-): Promise<string> {
+): Promise<string | null> {
   // Source A — Brandfetch
   if (homepage) {
     const brandfetchUrl = await tryBrandfetch(homepage);
@@ -331,8 +371,8 @@ async function resolveHdArtwork(
     if (lastFmUrl) return lastFmUrl;
   }
 
-  // Source C — Local placeholder
-  return stationPlaceholder;
+  // Aucun HD trouvé
+  return null;
 }
 
 // ── Core resolution logic (singleton per station) ──────────────────
@@ -371,7 +411,15 @@ async function resolveStation(
   if (quality === "OK") {
     finalUrl = workingUrl;
   } else {
-    finalUrl = await resolveHdArtwork(workingUrl, homepage, stationName);
+    const hdUrl = await resolveHdArtwork(workingUrl, homepage, stationName);
+    if (hdUrl) {
+      finalUrl = hdUrl;
+    } else if (quality === "LOW_QUALITY" && workingUrl) {
+      // Important: garder un favicon valide (même petit) plutôt qu'un placeholder générique
+      finalUrl = workingUrl;
+    } else {
+      finalUrl = stationPlaceholder;
+    }
   }
 
   // 4. Store
