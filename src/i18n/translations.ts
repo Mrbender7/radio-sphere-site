@@ -1034,6 +1034,9 @@ const translations: Record<Language, Record<string, string>> = {
     "player.returnToLive": "ライブに戻る",
     "player.recordPremiumOnly": "録音はプレミアム機能です",
     "player.fileSaved": "ファイルを保存しました！",
+    "player.backInTime": "過去に戻る",
+    "player.recordingNotAvailable": "録音は利用できません",
+    "player.recordingContinuesLive": "ライブに戻りました。録音は継続中...",
   },
 };
 
