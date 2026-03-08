@@ -50,11 +50,15 @@ function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
   return new Promise((resolve) => {
     if (!url) { resolve("ERROR"); return; }
 
-    const timeout = setTimeout(() => resolve("ERROR"), 6000);
+    const timeout = setTimeout(() => {
+      console.warn("[ArtworkCache] ⏱ Timeout validating:", url);
+      resolve("ERROR");
+    }, 8000);
 
-    // Try to get file size via HEAD request
-    const sizeCheck = fetch(url, { method: "HEAD", mode: "no-cors" })
+    // Try to get file size via HEAD (cors mode so we can read headers)
+    const sizeCheck = fetch(url, { method: "HEAD" })
       .then((r) => {
+        if (!r.ok) return null;
         const len = r.headers.get("content-length");
         if (len && parseInt(len, 10) < MIN_BYTES) return "LOW_QUALITY" as const;
         return null; // inconclusive
@@ -62,17 +66,27 @@ function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
       .catch(() => null);
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    // Don't set crossOrigin — we only need dimensions, not canvas access
     img.onload = async () => {
       clearTimeout(timeout);
       if (img.naturalWidth < MIN_DIMENSION || img.naturalHeight < MIN_DIMENSION) {
+        console.debug("[ArtworkCache] 📐 LOW_QUALITY (dimensions):", url, img.naturalWidth, "x", img.naturalHeight);
         resolve("LOW_QUALITY");
         return;
       }
       const sizeResult = await sizeCheck;
+      if (sizeResult === "LOW_QUALITY") {
+        console.debug("[ArtworkCache] 📦 LOW_QUALITY (size):", url);
+      } else {
+        console.debug("[ArtworkCache] ✅ OK:", url);
+      }
       resolve(sizeResult === "LOW_QUALITY" ? "LOW_QUALITY" : "OK");
     };
-    img.onerror = () => { clearTimeout(timeout); resolve("ERROR"); };
+    img.onerror = () => {
+      clearTimeout(timeout);
+      console.warn("[ArtworkCache] ❌ Error loading:", url);
+      resolve("ERROR");
+    };
     img.src = url;
   });
 }
@@ -88,9 +102,11 @@ function extractDomain(homepage: string): string | null {
 
 async function tryClearbit(homepage: string): Promise<string | null> {
   const domain = extractDomain(homepage);
-  if (!domain) return null;
+  if (!domain) { console.debug("[ArtworkCache] Clearbit: no domain from", homepage); return null; }
   const url = `https://logo.clearbit.com/${domain}?size=512`;
+  console.debug("[ArtworkCache] 🔍 Trying Clearbit:", url);
   const result = await validateImage(url);
+  console.debug("[ArtworkCache] Clearbit result:", result, "for", domain);
   return result === "OK" ? url : null;
 }
 
@@ -100,18 +116,25 @@ const LASTFM_API_KEY = "f0549ea17c34cc54c672676e791f616b";
 async function tryLastFm(stationName: string): Promise<string | null> {
   try {
     const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(stationName)}&api_key=${LASTFM_API_KEY}&format=json`;
+    console.debug("[ArtworkCache] 🔍 Trying Last.fm for:", stationName);
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
+    if (!res.ok) { console.debug("[ArtworkCache] Last.fm HTTP", res.status); return null; }
     const data = await res.json();
     const images = data?.artist?.image;
-    if (!Array.isArray(images)) return null;
+    if (!Array.isArray(images)) { console.debug("[ArtworkCache] Last.fm: no images for", stationName); return null; }
     const mega = images.find((i: any) => i.size === "mega")?.["#text"];
     const xl = images.find((i: any) => i.size === "extralarge")?.["#text"];
     const candidate = mega || xl;
-    if (!candidate || candidate.includes("2a96cbd8b46e442fc41c2b86b821562f")) return null;
+    if (!candidate || candidate.includes("2a96cbd8b46e442fc41c2b86b821562f")) {
+      console.debug("[ArtworkCache] Last.fm: no valid image for", stationName);
+      return null;
+    }
+    console.debug("[ArtworkCache] Last.fm candidate:", candidate);
     const result = await validateImage(candidate);
+    console.debug("[ArtworkCache] Last.fm validation:", result);
     return result === "OK" ? candidate : null;
-  } catch {
+  } catch (e) {
+    console.warn("[ArtworkCache] Last.fm error:", e);
     return null;
   }
 }
@@ -146,12 +169,14 @@ async function resolveStation(
 ): Promise<string> {
   const secureUrl = originalUrl?.replace("http://", "https://") || "";
 
-  // 1. Already persisted?
+  // 1. Already persisted? (skip if it's the placeholder — re-check for better art)
   const persisted = loadPersistedCache();
-  if (persisted[stationId]) {
+  const persistedUrl = persisted[stationId];
+  if (persistedUrl && !persistedUrl.includes("station-placeholder")) {
+    console.debug("[ArtworkCache] 💾 Cache hit for", stationName || stationId, "→", persistedUrl);
     const entry: CacheEntry = {
       status: "RESOLVED",
-      resolvedUrl: persisted[stationId],
+      resolvedUrl: persistedUrl,
       checked: true,
     };
     memoryCache.set(stationId, entry);
