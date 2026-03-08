@@ -115,7 +115,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setBufferSeconds(Math.min(duration, MAX_BUFFER_DURATION));
   }, []);
 
-  const buildBufferUrl = useCallback((url: string) => {
+  const buildBufferUrl = useCallback((url: string, bustCache = false) => {
+    if (!bustCache) return url;
     try {
       const u = new URL(url);
       u.searchParams.set('__tbm_fetch', String(Date.now()));
