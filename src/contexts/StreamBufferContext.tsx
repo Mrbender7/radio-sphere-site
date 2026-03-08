@@ -433,6 +433,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       bufferAvailable,
       recordingAvailable,
       currentSeekOffsetSeconds,
+      debugInfo,
       startRecording,
       stopRecording,
       seekBack,
