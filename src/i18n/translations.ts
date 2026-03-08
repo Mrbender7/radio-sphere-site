@@ -536,6 +536,8 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.noFavoritesToExport": "No hay favoritos para exportar",
     "favorites.refreshMetadata": "Actualizar metadatos",
     "favorites.purgeArtworkCache": "Purgar caché de imágenes",
+    "settings.replaceLowQuality": "Reemplazar imágenes de baja calidad",
+    "settings.replaceLowQualityDesc": "Los logos de baja calidad serán reemplazados por el logo HD de Radio Sphere",
     "settings.privacyPolicy": "Política de privacidad",
     "settings.reopenWelcome": "Reabrir página de bienvenida",
     "settings.resetApp": "Restablecer aplicación",
