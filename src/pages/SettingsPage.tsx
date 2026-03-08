@@ -450,7 +450,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
               setReplaceLowQualityState(checked);
               setReplaceLowQuality(checked);
               // Purge cache to force re-evaluation
-              try { localStorage.removeItem(STORAGE_KEY); } catch {}
+              try { localStorage.removeItem("radiosphere_artwork_cache"); localStorage.removeItem("radiosphere_artwork_quality"); } catch {}
               toast({ title: checked ? "🖼️ Artworks basse qualité remplacés" : "🖼️ Artworks originaux restaurés" });
             }}
           />
