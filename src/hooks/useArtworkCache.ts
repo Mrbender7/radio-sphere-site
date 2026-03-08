@@ -170,7 +170,7 @@ async function resolveStation(
   if (quality === "OK") {
     finalUrl = secureUrl;
   } else {
-    finalUrl = await resolveHdArtwork(secureUrl, homepage);
+    finalUrl = await resolveHdArtwork(secureUrl, homepage, stationName);
   }
 
   // 4. Store
