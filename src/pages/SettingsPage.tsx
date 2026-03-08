@@ -411,10 +411,25 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
             {t("favorites.refreshMetadata")}
           </Button>
 
+          <Button
+            onClick={() => {
+              try {
+                localStorage.removeItem("radiosphere_artwork_cache");
+                toast({ title: "🖼️ Cache artworks vidé ! Les images seront re-vérifiées." });
+              } catch {
+                toast({ title: "❌ Erreur", variant: "destructive" });
+              }
+            }}
+            variant="outline"
+            size="sm"
+            className="w-full rounded-lg text-xs gap-1.5 border-amber-500/30 text-amber-400"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {t("favorites.purgeArtworkCache")}
+          </Button>
+
         </div>
       </CollapsibleSection>
-
-      {/* Premium section — with unlock/lock inside */}
       <CollapsibleSection
         icon={Crown}
         title={t("premium.title")}
