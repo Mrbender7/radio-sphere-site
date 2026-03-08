@@ -53,8 +53,8 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
       <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 pb-4">
 
       {recent.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.recentlyPlayed")}</h2>
+        <section className="mb-3">
+          <h2 className="text-lg font-heading font-semibold mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.recentlyPlayed")}</h2>
           <ScrollableRow>
             {recent.slice(0, 10).map(s => (
               <StationCard key={s.id} station={s} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
@@ -64,8 +64,8 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
       )}
 
       {/* Favorites section */}
-      <section className="mb-6">
-        <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
+      <section className="mb-3">
+        <h2 className="text-lg font-heading font-semibold mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
           <Heart className="w-4 h-4 text-[hsl(280,80%,60%)]" />
           {t("home.yourFavorites")}
           {favorites.length > 0 && (
@@ -98,8 +98,8 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
 
       {/* Weekly discoveries */}
       {discoveries.length > 0 && (
-        <section className="mb-6">
-          <div className="flex items-center justify-between mb-3">
+        <section className="mb-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-lg font-heading font-semibold bg-gradient-to-r from-[hsl(280,80%,60%)] to-[hsl(340,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               {t("home.weeklyDiscoveries")}
@@ -121,8 +121,8 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
         </section>
       )}
 
-      <section className="mb-6">
-        <h2 className="text-lg font-heading font-semibold mb-3 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.exploreByGenre")}</h2>
+      <section className="mb-3">
+        <h2 className="text-lg font-heading font-semibold mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.exploreByGenre")}</h2>
         <div className="grid grid-cols-2 gap-3">
           {GENRES.map(genre => (
             <GenreCard key={genre} genre={genre} onClick={() => onGenreClick(genre)} t={t} />
