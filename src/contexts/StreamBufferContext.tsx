@@ -316,21 +316,28 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     } catch (e: any) {
       if (e?.name === 'AbortError') {
         setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'aborted' }));
-      } else if (
-        typeof streamUrl === 'string' &&
-        streamUrl.startsWith('http://') &&
-        window.location.protocol === 'https:'
-      ) {
-        const upgradedUrl = streamUrl.replace(/^http:\/\//i, 'https://');
-        setDebugInfo(d => ({ ...d, lastError: 'http blocked -> retry https' }));
-        setTimeout(() => startFetch(upgradedUrl), 150);
-      } else if (isFirefox) {
-        setDebugInfo(d => ({ ...d, lastError: 'fetch stalled -> fallback moz-xhr' }));
-        setTimeout(() => startFetchWithMozChunked(streamUrl), 150);
       } else {
-        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `fetch: ${e?.message || e}` }));
-        setBufferAvailable(false);
-        setRecordingAvailable(false);
+        if (noChunkTimeoutRef.current) {
+          clearTimeout(noChunkTimeoutRef.current);
+          noChunkTimeoutRef.current = null;
+        }
+
+        if (
+          typeof streamUrl === 'string' &&
+          streamUrl.startsWith('http://') &&
+          window.location.protocol === 'https:'
+        ) {
+          const upgradedUrl = streamUrl.replace(/^http:\/\//i, 'https://');
+          setDebugInfo(d => ({ ...d, lastError: 'http blocked -> retry https' }));
+          setTimeout(() => startFetch(upgradedUrl), 150);
+        } else if (isFirefox) {
+          setDebugInfo(d => ({ ...d, lastError: 'fetch stalled -> fallback moz-xhr' }));
+          setTimeout(() => startFetchWithMozChunked(streamUrl), 150);
+        } else {
+          setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `fetch: ${e?.message || e}` }));
+          setBufferAvailable(false);
+          setRecordingAvailable(false);
+        }
       }
     }
   }, [buildBufferUrl, processChunk, startFetchWithMozChunked, stopFetch]);
