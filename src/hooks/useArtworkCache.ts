@@ -87,20 +87,70 @@ function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
 }
 
 // ── Fallback chain ─────────────────────────────────────────────────
-const STRIP_PREFIXES = /^(www\.|radios?\.|stream\.|live\.|icecast\.|player\.|listen\.|webradio\.|audio\.)/;
+const STRIP_PREFIXES = [
+  "www",
+  "radios",
+  "radio",
+  "stream",
+  "live",
+  "icecast",
+  "player",
+  "listen",
+  "webradio",
+  "audio",
+];
 
 function extractDomain(homepage: string): string | null {
   try {
-    const hostname = new URL(homepage).hostname;
-    return hostname.replace(STRIP_PREFIXES, "");
+    let hostname = new URL(homepage).hostname.toLowerCase();
+
+    // Remove common noisy subdomains repeatedly (ex: www.stream.rtbf.be → rtbf.be)
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const prefix of STRIP_PREFIXES) {
+        const token = `${prefix}.`;
+        if (hostname.startsWith(token)) {
+          hostname = hostname.slice(token.length);
+          changed = true;
+        }
+      }
+    }
+
+    return hostname || null;
   } catch {
     return null;
   }
 }
+
 const BRANDFETCH_API_KEY = "uy994hGSIB15nIu5lPKp3FQw6IMsaeC2qScvf9pN__baJvw-NC08JWVu4G_-_S5AGw6czXl9mbTK3xYrNCeEZQ";
 
 // Domain-level dedup for Brandfetch (avoid calling same domain multiple times)
 const brandfetchDomainCache = new Map<string, Promise<string | null>>();
+
+function probeImage(url: string, timeoutMs = 4500): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!url) {
+      resolve(false);
+      return;
+    }
+
+    const img = new Image();
+    const timeout = setTimeout(() => resolve(false), timeoutMs);
+
+    img.onload = () => {
+      clearTimeout(timeout);
+      resolve(true);
+    };
+
+    img.onerror = () => {
+      clearTimeout(timeout);
+      resolve(false);
+    };
+
+    img.src = url;
+  });
+}
 
 async function tryBrandfetch(homepage: string): Promise<string | null> {
   const domain = extractDomain(homepage);
@@ -113,30 +163,18 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
 
   const promise = (async (): Promise<string | null> => {
     try {
-      const url = `https://api.brandfetch.io/v2/brands/${domain}`;
-      console.debug("[ArtworkCache] 🔍 Trying Brandfetch:", domain);
-      const res = await fetch(url, {
-        headers: { "Authorization": `Bearer ${BRANDFETCH_API_KEY}` },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!res.ok) { console.debug("[ArtworkCache] Brandfetch HTTP", res.status); return null; }
-      const data = await res.json();
-      const logos = data?.logos ?? [];
-      let bestUrl: string | null = null;
-      for (const type of ["icon", "logo"]) {
-        const logo = logos.find((l: any) => l.type === type);
-        if (logo?.formats?.length) {
-          const sorted = [...logo.formats].sort((a: any, b: any) => {
-            const order: Record<string, number> = { png: 0, jpeg: 1, jpg: 1, svg: 2 };
-            return (order[a.format] ?? 9) - (order[b.format] ?? 9);
-          });
-          bestUrl = sorted[0]?.src ?? null;
-          if (bestUrl) break;
-        }
+      // Expected format example: https://cdn.brandfetch.io/rtbf.be?c=CLIENT_ID
+      const cdnUrl = `https://cdn.brandfetch.io/${domain}?c=${BRANDFETCH_API_KEY}`;
+      console.debug("[ArtworkCache] 🔍 Trying Brandfetch CDN:", cdnUrl);
+
+      const exists = await probeImage(cdnUrl);
+      if (!exists) {
+        console.debug("[ArtworkCache] Brandfetch: no logo for", domain);
+        return null;
       }
-      if (!bestUrl) { console.debug("[ArtworkCache] Brandfetch: no logo for", domain); return null; }
-      console.debug("[ArtworkCache] ✅ Brandfetch found:", bestUrl);
-      return bestUrl;
+
+      console.debug("[ArtworkCache] ✅ Brandfetch found:", cdnUrl);
+      return cdnUrl;
     } catch (e) {
       console.warn("[ArtworkCache] Brandfetch error:", e);
       return null;
@@ -147,29 +185,91 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
   return promise;
 }
 
-
 const LASTFM_API_KEY = "f0549ea17c34cc54c672676e791f616b";
+
+function isLastFmPlaceholder(url: string): boolean {
+  return !url || url.includes("2a96cbd8b46e442fc41c2b86b821562f");
+}
+
+function pickLastFmImage(images: any): string | null {
+  if (!Array.isArray(images)) return null;
+
+  const bySize = ["mega", "extralarge", "large", "medium", "small"];
+  for (const size of bySize) {
+    const candidate = images.find((i: any) => i?.size === size)?.["#text"];
+    if (typeof candidate === "string" && !isLastFmPlaceholder(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+async function tryLastFmGetInfo(stationName: string): Promise<string | null> {
+  const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(stationName)}&api_key=${LASTFM_API_KEY}&format=json`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  return pickLastFmImage(data?.artist?.image);
+}
+
+async function tryLastFmSearch(stationName: string): Promise<string | null> {
+  const url = `https://ws.audioscrobbler.com/2.0/?method=artist.search&artist=${encodeURIComponent(stationName)}&limit=5&api_key=${LASTFM_API_KEY}&format=json`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  const artistsRaw = data?.results?.artistmatches?.artist;
+  const artists = Array.isArray(artistsRaw) ? artistsRaw : artistsRaw ? [artistsRaw] : [];
+
+  let fallbackArtistName: string | null = null;
+  for (const artist of artists) {
+    const image = pickLastFmImage(artist?.image);
+    if (image) return image;
+    if (!fallbackArtistName && typeof artist?.name === "string") {
+      fallbackArtistName = artist.name;
+    }
+  }
+
+  if (!fallbackArtistName) return null;
+  return tryLastFmGetInfo(fallbackArtistName);
+}
+
+function buildLastFmCandidates(stationName: string): string[] {
+  const fullName = stationName.trim();
+  if (!fullName) return [];
+
+  const cleaned = fullName
+    .replace(/\s*-\s*channel\s*\d+$/i, "")
+    .replace(/\s*-\s*live$/i, "")
+    .replace(/\s*\|.*$/, "")
+    .replace(/^\.+/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  return [...new Set([fullName, cleaned].filter(Boolean))];
+}
 
 async function tryLastFm(stationName: string): Promise<string | null> {
   try {
-    const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(stationName)}&api_key=${LASTFM_API_KEY}&format=json`;
-    console.debug("[ArtworkCache] 🔍 Trying Last.fm for:", stationName);
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) { console.debug("[ArtworkCache] Last.fm HTTP", res.status); return null; }
-    const data = await res.json();
-    const images = data?.artist?.image;
-    if (!Array.isArray(images)) { console.debug("[ArtworkCache] Last.fm: no images for", stationName); return null; }
-    const mega = images.find((i: any) => i.size === "mega")?.["#text"];
-    const xl = images.find((i: any) => i.size === "extralarge")?.["#text"];
-    const candidate = mega || xl;
-    if (!candidate || candidate.includes("2a96cbd8b46e442fc41c2b86b821562f")) {
-      console.debug("[ArtworkCache] Last.fm: no valid image for", stationName);
-      return null;
+    const candidates = buildLastFmCandidates(stationName);
+
+    // Priority: full station name first (ex: "RTBF La Première")
+    for (const candidate of candidates) {
+      console.debug("[ArtworkCache] 🔍 Trying Last.fm getinfo:", candidate);
+      const direct = await tryLastFmGetInfo(candidate);
+      if (direct) return direct;
     }
-    console.debug("[ArtworkCache] Last.fm candidate:", candidate);
-    const result = await validateImage(candidate);
-    console.debug("[ArtworkCache] Last.fm validation:", result);
-    return result === "OK" ? candidate : null;
+
+    for (const candidate of candidates) {
+      console.debug("[ArtworkCache] 🔍 Trying Last.fm search:", candidate);
+      const searched = await tryLastFmSearch(candidate);
+      if (searched) return searched;
+    }
+
+    console.debug("[ArtworkCache] Last.fm: no valid image for", stationName);
+    return null;
   } catch (e) {
     console.warn("[ArtworkCache] Last.fm error:", e);
     return null;
