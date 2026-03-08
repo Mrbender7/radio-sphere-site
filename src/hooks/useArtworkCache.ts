@@ -128,31 +128,34 @@ const BRANDFETCH_API_KEY = "uy994hGSIB15nIu5lPKp3FQw6IMsaeC2qScvf9pN__baJvw-NC08
 // Domain-level dedup for Brandfetch (avoid calling same domain multiple times)
 const brandfetchDomainCache = new Map<string, Promise<string | null>>();
 
-function probeImage(url: string, timeoutMs = 4500): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (!url) {
-      resolve(false);
-      return;
-    }
+// Rate-limiter: max N concurrent Brandfetch calls
+const MAX_CONCURRENT_BRANDFETCH = 3;
+let activeBrandfetch = 0;
+const brandfetchQueue: Array<() => void> = [];
 
-    const img = new Image();
-    const timeout = setTimeout(() => resolve(false), timeoutMs);
-
-    img.onload = () => {
-      clearTimeout(timeout);
-      resolve(true);
-    };
-
-    img.onerror = () => {
-      clearTimeout(timeout);
-      resolve(false);
-    };
-
-    img.src = url;
-  });
+function acquireBrandfetchSlot(): Promise<void> {
+  if (activeBrandfetch < MAX_CONCURRENT_BRANDFETCH) {
+    activeBrandfetch++;
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => brandfetchQueue.push(resolve));
 }
 
+function releaseBrandfetchSlot() {
+  activeBrandfetch--;
+  const next = brandfetchQueue.shift();
+  if (next) {
+    activeBrandfetch++;
+    next();
+  }
+}
+
+// Global flag: once we get a 429, stop all Brandfetch calls for this session
+let brandfetchQuotaExhausted = false;
+
 async function tryBrandfetch(homepage: string): Promise<string | null> {
+  if (brandfetchQuotaExhausted) return null;
+
   const domain = extractDomain(homepage);
   if (!domain) return null;
 
@@ -162,22 +165,57 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
   }
 
   const promise = (async (): Promise<string | null> => {
+    await acquireBrandfetchSlot();
     try {
-      // Expected format example: https://cdn.brandfetch.io/rtbf.be?c=CLIENT_ID
-      const cdnUrl = `https://cdn.brandfetch.io/${domain}?c=${BRANDFETCH_API_KEY}`;
-      console.debug("[ArtworkCache] 🔍 Trying Brandfetch CDN:", cdnUrl);
+      if (brandfetchQuotaExhausted) return null;
 
-      const exists = await probeImage(cdnUrl);
-      if (!exists) {
+      const url = `https://api.brandfetch.io/v2/brands/${domain}`;
+      console.debug("[ArtworkCache] 🔍 Trying Brandfetch API:", domain);
+      const res = await fetch(url, {
+        headers: { "Authorization": `Bearer ${BRANDFETCH_API_KEY}` },
+        signal: AbortSignal.timeout(6000),
+      });
+
+      if (res.status === 429) {
+        console.warn("[ArtworkCache] ⛔ Brandfetch quota exhausted — disabling for session");
+        brandfetchQuotaExhausted = true;
+        return null;
+      }
+
+      if (!res.ok) {
+        console.debug("[ArtworkCache] Brandfetch HTTP", res.status, "for", domain);
+        return null;
+      }
+
+      const data = await res.json();
+      const logos = data?.logos ?? [];
+      let bestUrl: string | null = null;
+
+      // Prefer icon (square), then logo; prefer png/jpeg over svg
+      for (const type of ["icon", "logo"]) {
+        const logo = logos.find((l: any) => l.type === type);
+        if (logo?.formats?.length) {
+          const sorted = [...logo.formats].sort((a: any, b: any) => {
+            const order: Record<string, number> = { png: 0, jpeg: 1, jpg: 1, svg: 2 };
+            return (order[a.format] ?? 9) - (order[b.format] ?? 9);
+          });
+          bestUrl = sorted[0]?.src ?? null;
+          if (bestUrl) break;
+        }
+      }
+
+      if (!bestUrl) {
         console.debug("[ArtworkCache] Brandfetch: no logo for", domain);
         return null;
       }
 
-      console.debug("[ArtworkCache] ✅ Brandfetch found:", cdnUrl);
-      return cdnUrl;
+      console.debug("[ArtworkCache] ✅ Brandfetch found:", bestUrl);
+      return bestUrl;
     } catch (e) {
       console.warn("[ArtworkCache] Brandfetch error:", e);
       return null;
+    } finally {
+      releaseBrandfetchSlot();
     }
   })();
 
