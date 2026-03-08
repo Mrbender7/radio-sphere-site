@@ -625,6 +625,7 @@ const translations: Record<Language, Record<string, string>> = {
     "player.recordPremiumOnly": "La grabación es una función Premium",
     "player.fileSaved": "¡Archivo guardado!",
     "player.backInTime": "Volver al pasado",
+    "player.bufferLoading": "Cargando búfer...",
     "player.recordingNotAvailable": "Grabación no disponible",
     "player.recordingContinuesLive": "Volviendo al directo, grabación en curso...",
   },
