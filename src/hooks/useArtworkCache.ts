@@ -186,6 +186,7 @@ export function useArtworkCache(
   stationId: string,
   originalUrl: string,
   homepage: string = "",
+  stationName: string = "",
 ) {
   // Trigger resolution once (idempotent via inflightChecks)
   const startedRef = useRef(false);
