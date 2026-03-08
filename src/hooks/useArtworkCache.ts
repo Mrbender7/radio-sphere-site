@@ -142,6 +142,7 @@ async function resolveStation(
   stationId: string,
   originalUrl: string,
   homepage: string,
+  stationName: string,
 ): Promise<string> {
   const secureUrl = originalUrl?.replace("http://", "https://") || "";
 
