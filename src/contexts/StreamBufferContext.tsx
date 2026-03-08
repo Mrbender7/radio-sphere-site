@@ -161,21 +161,24 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
   }, [stopFetch, trimBuffer, updateBufferSeconds]);
 
+  // C'est ici que j'ai fait le changement : j'ai retiré !isPlaying de la condition de coupe
+  // et je force le startFetch dès qu'on a une streamUrl, même si l'audio n'est pas encore "playing"
   useEffect(() => {
     const stationId = currentStation?.id ?? null;
 
-    if (!currentStation?.streamUrl || !isPlaying) {
+    if (!currentStation?.streamUrl) {
       stopFetch();
       clearBuffer();
       stationIdRef.current = null;
       return;
     }
+
     if (stationId !== stationIdRef.current) {
       stationIdRef.current = stationId;
       clearBuffer();
       startFetch(currentStation.streamUrl);
     }
-  }, [currentStation?.id, currentStation?.streamUrl, isPlaying, startFetch, stopFetch, clearBuffer]);
+  }, [currentStation?.id, currentStation?.streamUrl, startFetch, stopFetch, clearBuffer]);
 
   useEffect(() => {
     return () => {
