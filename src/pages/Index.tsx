@@ -4,6 +4,7 @@ import { PremiumProvider } from "@/contexts/PremiumContext";
 import { FavoritesProvider, useFavoritesContext } from "@/contexts/FavoritesContext";
 import { LanguageProvider, useTranslation } from "@/contexts/LanguageContext";
 import { SleepTimerProvider } from "@/contexts/SleepTimerContext";
+import { StreamBufferProvider } from "@/contexts/StreamBufferContext";
 import { BottomNav, TabId } from "@/components/BottomNav";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { FullScreenPlayer } from "@/components/FullScreenPlayer";

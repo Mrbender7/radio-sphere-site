@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { globalAudio } from "@/contexts/PlayerContext";
 
 // --- Types ---
@@ -38,6 +39,8 @@ const BITRATE_ESTIMATE = 16000; // ~128kbps bytes/sec fallback
 const MAX_BUFFER_BYTES = MAX_BUFFER_SECONDS * BITRATE_ESTIMATE;
 
 export function StreamBufferProvider({ children }: { children: React.ReactNode }) {
+  const { currentStation, isPlaying } = usePlayer();
+
   // Refs
   const chunksRef = useRef<TimestampedChunk[]>([]);
   const totalBytesRef = useRef(0);
@@ -45,12 +48,9 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const recordingStartIdxRef = useRef(-1);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const seekBlobUrlRef = useRef<string | null>(null);
-  const trackedSrcRef = useRef<string | null>(null);
+  const stationIdRef = useRef<string | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
-  const noChunkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const noChunkRetryRef = useRef(0);
   const detectedMimeRef = useRef<string>("audio/mpeg");
-  const isPlayingRef = useRef(false);
 
   // States
   const [bufferSeconds, setBufferSeconds] = useState(0);
@@ -89,13 +89,6 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const resetNoChunkWatchdog = useCallback(() => {
-    if (noChunkTimeoutRef.current) {
-      clearTimeout(noChunkTimeoutRef.current);
-      noChunkTimeoutRef.current = null;
-    }
-  }, []);
-
   const processChunk = useCallback((chunk: Uint8Array) => {
     const now = Date.now();
     chunksRef.current.push({ data: chunk, timestamp: now });
@@ -108,37 +101,26 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setBufferSeconds(estimatedSeconds);
     setBufferAvailable(estimatedSeconds > 2);
     setDebugInfo(d => ({ ...d, chunkCount }));
+  }, [trimBuffer]);
 
-    // Reset watchdog on each chunk
-    resetNoChunkWatchdog();
-    noChunkRetryRef.current = 0;
-    noChunkTimeoutRef.current = setTimeout(() => {
-      console.warn("[StreamBuffer] No chunks for 15s, connection may be dead");
-      setDebugInfo(d => ({ ...d, lastError: 'No data for 15s' }));
-    }, 15000);
-  }, [trimBuffer, resetNoChunkWatchdog]);
-
-  // --- Fetch management ---
+  // --- Fetch management (simple, original approach) ---
   const stopFetch = useCallback(() => {
-    resetNoChunkWatchdog();
     if (fetchControllerRef.current) {
       fetchControllerRef.current.abort();
       fetchControllerRef.current = null;
     }
     setDebugInfo(d => ({ ...d, fetchActive: false }));
-  }, [resetNoChunkWatchdog]);
+  }, []);
 
   const startFetch = useCallback(async (streamUrl: string) => {
-    if (fetchControllerRef.current) return; // Avoid double connections
+    if (fetchControllerRef.current) return;
 
     const controller = new AbortController();
     fetchControllerRef.current = controller;
 
-    const fetchUrl = streamUrl;
-
     try {
-      console.log("[StreamBuffer] Fetch stream started for:", fetchUrl);
-      const response = await fetch(fetchUrl, {
+      console.log("[StreamBuffer] Starting fetch for:", streamUrl.substring(0, 80));
+      const response = await fetch(streamUrl, {
         signal: controller.signal,
         cache: 'no-store',
         mode: 'cors',
@@ -151,19 +133,12 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
         return;
       }
 
-      // Detect MIME
       const contentType = response.headers.get('content-type') || 'audio/mpeg';
       detectedMimeRef.current = contentType.split(';')[0].trim();
-      console.log("[StreamBuffer] Fetch stream started, MIME:", detectedMimeRef.current);
+      console.log("[StreamBuffer] Fetch connected, MIME:", detectedMimeRef.current);
 
       const reader = response.body.getReader();
       setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '' }));
-
-      // Start watchdog
-      noChunkTimeoutRef.current = setTimeout(() => {
-        console.warn("[StreamBuffer] No initial chunks after 15s");
-        setDebugInfo(d => ({ ...d, lastError: 'No initial data' }));
-      }, 15000);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -174,19 +149,51 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       if (e?.name !== 'AbortError') {
         console.warn("[StreamBuffer] Fetch error:", e?.message);
         setDebugInfo(d => ({ ...d, fetchActive: false, lastError: e?.message || 'fetch error' }));
-
-        // Try https:// upgrade if http:// failed (mixed content)
-        if (fetchUrl.startsWith('http://') && !controller.signal.aborted) {
-          console.log("[StreamBuffer] Retrying with HTTPS...");
-          fetchControllerRef.current = null;
-          startFetch(fetchUrl.replace('http://', 'https://'));
-          return;
-        }
       }
     }
     fetchControllerRef.current = null;
     setDebugInfo(d => ({ ...d, fetchActive: false }));
   }, [processChunk]);
+
+  // --- Lifecycle: react to station changes and play/pause ---
+  useEffect(() => {
+    const stationId = currentStation?.id ?? null;
+
+    // Station changed → reset everything
+    if (stationId !== stationIdRef.current) {
+      console.log("[StreamBuffer] Station change detected, resetting buffer");
+      stopFetch();
+      clearBuffer();
+      stationIdRef.current = stationId;
+
+      if (currentStation?.streamUrl && isPlaying) {
+        startFetch(currentStation.streamUrl);
+      }
+    }
+    // Pause → stop fetch but KEEP buffer
+    else if (!isPlaying && fetchControllerRef.current) {
+      console.log("[StreamBuffer] Pause detected, stopping fetch but KEEPING buffer");
+      stopFetch();
+    }
+    // Resume → restart fetch
+    else if (isPlaying && !fetchControllerRef.current && currentStation?.streamUrl) {
+      console.log("[StreamBuffer] Resume detected, restarting fetch");
+      startFetch(currentStation.streamUrl);
+    }
+  }, [currentStation?.id, currentStation?.streamUrl, isPlaying, startFetch, stopFetch, clearBuffer]);
+
+  // Cleanup only on full unmount
+  useEffect(() => {
+    return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (fetchControllerRef.current) {
+        fetchControllerRef.current.abort();
+        fetchControllerRef.current = null;
+      }
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (seekBlobUrlRef.current) URL.revokeObjectURL(seekBlobUrlRef.current);
+    };
+  }, []);
 
   // --- Recording ---
   const startRecording = useCallback(() => {
@@ -201,7 +208,6 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       const elapsed = (Date.now() - start) / 1000;
       setRecordingDuration(elapsed);
       if (elapsed >= MAX_RECORDING_SECONDS) {
-        // Auto-stop
         clearInterval(recordingTimerRef.current!);
         recordingTimerRef.current = null;
       }
@@ -251,7 +257,6 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     const now = Date.now();
     const targetTime = now - (seconds * 1000);
 
-    // Find the chunk closest to targetTime
     let startIdx = 0;
     for (let i = chunks.length - 1; i >= 0; i--) {
       if (chunks[i].timestamp <= targetTime) {
@@ -271,7 +276,6 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       offset += chunk.data.byteLength;
     }
 
-    // Revoke previous blob
     if (seekBlobUrlRef.current) {
       URL.revokeObjectURL(seekBlobUrlRef.current);
     }
@@ -280,7 +284,6 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     const blobUrl = URL.createObjectURL(blob);
     seekBlobUrlRef.current = blobUrl;
 
-    // Swap the audio source to the blob
     const audio = globalAudio;
     const wasPlaying = !audio.paused;
     audio.src = blobUrl;
@@ -299,79 +302,19 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       seekBlobUrlRef.current = null;
     }
 
-    // Restore the live stream URL
-    const currentSrc = trackedSrcRef.current;
-    if (currentSrc) {
+    const streamUrl = currentStation?.streamUrl;
+    if (streamUrl) {
       const audio = globalAudio;
-      audio.src = currentSrc;
+      audio.src = streamUrl;
       audio.load();
       audio.play().catch(() => {});
     }
 
     setIsLive(true);
     setCurrentSeekOffsetSeconds(0);
-  }, []);
+  }, [currentStation?.streamUrl]);
 
   const canSeekBack = bufferSeconds > 2;
-
-  // --- Observe globalAudio for src changes and play/pause ---
-  useEffect(() => {
-    const audio = globalAudio;
-    let pollInterval: ReturnType<typeof setInterval> | null = null;
-
-    const checkAudioState = () => {
-      const src = audio.src || null;
-      const playing = !audio.paused && src !== null;
-
-      // Ignore blob: URLs (those are our own seek-back blobs)
-      const realSrc = src && !src.startsWith('blob:') ? src : null;
-
-      // Detect station/src change
-      if (realSrc !== trackedSrcRef.current) {
-        console.log("[StreamBuffer] Audio src changed:", realSrc?.substring(0, 60));
-        stopFetch();
-        clearBuffer();
-        trackedSrcRef.current = realSrc;
-
-        if (realSrc && playing) {
-          startFetch(realSrc);
-        }
-        isPlayingRef.current = playing;
-        return;
-      }
-
-      // Detect play/pause transitions
-      if (playing !== isPlayingRef.current) {
-        isPlayingRef.current = playing;
-        if (!playing && fetchControllerRef.current) {
-          console.log("[StreamBuffer] Pause detected, stopping fetch but KEEPING buffer");
-          stopFetch();
-        } else if (playing && !fetchControllerRef.current && realSrc) {
-          console.log("[StreamBuffer] Resume detected, restarting fetch");
-          startFetch(realSrc);
-        }
-      }
-    };
-
-    // Poll every 500ms to detect changes (more reliable than events for cross-context)
-    pollInterval = setInterval(checkAudioState, 500);
-    // Also check immediately
-    checkAudioState();
-
-    return () => {
-      if (pollInterval) clearInterval(pollInterval);
-    };
-  }, [startFetch, stopFetch, clearBuffer]);
-
-  // Cleanup on unmount (only when provider is truly removed from tree)
-  useEffect(() => {
-    return () => {
-      stopFetch();
-      resetNoChunkWatchdog();
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-      if (seekBlobUrlRef.current) URL.revokeObjectURL(seekBlobUrlRef.current);
-    };
-  }, [stopFetch, resetNoChunkWatchdog]);
 
   return (
     <StreamBufferContext.Provider value={{
