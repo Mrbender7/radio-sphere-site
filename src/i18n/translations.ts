@@ -933,6 +933,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "了解",
     "favorites.noFavoritesToExport": "エクスポートするお気に入りがありません",
     "favorites.refreshMetadata": "メタデータを更新",
+    "favorites.purgeArtworkCache": "アートワークキャッシュを削除",
     "settings.privacyPolicy": "プライバシーポリシー",
     "settings.reopenWelcome": "ウェルカムページを再表示",
     "settings.resetApp": "アプリをリセット",
