@@ -210,7 +210,9 @@ const translations: Record<Language, Record<string, string>> = {
     "player.shareRecording": "Partager l'enregistrement",
     "player.returnToLive": "Retour au direct",
     "player.recordPremiumOnly": "L'enregistrement est une fonctionnalité Premium",
-    "player.fileSaved": "Fichier sauvegardé !",
+    "player.backInTime": "Retour dans le passé",
+    "player.recordingNotAvailable": "Enregistrement indisponible",
+    "player.recordingContinuesLive": "Retour au direct, enregistrement en cours...",
   },
   en: {
     "nav.home": "Home",
