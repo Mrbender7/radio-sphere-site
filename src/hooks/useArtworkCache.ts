@@ -12,8 +12,8 @@ interface CacheEntry {
 
 // ── In-memory store (shared across all hook instances) ─────────────
 const STORAGE_KEY = "radiosphere_artwork_cache";
-const MIN_DIMENSION = 300;
-const MIN_BYTES = 10_000; // 10 KB
+const MIN_DIMENSION = 100; // lowered — 200x200 brand icons are fine
+const MIN_BYTES = 5_000; // 5 KB
 
 const memoryCache = new Map<string, CacheEntry>();
 const listeners = new Set<() => void>();
