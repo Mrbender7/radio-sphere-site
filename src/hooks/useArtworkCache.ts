@@ -116,18 +116,25 @@ const LASTFM_API_KEY = "f0549ea17c34cc54c672676e791f616b";
 async function tryLastFm(stationName: string): Promise<string | null> {
   try {
     const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(stationName)}&api_key=${LASTFM_API_KEY}&format=json`;
+    console.debug("[ArtworkCache] 🔍 Trying Last.fm for:", stationName);
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
+    if (!res.ok) { console.debug("[ArtworkCache] Last.fm HTTP", res.status); return null; }
     const data = await res.json();
     const images = data?.artist?.image;
-    if (!Array.isArray(images)) return null;
+    if (!Array.isArray(images)) { console.debug("[ArtworkCache] Last.fm: no images for", stationName); return null; }
     const mega = images.find((i: any) => i.size === "mega")?.["#text"];
     const xl = images.find((i: any) => i.size === "extralarge")?.["#text"];
     const candidate = mega || xl;
-    if (!candidate || candidate.includes("2a96cbd8b46e442fc41c2b86b821562f")) return null;
+    if (!candidate || candidate.includes("2a96cbd8b46e442fc41c2b86b821562f")) {
+      console.debug("[ArtworkCache] Last.fm: no valid image for", stationName);
+      return null;
+    }
+    console.debug("[ArtworkCache] Last.fm candidate:", candidate);
     const result = await validateImage(candidate);
+    console.debug("[ArtworkCache] Last.fm validation:", result);
     return result === "OK" ? candidate : null;
-  } catch {
+  } catch (e) {
+    console.warn("[ArtworkCache] Last.fm error:", e);
     return null;
   }
 }
