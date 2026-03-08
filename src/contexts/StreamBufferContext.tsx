@@ -50,6 +50,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const seekBlobUrlRef = useRef<string | null>(null);
   const stationIdRef = useRef<string | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
+  const noChunkTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noChunkRetryRef = useRef(0);
   const bufferAvailableRef = useRef(false);
   const detectedMimeRef = useRef<string>("audio/mpeg");
 
