@@ -419,7 +419,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
       </CollapsibleSection>
 
       {/* Replace low-quality artworks toggle */}
-      <div className="rounded-xl bg-gradient-to-r from-primary/10 to-accent border border-primary/20 p-4 mb-4">
+      <div className="rounded-xl bg-accent p-4 mb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
             <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
@@ -432,6 +432,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
           </div>
           <Switch
             checked={replaceLowQuality}
+            className="h-7 w-12 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] [&>span]:h-6 [&>span]:w-6 [&>span]:shadow-[0_2px_6px_rgba(0,0,0,0.5)] [&>span]:data-[state=checked]:translate-x-5 [&>span]:data-[state=checked]:shadow-[0_0_8px_hsla(var(--primary)/0.5),0_2px_6px_rgba(0,0,0,0.5)]"
             onCheckedChange={(checked) => {
               setReplaceLowQualityState(checked);
               setReplaceLowQuality(checked);
