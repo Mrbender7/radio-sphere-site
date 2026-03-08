@@ -101,7 +101,6 @@ function AppContentInner() {
   return (
       <PremiumProvider>
         <SleepTimerProvider>
-          <StreamBufferProvider>
           <SleepTimerIndicator />
           <div className="flex flex-col h-full bg-background" style={{ paddingTop: 'env(safe-area-inset-top, 24px)' }}>
             <div className={`flex-1 flex flex-col overflow-hidden ${currentStation ? 'pb-28' : 'pb-14'}`}>
@@ -115,7 +114,6 @@ function AppContentInner() {
             <FullScreenPlayer onTagClick={handleTagClick} />
             <ExitConfirmDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
           </div>
-          </StreamBufferProvider>
         </SleepTimerProvider>
       </PremiumProvider>
   );
