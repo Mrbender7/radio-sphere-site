@@ -2,29 +2,8 @@ import { RadioStation } from "@/types/radio";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { Heart, Play } from "lucide-react";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
+import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
-import stationPlaceholder from "@/assets/station-placeholder.png";
-
-interface StationCardProps {
-  station: RadioStation;
-  isFavorite: boolean;
-  onToggleFavorite: (station: RadioStation) => void;
-  compact?: boolean;
-}
-
-function StationLogo({ src, alt, className }: { src?: string; alt: string; className?: string }) {
-  const secureSrc = src?.replace('http://', 'https://');
-  const isPlaceholder = !secureSrc;
-  return (
-    <img
-      src={secureSrc || stationPlaceholder}
-      alt={alt}
-      loading="lazy"
-      className={cn("w-full h-full object-cover", isPlaceholder && "mask-radial-fade", className)}
-      onError={e => { (e.target as HTMLImageElement).src = stationPlaceholder; (e.target as HTMLImageElement).classList.add("mask-radial-fade"); }}
-    />
-  );
-}
 
 export function StationCard({ station, isFavorite, onToggleFavorite, compact }: StationCardProps) {
   const { play, currentStation, isPlaying } = usePlayer();
