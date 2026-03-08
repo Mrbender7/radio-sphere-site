@@ -13,7 +13,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-/** Wrapper that bridges FavoritesContext → PlayerProvider.onStationPlay */
 function CoreProviders({ children }: { children: React.ReactNode }) {
   const { addRecent } = useFavoritesContext();
 

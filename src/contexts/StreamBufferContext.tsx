@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { globalAudio } from "@/contexts/PlayerContext";
+import { useTranslation } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
-// --- Types ---
 interface TimestampedChunk {
   data: Uint8Array;
-  timestamp: number;
+  time: number;
+  byteOffset: number;
 }
 
 interface StreamBufferContextType {
@@ -17,7 +19,6 @@ interface StreamBufferContextType {
   bufferAvailable: boolean;
   recordingAvailable: boolean;
   currentSeekOffsetSeconds: number;
-  debugInfo: { chunkCount: number; fetchActive: boolean; lastError: string };
   startRecording: () => void;
   stopRecording: () => Promise<{ blob: Blob; fileName: string } | null>;
   seekBack: (seconds: number) => void;
@@ -32,16 +33,14 @@ export function useStreamBuffer() {
   return ctx;
 }
 
-// --- Constants ---
-const MAX_BUFFER_SECONDS = 5 * 60; // 5 min circular buffer
-const MAX_RECORDING_SECONDS = 10 * 60; // 10 min recording
-const BITRATE_ESTIMATE = 16000; // ~128kbps bytes/sec fallback
-const MAX_BUFFER_BYTES = MAX_BUFFER_SECONDS * BITRATE_ESTIMATE;
+const MAX_BUFFER_DURATION = 5 * 60;
+const MAX_RECORDING_DURATION = 10 * 60;
+const MAX_BUFFER_BYTES = 5 * 60 * 20 * 1024;
 
 export function StreamBufferProvider({ children }: { children: React.ReactNode }) {
   const { currentStation, isPlaying } = usePlayer();
+  const { t } = useTranslation();
 
-  // Refs
   const chunksRef = useRef<TimestampedChunk[]>([]);
   const totalBytesRef = useRef(0);
   const cumulativeBytesRef = useRef(0);
@@ -50,9 +49,9 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const seekBlobUrlRef = useRef<string | null>(null);
   const stationIdRef = useRef<string | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
-  const detectedMimeRef = useRef<string>("audio/mpeg");
+  const bufferAvailableRef = useRef(false);
+  const detectedMimeRef = useRef("audio/mpeg");
 
-  // States
   const [bufferSeconds, setBufferSeconds] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -60,22 +59,23 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   const [bufferAvailable, setBufferAvailable] = useState(false);
   const [recordingAvailable, setRecordingAvailable] = useState(false);
   const [currentSeekOffsetSeconds, setCurrentSeekOffsetSeconds] = useState(0);
-  const [debugInfo, setDebugInfo] = useState<{ chunkCount: number; fetchActive: boolean; lastError: string }>({
-    chunkCount: 0, fetchActive: false, lastError: ''
-  });
 
-  // --- Utility functions ---
   const clearBuffer = useCallback(() => {
     chunksRef.current = [];
     totalBytesRef.current = 0;
     cumulativeBytesRef.current = 0;
-    recordingStartIdxRef.current = -1;
     setBufferSeconds(0);
-    setBufferAvailable(false);
-    setRecordingAvailable(false);
+    setIsRecording(false);
+    setRecordingDuration(0);
     setIsLive(true);
     setCurrentSeekOffsetSeconds(0);
-    setDebugInfo({ chunkCount: 0, fetchActive: false, lastError: '' });
+    setBufferAvailable(false);
+    recordingStartIdxRef.current = -1;
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    bufferAvailableRef.current = false;
     if (seekBlobUrlRef.current) {
       URL.revokeObjectURL(seekBlobUrlRef.current);
       seekBlobUrlRef.current = null;
@@ -83,243 +83,249 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const trimBuffer = useCallback(() => {
-    while (totalBytesRef.current > MAX_BUFFER_BYTES && chunksRef.current.length > 1) {
+    while (totalBytesRef.current > MAX_BUFFER_BYTES && chunksRef.current.length > 0) {
       const removed = chunksRef.current.shift()!;
       totalBytesRef.current -= removed.data.byteLength;
+      if (recordingStartIdxRef.current > 0) {
+        recordingStartIdxRef.current--;
+      } else if (recordingStartIdxRef.current === 0) {
+        recordingStartIdxRef.current = 0;
+      }
     }
   }, []);
 
-  const processChunk = useCallback((chunk: Uint8Array) => {
-    const now = Date.now();
-    chunksRef.current.push({ data: chunk, timestamp: now });
-    totalBytesRef.current += chunk.byteLength;
-    cumulativeBytesRef.current += chunk.byteLength;
-    trimBuffer();
+  const updateBufferSeconds = useCallback(() => {
+    const chunks = chunksRef.current;
+    if (chunks.length < 2) {
+      setBufferSeconds(0);
+      return;
+    }
+    const duration = (chunks[chunks.length - 1].time - chunks[0].time) / 1000;
+    setBufferSeconds(Math.min(duration, MAX_BUFFER_DURATION));
+  }, []);
 
-    const chunkCount = chunksRef.current.length;
-    const estimatedSeconds = totalBytesRef.current / BITRATE_ESTIMATE;
-    setBufferSeconds(estimatedSeconds);
-    setBufferAvailable(estimatedSeconds > 2);
-    setDebugInfo(d => ({ ...d, chunkCount }));
-  }, [trimBuffer]);
-
-  // --- Fetch management (simple, original approach) ---
   const stopFetch = useCallback(() => {
     if (fetchControllerRef.current) {
       fetchControllerRef.current.abort();
       fetchControllerRef.current = null;
     }
-    setDebugInfo(d => ({ ...d, fetchActive: false }));
   }, []);
 
   const startFetch = useCallback(async (streamUrl: string) => {
-    if (fetchControllerRef.current) return;
-
+    stopFetch();
     const controller = new AbortController();
     fetchControllerRef.current = controller;
 
     try {
-      console.log("[StreamBuffer] Starting fetch for:", streamUrl.substring(0, 80));
       const response = await fetch(streamUrl, {
         signal: controller.signal,
-        cache: 'no-store',
-        mode: 'cors',
+        headers: { 'Accept': '*/*' },
       });
-
       if (!response.ok || !response.body) {
-        console.warn("[StreamBuffer] Bad response:", response.status);
-        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `HTTP ${response.status}` }));
-        fetchControllerRef.current = null;
+        setBufferAvailable(false);
+        setRecordingAvailable(false);
         return;
       }
-
-      const contentType = response.headers.get('content-type') || 'audio/mpeg';
+      const contentType = response.headers.get('Content-Type') || 'audio/mpeg';
       detectedMimeRef.current = contentType.split(';')[0].trim();
-      console.log("[StreamBuffer] Fetch connected, MIME:", detectedMimeRef.current);
-
       const reader = response.body.getReader();
-      setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '' }));
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) processChunk(value);
-      }
+      const readLoop = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (!value || value.byteLength === 0) continue;
+            const chunk: TimestampedChunk = {
+              data: value,
+              time: Date.now(),
+              byteOffset: cumulativeBytesRef.current,
+            };
+            cumulativeBytesRef.current += value.byteLength;
+            chunksRef.current.push(chunk);
+            totalBytesRef.current += value.byteLength;
+            if (!bufferAvailableRef.current) {
+              bufferAvailableRef.current = true;
+              setBufferAvailable(true);
+            }
+            trimBuffer();
+            updateBufferSeconds();
+          }
+        } catch (err: any) {
+          // Silently handle abort errors
+        }
+      };
+      readLoop();
     } catch (e: any) {
-      if (e?.name !== 'AbortError') {
-        console.warn("[StreamBuffer] Fetch error:", e?.message);
-        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: e?.message || 'fetch error' }));
-      }
+      setBufferAvailable(false);
+      setRecordingAvailable(false);
     }
-    fetchControllerRef.current = null;
-    setDebugInfo(d => ({ ...d, fetchActive: false }));
-  }, [processChunk]);
+  }, [stopFetch, trimBuffer, updateBufferSeconds]);
 
-  // --- Lifecycle: react to station changes and play/pause ---
   useEffect(() => {
     const stationId = currentStation?.id ?? null;
 
-    // Station changed → reset everything
-    if (stationId !== stationIdRef.current) {
-      console.log("[StreamBuffer] Station change detected, resetting buffer");
+    if (!currentStation?.streamUrl || !isPlaying) {
       stopFetch();
       clearBuffer();
+      stationIdRef.current = null;
+      return;
+    }
+    if (stationId !== stationIdRef.current) {
       stationIdRef.current = stationId;
-
-      if (currentStation?.streamUrl && isPlaying) {
-        startFetch(currentStation.streamUrl);
-      }
-    }
-    // Pause → stop fetch but KEEP buffer
-    else if (!isPlaying && fetchControllerRef.current) {
-      console.log("[StreamBuffer] Pause detected, stopping fetch but KEEPING buffer");
-      stopFetch();
-    }
-    // Resume → restart fetch
-    else if (isPlaying && !fetchControllerRef.current && currentStation?.streamUrl) {
-      console.log("[StreamBuffer] Resume detected, restarting fetch");
+      clearBuffer();
       startFetch(currentStation.streamUrl);
     }
   }, [currentStation?.id, currentStation?.streamUrl, isPlaying, startFetch, stopFetch, clearBuffer]);
 
-  // Cleanup only on full unmount
   useEffect(() => {
     return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      if (fetchControllerRef.current) {
-        fetchControllerRef.current.abort();
-        fetchControllerRef.current = null;
-      }
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
       if (seekBlobUrlRef.current) URL.revokeObjectURL(seekBlobUrlRef.current);
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
     };
   }, []);
 
-  // --- Recording ---
   const startRecording = useCallback(() => {
-    recordingStartIdxRef.current = chunksRef.current.length;
+    if (!bufferAvailable || chunksRef.current.length === 0) return;
+    if (!isLive && currentSeekOffsetSeconds > 0) {
+      const now = Date.now();
+      const targetTime = now - currentSeekOffsetSeconds * 1000;
+      let startIdx = 0;
+      for (let i = 0; i < chunksRef.current.length; i++) {
+        if (chunksRef.current[i].time >= targetTime) {
+          startIdx = i;
+          break;
+        }
+      }
+      recordingStartIdxRef.current = startIdx;
+    } else {
+      recordingStartIdxRef.current = chunksRef.current.length - 1;
+    }
     setIsRecording(true);
     setRecordingDuration(0);
-    setRecordingAvailable(false);
-
-    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-    const start = Date.now();
+    const startTime = Date.now();
     recordingTimerRef.current = setInterval(() => {
-      const elapsed = (Date.now() - start) / 1000;
-      setRecordingDuration(elapsed);
-      if (elapsed >= MAX_RECORDING_SECONDS) {
-        clearInterval(recordingTimerRef.current!);
-        recordingTimerRef.current = null;
-      }
-    }, 500);
-  }, []);
+      setRecordingDuration(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+    toast.success(t("player.recordingStarted"));
+  }, [t, bufferAvailable, isLive, currentSeekOffsetSeconds]);
 
   const stopRecording = useCallback(async (): Promise<{ blob: Blob; fileName: string } | null> => {
+    if (!isRecording) return null;
+    setIsRecording(false);
     if (recordingTimerRef.current) {
       clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = null;
     }
-    setIsRecording(false);
-
-    const startIdx = recordingStartIdxRef.current;
-    if (startIdx < 0 || startIdx >= chunksRef.current.length) {
-      recordingStartIdxRef.current = -1;
-      return null;
-    }
-
-    const recordedChunks = chunksRef.current.slice(startIdx);
+    if (recordingStartIdxRef.current < 0) return null;
+    const chunks = chunksRef.current;
+    const startIdx = Math.max(0, recordingStartIdxRef.current);
+    const recordedChunks = chunks.slice(startIdx);
     recordingStartIdxRef.current = -1;
-
     if (recordedChunks.length === 0) return null;
 
-    const totalSize = recordedChunks.reduce((sum, c) => sum + c.data.byteLength, 0);
-    const merged = new Uint8Array(totalSize);
-    let offset = 0;
-    for (const chunk of recordedChunks) {
-      merged.set(chunk.data, offset);
-      offset += chunk.data.byteLength;
-    }
-
+    const parts: BlobPart[] = [];
+    for (const c of recordedChunks) parts.push(new Uint8Array(c.data));
     const mime = detectedMimeRef.current;
-    const ext = mime.includes('aac') ? 'aac' : mime.includes('ogg') ? 'ogg' : 'mp3';
-    const blob = new Blob([merged], { type: mime });
-    const fileName = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.${ext}`;
+    const blob = new Blob(parts, { type: mime });
+    let ext = 'mp3';
+    if (mime.includes('aac') || mime.includes('mp4')) ext = 'aac';
+    else if (mime.includes('ogg')) ext = 'ogg';
+    else if (mime.includes('flac')) ext = 'flac';
 
-    setRecordingAvailable(true);
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}h${String(now.getMinutes()).padStart(2, '0')}`;
+    const stationName = (currentStation?.name ?? 'Station').replace(/[^a-zA-Z0-9À-ÿ\s-]/g, '').replace(/\s+/g, '_').slice(0, 40);
+    const fileName = `RadioSphere_${stationName}_${dateStr}_${timeStr}.${ext}`;
+    toast.success(t("player.recordingStopped"));
+    setRecordingDuration(0);
     return { blob, fileName };
-  }, []);
+  }, [isRecording, currentStation?.name, t]);
 
-  // --- Seek back ---
-  const seekBack = useCallback((seconds: number) => {
-    const chunks = chunksRef.current;
-    if (chunks.length < 2) return;
-
-    const now = Date.now();
-    const targetTime = now - (seconds * 1000);
-
-    let startIdx = 0;
-    for (let i = chunks.length - 1; i >= 0; i--) {
-      if (chunks[i].timestamp <= targetTime) {
-        startIdx = i;
-        break;
-      }
-    }
-
-    const seekChunks = chunks.slice(startIdx);
-    if (seekChunks.length === 0) return;
-
-    const totalSize = seekChunks.reduce((sum, c) => sum + c.data.byteLength, 0);
-    const merged = new Uint8Array(totalSize);
-    let offset = 0;
-    for (const chunk of seekChunks) {
-      merged.set(chunk.data, offset);
-      offset += chunk.data.byteLength;
-    }
-
-    if (seekBlobUrlRef.current) {
-      URL.revokeObjectURL(seekBlobUrlRef.current);
-    }
-
-    const blob = new Blob([merged], { type: detectedMimeRef.current });
-    const blobUrl = URL.createObjectURL(blob);
-    seekBlobUrlRef.current = blobUrl;
-
-    const audio = globalAudio;
-    const wasPlaying = !audio.paused;
-    audio.src = blobUrl;
-    audio.load();
-    if (wasPlaying) {
-      audio.play().catch(() => {});
-    }
-
-    setIsLive(false);
-    setCurrentSeekOffsetSeconds(seconds);
-  }, []);
-
-  const returnToLive = useCallback(() => {
+  const returnToLiveInternal = useCallback(() => {
     if (seekBlobUrlRef.current) {
       URL.revokeObjectURL(seekBlobUrlRef.current);
       seekBlobUrlRef.current = null;
     }
-
     const streamUrl = currentStation?.streamUrl;
     if (streamUrl) {
-      const audio = globalAudio;
-      audio.src = streamUrl;
-      audio.load();
-      audio.play().catch(() => {});
+      globalAudio.pause();
+      globalAudio.src = streamUrl;
+      globalAudio.load();
+      globalAudio.play().catch(() => {});
     }
-
     setIsLive(true);
     setCurrentSeekOffsetSeconds(0);
   }, [currentStation?.streamUrl]);
 
-  const canSeekBack = bufferSeconds > 2;
+  const seekBack = useCallback((seconds: number) => {
+    if (seconds <= 0) {
+      returnToLiveInternal();
+      return;
+    }
+    const chunks = chunksRef.current;
+    if (chunks.length < 2) return;
+    const now = Date.now();
+    const targetTime = now - seconds * 1000;
+    let startIdx = 0;
+    for (let i = 0; i < chunks.length; i++) {
+      if (chunks[i].time >= targetTime) {
+        startIdx = i;
+        break;
+      }
+    }
+    const selectedChunks = chunks.slice(startIdx);
+    if (selectedChunks.length === 0) return;
+
+    const parts: BlobPart[] = [];
+    for (const c of selectedChunks) parts.push(new Uint8Array(c.data));
+    const blob = new Blob(parts, { type: detectedMimeRef.current });
+    if (seekBlobUrlRef.current) URL.revokeObjectURL(seekBlobUrlRef.current);
+    const blobUrl = URL.createObjectURL(blob);
+    seekBlobUrlRef.current = blobUrl;
+    const actualOffset = (now - selectedChunks[0].time) / 1000;
+    setCurrentSeekOffsetSeconds(Math.round(actualOffset));
+    globalAudio.pause();
+    globalAudio.src = blobUrl;
+    globalAudio.load();
+    globalAudio.play().catch(() => {});
+    setIsLive(false);
+  }, [returnToLiveInternal]);
+
+  const returnToLive = useCallback(() => {
+    if (isLive) return;
+    returnToLiveInternal();
+  }, [isLive, returnToLiveInternal]);
+
+  const canSeekBack = bufferAvailable && bufferSeconds > 2;
+
+  useEffect(() => {
+    setRecordingAvailable(bufferAvailable);
+  }, [bufferAvailable]);
+
+  useEffect(() => {
+    const handleBlobEnded = () => {
+      if (!isLive && seekBlobUrlRef.current && globalAudio.src.startsWith('blob:')) {
+        returnToLiveInternal();
+      }
+    };
+    const handleBlobError = () => {
+      if (globalAudio.src && globalAudio.src.startsWith('blob:')) {
+        returnToLiveInternal();
+      }
+    };
+    globalAudio.addEventListener('ended', handleBlobEnded);
+    globalAudio.addEventListener('error', handleBlobError);
+    return () => {
+      globalAudio.removeEventListener('ended', handleBlobEnded);
+      globalAudio.removeEventListener('error', handleBlobError);
+    };
+  }, [isLive, returnToLiveInternal]);
 
   return (
     <StreamBufferContext.Provider value={{
       bufferSeconds, isRecording, recordingDuration, isLive, canSeekBack,
-      bufferAvailable, recordingAvailable, currentSeekOffsetSeconds, debugInfo,
+      bufferAvailable, recordingAvailable, currentSeekOffsetSeconds,
       startRecording, stopRecording, seekBack, returnToLive,
     }}>
       {children}
