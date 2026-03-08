@@ -167,7 +167,8 @@ async function resolveStation(
   homepage: string,
   stationName: string,
 ): Promise<string> {
-  const secureUrl = originalUrl?.replace("http://", "https://") || "";
+  // Keep original URL as-is (don't force https — breaks many radio favicons)
+  const workingUrl = originalUrl || "";
 
   // 1. Already persisted? (skip if it's the placeholder — re-check for better art)
   const persisted = loadPersistedCache();
