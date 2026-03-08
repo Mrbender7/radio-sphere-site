@@ -257,8 +257,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     try {
       const response = await fetch(fetchUrl, {
         signal: controller.signal,
-        headers: { 'Accept': '*/*', 'Cache-Control': 'no-cache' },
         cache: 'no-store',
+        mode: 'cors',
       });
 
       if (!response.ok || !response.body) {
