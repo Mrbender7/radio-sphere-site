@@ -186,17 +186,17 @@ async function resolveStation(
   }
 
   // 2. Mark as checking
-  memoryCache.set(stationId, { status: "CHECKING", resolvedUrl: secureUrl || stationPlaceholder, checked: false });
+  memoryCache.set(stationId, { status: "CHECKING", resolvedUrl: workingUrl || stationPlaceholder, checked: false });
   notify();
 
   // 3. Validate original
-  const quality = await validateImage(secureUrl);
+  const quality = await validateImage(workingUrl);
 
   let finalUrl: string;
   if (quality === "OK") {
-    finalUrl = secureUrl;
+    finalUrl = workingUrl;
   } else {
-    finalUrl = await resolveHdArtwork(secureUrl, homepage, stationName);
+    finalUrl = await resolveHdArtwork(workingUrl, homepage, stationName);
   }
 
   // 4. Store
