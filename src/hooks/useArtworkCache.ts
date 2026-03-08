@@ -150,11 +150,16 @@ function releaseBrandfetchSlot() {
   }
 }
 
-// Global flag: once we get a 429, stop all Brandfetch calls for this session
-let brandfetchQuotaExhausted = false;
+// Backoff global: après un 429, pause temporaire au lieu de désactiver toute la session
+const BRANDFETCH_COOLDOWN_MS = 60_000;
+let brandfetchCooldownUntil = 0;
+
+function isBrandfetchCoolingDown(): boolean {
+  return Date.now() < brandfetchCooldownUntil;
+}
 
 async function tryBrandfetch(homepage: string): Promise<string | null> {
-  if (brandfetchQuotaExhausted) return null;
+  if (isBrandfetchCoolingDown()) return null;
 
   const domain = extractDomain(homepage);
   if (!domain) return null;
@@ -164,10 +169,12 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
     return brandfetchDomainCache.get(domain)!;
   }
 
+  let shouldKeepDomainCache = true;
+
   const promise = (async (): Promise<string | null> => {
     await acquireBrandfetchSlot();
     try {
-      if (brandfetchQuotaExhausted) return null;
+      if (isBrandfetchCoolingDown()) return null;
 
       const url = `https://api.brandfetch.io/v2/brands/${domain}`;
       console.debug("[ArtworkCache] 🔍 Trying Brandfetch API:", domain);
@@ -177,8 +184,14 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
       });
 
       if (res.status === 429) {
-        console.warn("[ArtworkCache] ⛔ Brandfetch quota exhausted — disabling for session");
-        brandfetchQuotaExhausted = true;
+        const retryAfterSec = Number(res.headers.get("retry-after") || "0");
+        const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+          ? retryAfterSec * 1000
+          : BRANDFETCH_COOLDOWN_MS;
+
+        brandfetchCooldownUntil = Date.now() + waitMs;
+        shouldKeepDomainCache = false; // 429 = transitoire, autoriser un retry futur
+        console.warn("[ArtworkCache] ⛔ Brandfetch rate-limited — cooldown", Math.round(waitMs / 1000), "s");
         return null;
       }
 
@@ -220,6 +233,12 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
   })();
 
   brandfetchDomainCache.set(domain, promise);
+  promise.finally(() => {
+    if (!shouldKeepDomainCache) {
+      brandfetchDomainCache.delete(domain);
+    }
+  });
+
   return promise;
 }
 
