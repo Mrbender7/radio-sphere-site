@@ -115,7 +115,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setBufferSeconds(Math.min(duration, MAX_BUFFER_DURATION));
   }, []);
 
-  const buildBufferUrl = useCallback((url: string) => {
+  const buildBufferUrl = useCallback((url: string, bustCache = false) => {
+    if (!bustCache) return url;
     try {
       const u = new URL(url);
       u.searchParams.set('__tbm_fetch', String(Date.now()));
@@ -231,7 +232,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     setDebugInfo(d => ({ ...d, fetchActive: true, lastError: '', chunkCount: 0 }));
 
     const isFirefox = /firefox/i.test(navigator.userAgent);
-    const fetchUrl = buildBufferUrl(streamUrl);
+    const shouldBustCache = noChunkRetryRef.current > 0;
+    const fetchUrl = buildBufferUrl(streamUrl, shouldBustCache);
 
     // Watchdog: if no chunk arrives quickly, retry then fallback to moz-xhr on Firefox
     noChunkTimeoutRef.current = setTimeout(() => {
@@ -255,8 +257,8 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     try {
       const response = await fetch(fetchUrl, {
         signal: controller.signal,
-        headers: { 'Accept': '*/*', 'Cache-Control': 'no-cache' },
         cache: 'no-store',
+        mode: 'cors',
       });
 
       if (!response.ok || !response.body) {
@@ -314,13 +316,28 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     } catch (e: any) {
       if (e?.name === 'AbortError') {
         setDebugInfo(d => ({ ...d, fetchActive: false, lastError: 'aborted' }));
-      } else if (isFirefox) {
-        setDebugInfo(d => ({ ...d, lastError: 'fetch stalled -> fallback moz-xhr' }));
-        setTimeout(() => startFetchWithMozChunked(streamUrl), 150);
       } else {
-        setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `fetch: ${e?.message || e}` }));
-        setBufferAvailable(false);
-        setRecordingAvailable(false);
+        if (noChunkTimeoutRef.current) {
+          clearTimeout(noChunkTimeoutRef.current);
+          noChunkTimeoutRef.current = null;
+        }
+
+        if (
+          typeof streamUrl === 'string' &&
+          streamUrl.startsWith('http://') &&
+          window.location.protocol === 'https:'
+        ) {
+          const upgradedUrl = streamUrl.replace(/^http:\/\//i, 'https://');
+          setDebugInfo(d => ({ ...d, lastError: 'http blocked -> retry https' }));
+          setTimeout(() => startFetch(upgradedUrl), 150);
+        } else if (isFirefox) {
+          setDebugInfo(d => ({ ...d, lastError: 'fetch stalled -> fallback moz-xhr' }));
+          setTimeout(() => startFetchWithMozChunked(streamUrl), 150);
+        } else {
+          setDebugInfo(d => ({ ...d, fetchActive: false, lastError: `fetch: ${e?.message || e}` }));
+          setBufferAvailable(false);
+          setRecordingAvailable(false);
+        }
       }
     }
   }, [buildBufferUrl, processChunk, startFetchWithMozChunked, stopFetch]);
