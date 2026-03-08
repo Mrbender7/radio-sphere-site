@@ -358,7 +358,7 @@ async function resolveHdArtwork(
   originalUrl: string,
   homepage: string,
   stationName: string,
-): Promise<string> {
+): Promise<string | null> {
   // Source A — Brandfetch
   if (homepage) {
     const brandfetchUrl = await tryBrandfetch(homepage);
@@ -371,8 +371,8 @@ async function resolveHdArtwork(
     if (lastFmUrl) return lastFmUrl;
   }
 
-  // Source C — Local placeholder
-  return stationPlaceholder;
+  // Aucun HD trouvé
+  return null;
 }
 
 // ── Core resolution logic (singleton per station) ──────────────────
