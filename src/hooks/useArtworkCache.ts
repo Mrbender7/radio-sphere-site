@@ -100,14 +100,43 @@ function extractDomain(homepage: string): string | null {
   }
 }
 
-async function tryClearbit(homepage: string): Promise<string | null> {
+const BRANDFETCH_API_KEY = "jMd9rG1P6leKiThV1-l39e-bSBb58sbk-opFE4JxgvT_VSMpHdi7BD-JN8DKXfcfcipIeb7kiPxC9Wx174OfPw";
+
+async function tryBrandfetch(homepage: string): Promise<string | null> {
   const domain = extractDomain(homepage);
-  if (!domain) { console.debug("[ArtworkCache] Clearbit: no domain from", homepage); return null; }
-  const url = `https://logo.clearbit.com/${domain}?size=512`;
-  console.debug("[ArtworkCache] 🔍 Trying Clearbit:", url);
-  const result = await validateImage(url);
-  console.debug("[ArtworkCache] Clearbit result:", result, "for", domain);
-  return result === "OK" ? url : null;
+  if (!domain) { console.debug("[ArtworkCache] Brandfetch: no domain from", homepage); return null; }
+  try {
+    const url = `https://api.brandfetch.io/v2/brands/${domain}`;
+    console.debug("[ArtworkCache] 🔍 Trying Brandfetch:", domain);
+    const res = await fetch(url, {
+      headers: { "Authorization": `Bearer ${BRANDFETCH_API_KEY}` },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) { console.debug("[ArtworkCache] Brandfetch HTTP", res.status); return null; }
+    const data = await res.json();
+    // Pick the best logo: prefer "icon" type, then "logo", largest first
+    const logos = data?.logos ?? [];
+    let bestUrl: string | null = null;
+    for (const type of ["icon", "logo"]) {
+      const logo = logos.find((l: any) => l.type === type);
+      if (logo?.formats?.length) {
+        // Pick largest format by preference: svg > png > jpg
+        const sorted = [...logo.formats].sort((a: any, b: any) => {
+          const order: Record<string, number> = { svg: 0, png: 1, jpg: 2, jpeg: 2 };
+          return (order[a.format] ?? 9) - (order[b.format] ?? 9);
+        });
+        bestUrl = sorted[0]?.src ?? null;
+        if (bestUrl) break;
+      }
+    }
+    if (!bestUrl) { console.debug("[ArtworkCache] Brandfetch: no logo found for", domain); return null; }
+    console.debug("[ArtworkCache] Brandfetch candidate:", bestUrl);
+    const result = await validateImage(bestUrl);
+    return result === "OK" ? bestUrl : null;
+  } catch (e) {
+    console.warn("[ArtworkCache] Brandfetch error:", e);
+    return null;
+  }
 }
 
 
@@ -144,10 +173,10 @@ async function resolveHdArtwork(
   homepage: string,
   stationName: string,
 ): Promise<string> {
-  // Source A — Clearbit
+  // Source A — Brandfetch
   if (homepage) {
-    const clearbitUrl = await tryClearbit(homepage);
-    if (clearbitUrl) return clearbitUrl;
+    const brandfetchUrl = await tryBrandfetch(homepage);
+    if (brandfetchUrl) return brandfetchUrl;
   }
 
   // Source B — Last.fm
