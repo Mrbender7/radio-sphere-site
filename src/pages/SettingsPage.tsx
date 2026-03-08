@@ -4,7 +4,9 @@ import { useSleepTimer, SLEEP_TIMER_OPTIONS } from "@/contexts/SleepTimerContext
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
-import { Wifi, Crown, Moon, Car, Cast, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, RefreshCw, Disc } from "lucide-react";
+import { Wifi, Crown, Moon, Car, Cast, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, RefreshCw, Disc, ImageOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { getReplaceLowQuality, setReplaceLowQuality } from "@/hooks/useArtworkCache";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import {
   Select,
@@ -113,6 +115,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const [customMinutes, setCustomMinutes] = useState("");
   const [unavailableStations, setUnavailableStations] = useState<RadioStation[]>([]);
   const [showUnavailableDialog, setShowUnavailableDialog] = useState(false);
+  const [replaceLowQuality, setReplaceLowQualityState] = useState(getReplaceLowQuality);
   const premiumFeatures = [
     { icon: Moon, title: t("premium.sleepTimer"), desc: t("premium.sleepTimerDesc") },
     { icon: Disc, title: t("premium.recorder"), desc: t("premium.recorderDesc") },
@@ -430,6 +433,30 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
 
         </div>
       </CollapsibleSection>
+
+      {/* Replace low-quality artworks toggle */}
+      <div className="rounded-xl bg-accent p-4 mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <ImageOff className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">{t("settings.replaceLowQuality")}</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{t("settings.replaceLowQualityDesc")}</p>
+            </div>
+          </div>
+          <Switch
+            checked={replaceLowQuality}
+            onCheckedChange={(checked) => {
+              setReplaceLowQualityState(checked);
+              setReplaceLowQuality(checked);
+              // Purge cache to force re-evaluation
+              try { localStorage.removeItem("radiosphere_artwork_cache"); localStorage.removeItem("radiosphere_artwork_quality"); } catch {}
+              toast({ title: checked ? "🖼️ Artworks basse qualité remplacés" : "🖼️ Artworks originaux restaurés" });
+            }}
+          />
+        </div>
+      </div>
+
       <CollapsibleSection
         icon={Crown}
         title={t("premium.title")}
