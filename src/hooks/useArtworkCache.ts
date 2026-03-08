@@ -12,8 +12,8 @@ interface CacheEntry {
 
 // ── In-memory store (shared across all hook instances) ─────────────
 const STORAGE_KEY = "radiosphere_artwork_cache";
-const MIN_DIMENSION = 300;
-const MIN_BYTES = 10_000; // 10 KB
+const MIN_DIMENSION = 100; // lowered — 200x200 brand icons are fine
+const MIN_BYTES = 5_000; // 5 KB
 
 const memoryCache = new Map<string, CacheEntry>();
 const listeners = new Set<() => void>();
@@ -46,41 +46,36 @@ function persistEntry(stationId: string, url: string) {
 }
 
 // ── Image validation ───────────────────────────────────────────────
+function isTrustedCdn(url: string): boolean {
+  return url.includes("cdn.brandfetch.io");
+}
+
 function validateImage(url: string): Promise<"OK" | "LOW_QUALITY" | "ERROR"> {
   return new Promise((resolve) => {
     if (!url) { resolve("ERROR"); return; }
+
+    // Trust CDN sources — skip expensive HEAD + dimension checks
+    if (isTrustedCdn(url)) {
+      console.debug("[ArtworkCache] ✅ Trusted CDN, skipping validation:", url);
+      resolve("OK");
+      return;
+    }
 
     const timeout = setTimeout(() => {
       console.warn("[ArtworkCache] ⏱ Timeout validating:", url);
       resolve("ERROR");
     }, 8000);
 
-    // Try to get file size via HEAD (cors mode so we can read headers)
-    const sizeCheck = fetch(url, { method: "HEAD" })
-      .then((r) => {
-        if (!r.ok) return null;
-        const len = r.headers.get("content-length");
-        if (len && parseInt(len, 10) < MIN_BYTES) return "LOW_QUALITY" as const;
-        return null; // inconclusive
-      })
-      .catch(() => null);
-
     const img = new Image();
-    // Don't set crossOrigin — we only need dimensions, not canvas access
-    img.onload = async () => {
+    img.onload = () => {
       clearTimeout(timeout);
       if (img.naturalWidth < MIN_DIMENSION || img.naturalHeight < MIN_DIMENSION) {
         console.debug("[ArtworkCache] 📐 LOW_QUALITY (dimensions):", url, img.naturalWidth, "x", img.naturalHeight);
         resolve("LOW_QUALITY");
         return;
       }
-      const sizeResult = await sizeCheck;
-      if (sizeResult === "LOW_QUALITY") {
-        console.debug("[ArtworkCache] 📦 LOW_QUALITY (size):", url);
-      } else {
-        console.debug("[ArtworkCache] ✅ OK:", url);
-      }
-      resolve(sizeResult === "LOW_QUALITY" ? "LOW_QUALITY" : "OK");
+      console.debug("[ArtworkCache] ✅ OK:", url);
+      resolve("OK");
     };
     img.onerror = () => {
       clearTimeout(timeout);
@@ -102,41 +97,53 @@ function extractDomain(homepage: string): string | null {
 
 const BRANDFETCH_API_KEY = "jMd9rG1P6leKiThV1-l39e-bSBb58sbk-opFE4JxgvT_VSMpHdi7BD-JN8DKXfcfcipIeb7kiPxC9Wx174OfPw";
 
+// Domain-level dedup for Brandfetch (avoid calling same domain multiple times)
+const brandfetchDomainCache = new Map<string, Promise<string | null>>();
+
 async function tryBrandfetch(homepage: string): Promise<string | null> {
   const domain = extractDomain(homepage);
-  if (!domain) { console.debug("[ArtworkCache] Brandfetch: no domain from", homepage); return null; }
-  try {
-    const url = `https://api.brandfetch.io/v2/brands/${domain}`;
-    console.debug("[ArtworkCache] 🔍 Trying Brandfetch:", domain);
-    const res = await fetch(url, {
-      headers: { "Authorization": `Bearer ${BRANDFETCH_API_KEY}` },
-      signal: AbortSignal.timeout(6000),
-    });
-    if (!res.ok) { console.debug("[ArtworkCache] Brandfetch HTTP", res.status); return null; }
-    const data = await res.json();
-    // Pick the best logo: prefer "icon" type, then "logo", largest first
-    const logos = data?.logos ?? [];
-    let bestUrl: string | null = null;
-    for (const type of ["icon", "logo"]) {
-      const logo = logos.find((l: any) => l.type === type);
-      if (logo?.formats?.length) {
-        // Pick largest format by preference: svg > png > jpg
-        const sorted = [...logo.formats].sort((a: any, b: any) => {
-          const order: Record<string, number> = { svg: 0, png: 1, jpg: 2, jpeg: 2 };
-          return (order[a.format] ?? 9) - (order[b.format] ?? 9);
-        });
-        bestUrl = sorted[0]?.src ?? null;
-        if (bestUrl) break;
-      }
-    }
-    if (!bestUrl) { console.debug("[ArtworkCache] Brandfetch: no logo found for", domain); return null; }
-    console.debug("[ArtworkCache] Brandfetch candidate:", bestUrl);
-    const result = await validateImage(bestUrl);
-    return result === "OK" ? bestUrl : null;
-  } catch (e) {
-    console.warn("[ArtworkCache] Brandfetch error:", e);
-    return null;
+  if (!domain) return null;
+
+  // Deduplicate by domain
+  if (brandfetchDomainCache.has(domain)) {
+    return brandfetchDomainCache.get(domain)!;
   }
+
+  const promise = (async (): Promise<string | null> => {
+    try {
+      const url = `https://api.brandfetch.io/v2/brands/${domain}`;
+      console.debug("[ArtworkCache] 🔍 Trying Brandfetch:", domain);
+      const res = await fetch(url, {
+        headers: { "Authorization": `Bearer ${BRANDFETCH_API_KEY}` },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) { console.debug("[ArtworkCache] Brandfetch HTTP", res.status); return null; }
+      const data = await res.json();
+      const logos = data?.logos ?? [];
+      let bestUrl: string | null = null;
+      // Prefer icon (square), then logo; prefer png/jpeg over svg for <img> display
+      for (const type of ["icon", "logo"]) {
+        const logo = logos.find((l: any) => l.type === type);
+        if (logo?.formats?.length) {
+          const sorted = [...logo.formats].sort((a: any, b: any) => {
+            const order: Record<string, number> = { png: 0, jpeg: 1, jpg: 1, svg: 2 };
+            return (order[a.format] ?? 9) - (order[b.format] ?? 9);
+          });
+          bestUrl = sorted[0]?.src ?? null;
+          if (bestUrl) break;
+        }
+      }
+      if (!bestUrl) { console.debug("[ArtworkCache] Brandfetch: no logo for", domain); return null; }
+      console.debug("[ArtworkCache] ✅ Brandfetch found:", bestUrl);
+      return bestUrl; // Trusted CDN — no validation needed
+    } catch (e) {
+      console.warn("[ArtworkCache] Brandfetch error:", e);
+      return null;
+    }
+  })();
+
+  brandfetchDomainCache.set(domain, promise);
+  return promise;
 }
 
 
