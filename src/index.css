@@ -114,8 +114,3 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-
-/* Vintage filter for station logos in cassette */
-.vintage-filter {
-  filter: sepia(0.6) brightness(0.8) contrast(1.1) saturate(0.7);
-}
