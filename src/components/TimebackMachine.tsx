@@ -182,6 +182,12 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
           }
         </div>
 
+        {/* Debug info — temporary */}
+        <div className="text-[10px] text-muted-foreground/60 font-mono text-center space-y-0.5">
+          <div>fetch: {debugInfo.fetchActive ? '✅ active' : '❌ inactive'} | chunks: {debugInfo.chunkCount} | buf: {bufferSeconds.toFixed(1)}s</div>
+          {debugInfo.lastError && <div className="text-red-400">err: {debugInfo.lastError}</div>}
+        </div>
+
         {/* Transport controls */}
         <div className="flex items-center justify-center gap-3">
           {/* Rewind */}
