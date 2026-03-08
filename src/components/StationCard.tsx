@@ -5,6 +5,13 @@ import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
 
+interface StationCardProps {
+  station: RadioStation;
+  isFavorite: boolean;
+  onToggleFavorite: (station: RadioStation) => void;
+  compact?: boolean;
+}
+
 export function StationCard({ station, isFavorite, onToggleFavorite, compact }: StationCardProps) {
   const { play, currentStation, isPlaying } = usePlayer();
   const isActive = currentStation?.id === station.id;
@@ -19,7 +26,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact }: 
         )}
       >
         <div className="w-12 h-12 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
-          <StationLogo src={station.logo} alt={station.name} />
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} alt={station.name} />
         </div>
         <div className="flex-1 min-w-0 text-left">
           <p className={cn("text-sm font-medium truncate", isActive && "text-primary")}>{station.name}</p>
