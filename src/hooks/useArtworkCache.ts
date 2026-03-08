@@ -305,7 +305,28 @@ function buildLastFmCandidates(stationName: string): string[] {
     .replace(/\s{2,}/g, " ")
     .trim();
 
-  return [...new Set([fullName, cleaned].filter(Boolean))];
+  const canonical = cleaned
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b\d{2,3}(?:\.\d+)?\b/g, " ")
+    .replace(/\s*-\s*[^|]+$/g, " ")
+    .replace(/\b(?:fm|radio|webradio|stream|live|official|belgium|belgië)\b/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  const firstSegment = cleaned.split(" - ")[0]?.trim() ?? "";
+  const brandHints: string[] = [];
+
+  if (/classic\s*21/i.test(fullName)) {
+    brandHints.push("Classic 21", "RTBF Classic 21");
+  }
+  if (/\brtbf\b/i.test(fullName)) {
+    brandHints.push("RTBF");
+  }
+  if (/\bnrj\b/i.test(fullName)) {
+    brandHints.push("NRJ");
+  }
+
+  return [...new Set([fullName, cleaned, canonical, firstSegment, ...brandHints].filter(Boolean))];
 }
 
 async function tryLastFm(stationName: string): Promise<string | null> {
