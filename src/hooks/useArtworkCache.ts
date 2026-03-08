@@ -193,7 +193,7 @@ export function useArtworkCache(
   if (!startedRef.current && stationId) {
     startedRef.current = true;
     if (!inflightChecks.has(stationId) && !memoryCache.get(stationId)?.checked) {
-      const p = resolveStation(stationId, originalUrl, homepage);
+      const p = resolveStation(stationId, originalUrl, homepage, stationName);
       inflightChecks.set(stationId, p);
       p.finally(() => inflightChecks.delete(stationId));
     }
