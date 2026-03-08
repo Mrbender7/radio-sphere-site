@@ -123,7 +123,7 @@ function extractDomain(homepage: string): string | null {
   }
 }
 
-const BRANDFETCH_CLIENT_ID = "1id5XcSnoYOwSwkrsun";
+const BRANDFETCH_CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID || "";
 
 // Domain-level dedup for Brandfetch (avoid calling same domain multiple times)
 const brandfetchDomainCache = new Map<string, Promise<string | null>>();
@@ -158,9 +158,11 @@ function isBrandfetchCoolingDown(): boolean {
   return Date.now() < brandfetchCooldownUntil;
 }
 
-async function tryBrandfetch(homepage: string): Promise<string | null> {
-  if (isBrandfetchCoolingDown()) return null;
+function getDuckDuckGoIcon(domain: string): string {
+  return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+}
 
+async function tryBrandfetch(homepage: string): Promise<string | null> {
   const domain = extractDomain(homepage);
   if (!domain) return null;
 
@@ -172,57 +174,55 @@ async function tryBrandfetch(homepage: string): Promise<string | null> {
   let shouldKeepDomainCache = true;
 
   const promise = (async (): Promise<string | null> => {
-    await acquireBrandfetchSlot();
-    try {
-      if (isBrandfetchCoolingDown()) return null;
+    // Source A — Brandfetch CDN (if client ID available and not cooling down)
+    if (BRANDFETCH_CLIENT_ID && !isBrandfetchCoolingDown()) {
+      await acquireBrandfetchSlot();
+      try {
+        if (!isBrandfetchCoolingDown()) {
+          const cdnUrl = `https://cdn.brandfetch.io/${domain}?c=${BRANDFETCH_CLIENT_ID}`;
+          console.debug("[ArtworkCache] 🔍 Trying Brandfetch CDN:", domain);
 
-      // Logo API (CDN) — uses Client ID, returns image directly
-      const cdnUrl = `https://cdn.brandfetch.io/${domain}?c=${BRANDFETCH_CLIENT_ID}`;
-      console.debug("[ArtworkCache] 🔍 Trying Brandfetch CDN:", domain);
+          const res = await fetch(cdnUrl, {
+            method: "HEAD",
+            signal: AbortSignal.timeout(6000),
+          });
 
-      const res = await fetch(cdnUrl, {
-        method: "HEAD",
-        signal: AbortSignal.timeout(6000),
-      });
-
-      if (res.status === 429) {
-        const retryAfterSec = Number(res.headers.get("retry-after") || "0");
-        const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
-          ? retryAfterSec * 1000
-          : BRANDFETCH_COOLDOWN_MS;
-
-        brandfetchCooldownUntil = Date.now() + waitMs;
-        shouldKeepDomainCache = false;
-        console.warn("[ArtworkCache] ⛔ Brandfetch rate-limited — cooldown", Math.round(waitMs / 1000), "s");
-        return null;
+          if (res.status === 429) {
+            const retryAfterSec = Number(res.headers.get("retry-after") || "0");
+            const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+              ? retryAfterSec * 1000
+              : BRANDFETCH_COOLDOWN_MS;
+            brandfetchCooldownUntil = Date.now() + waitMs;
+            shouldKeepDomainCache = false;
+            console.warn("[ArtworkCache] ⛔ Brandfetch rate-limited — cooldown", Math.round(waitMs / 1000), "s");
+          } else if (res.ok) {
+            const contentType = res.headers.get("content-type") || "";
+            if (contentType.startsWith("image/")) {
+              const valid = await validateImage(cdnUrl);
+              if (valid === "OK") {
+                console.debug("[ArtworkCache] ✅ Brandfetch CDN found:", cdnUrl);
+                return cdnUrl;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("[ArtworkCache] Brandfetch error:", e);
+      } finally {
+        releaseBrandfetchSlot();
       }
-
-      if (!res.ok) {
-        console.debug("[ArtworkCache] Brandfetch CDN HTTP", res.status, "for", domain);
-        return null;
-      }
-
-      const contentType = res.headers.get("content-type") || "";
-      if (!contentType.startsWith("image/")) {
-        console.debug("[ArtworkCache] Brandfetch CDN non-image response for", domain, contentType);
-        return null;
-      }
-
-      // Validate the image actually loads and has decent dimensions
-      const valid = await validateImage(cdnUrl);
-      if (valid !== "OK") {
-        console.debug("[ArtworkCache] Brandfetch CDN image validation failed for", domain, valid);
-        return null;
-      }
-
-      console.debug("[ArtworkCache] ✅ Brandfetch CDN found:", cdnUrl);
-      return cdnUrl;
-    } catch (e) {
-      console.warn("[ArtworkCache] Brandfetch error:", e);
-      return null;
-    } finally {
-      releaseBrandfetchSlot();
     }
+
+    // Source B — DuckDuckGo favicon fallback
+    const ddgUrl = getDuckDuckGoIcon(domain);
+    console.debug("[ArtworkCache] 🔍 Trying DuckDuckGo icon:", domain);
+    const ddgValid = await validateImage(ddgUrl);
+    if (ddgValid === "OK") {
+      console.debug("[ArtworkCache] ✅ DuckDuckGo icon found:", ddgUrl);
+      return ddgUrl;
+    }
+
+    return null;
   })();
 
   brandfetchDomainCache.set(domain, promise);
