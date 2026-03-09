@@ -119,7 +119,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       // Skip heartbeat reload when playing a time-shift blob
       if (audio.src && audio.src.startsWith('blob:')) return;
 
-      const isDead = audio.paused ||
+      const isDead = (audio.paused && isPlayingRef.current) ||
         audio.networkState === 3 /* NETWORK_NO_SOURCE */ ||
         (audio.readyState < 2 && !audio.paused);
 
