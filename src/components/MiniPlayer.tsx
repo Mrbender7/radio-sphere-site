@@ -76,9 +76,6 @@ export function MiniPlayer() {
           {currentStation.tags.length > 0 ? currentStation.tags.slice(0, 2).join(' • ') : ''}
         </p>
       </div>
-      {isPlaying && (
-        <AudioVisualizer size="medium" />
-      )}
       <button
         onClick={e => { e.stopPropagation(); toggleFavorite(currentStation); }}
         className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
