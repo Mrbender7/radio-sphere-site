@@ -176,7 +176,12 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       readLoop();
     } catch (e: any) {
       if (e.name !== 'AbortError') {
-        console.error("[StreamBuffer] Erreur lors du fetch direct :", e);
+        const isCors = e instanceof TypeError && e.message?.includes('Failed to fetch');
+        if (isCors) {
+          console.warn("[StreamBuffer] CORS blocked fetch (expected on web). TBM unavailable for this station.");
+        } else {
+          console.error("[StreamBuffer] Fetch error:", e);
+        }
       }
       setBufferAvailable(false);
       setRecordingAvailable(false);
