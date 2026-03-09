@@ -137,6 +137,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
       const reader = response.body.getReader();
 
+      let chunkCount = 0;
       const readLoop = async () => {
         try {
           while (true) {
@@ -147,7 +148,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
             }
             if (!value || value.byteLength === 0) continue;
 
-            console.log("[StreamBuffer] Chunk received:", value.byteLength);
+            chunkCount++;
+            if (chunkCount <= 3 || chunkCount % 50 === 0) {
+              console.log(`[StreamBuffer] Chunk #${chunkCount} received:`, value.byteLength, "bytes");
+            }
 
             const chunk: TimestampedChunk = {
               data: value,
@@ -192,12 +196,10 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const stationId = currentStation?.id ?? null;
 
-    if (!currentStation?.streamUrl || !isPlaying) {
+    if (!currentStation?.streamUrl) {
       stopFetch();
-      if (!currentStation?.streamUrl) {
-        clearBuffer();
-        stationIdRef.current = null;
-      }
+      clearBuffer();
+      stationIdRef.current = null;
       return;
     }
 
@@ -207,7 +209,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
       clearBuffer();
       startFetch(currentStation.streamUrl);
     }
-  }, [currentStation?.id, currentStation?.streamUrl, isPlaying, startFetch, stopFetch, clearBuffer]);
+  }, [currentStation?.id, currentStation?.streamUrl, startFetch, stopFetch, clearBuffer]);
 
   useEffect(() => {
     return () => {
