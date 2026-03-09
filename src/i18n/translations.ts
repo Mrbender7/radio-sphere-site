@@ -129,7 +129,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "Compris",
     "favorites.noFavoritesToExport": "Aucun favori à exporter",
     "favorites.refreshMetadata": "Mettre à jour les métadonnées",
-    "favorites.purgeArtworkCache": "Purger le cache des artworks",
+    
     "settings.privacyPolicy": "Politique de confidentialité",
     "settings.reopenWelcome": "Revoir la page de bienvenue",
     "settings.resetApp": "Réinitialiser l'application",
