@@ -257,16 +257,24 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
               {/* TBM Button */}
               <button
                 onClick={() => setShowTimeback(true)}
-                className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all active:scale-95 overflow-hidden ${
+                className={`w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 overflow-hidden ${
                   bufferAvailable
-                    ? "border-primary/60 animate-tbm-glow"
-                    : "border-border opacity-60"
+                    ? "animate-tbm-glow"
+                    : ""
                 }`}
                 style={{
-                  background: 'hsl(var(--accent))',
+                  background: bufferAvailable
+                    ? 'linear-gradient(145deg, hsl(220,90%,55%), hsl(260,80%,50%))'
+                    : 'linear-gradient(145deg, hsl(0,0%,28%), hsl(0,0%,18%))',
+                  border: bufferAvailable
+                    ? '2px solid hsla(220,90%,70%,0.6)'
+                    : '2px solid hsla(0,0%,40%,0.4)',
+                  boxShadow: bufferAvailable
+                    ? undefined
+                    : 'inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.4)',
                 }}
               >
-                <img src={tbmLogo} alt="Timeback Machine" className="w-9 h-9 object-contain" />
+                <img src={tbmLogo} alt="Timeback Machine" className="w-full h-full object-cover rounded-full" />
               </button>
 
               {/* Play/Pause */}
