@@ -280,12 +280,13 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
 
-    const noop = () => {};
     navigator.mediaSession.setActionHandler('play', handlePlay);
     navigator.mediaSession.setActionHandler('pause', handlePause);
     navigator.mediaSession.setActionHandler('stop', handlePause);
-    navigator.mediaSession.setActionHandler('seekbackward', noop);
-    navigator.mediaSession.setActionHandler('seekforward', noop);
+    navigator.mediaSession.setActionHandler('seekbackward', null);
+    navigator.mediaSession.setActionHandler('seekforward', null);
+    navigator.mediaSession.setActionHandler('previoustrack', null);
+    navigator.mediaSession.setActionHandler('nexttrack', null);
 
     return () => {
       navigator.mediaSession.setActionHandler('play', null);
@@ -293,6 +294,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       navigator.mediaSession.setActionHandler('stop', null);
       navigator.mediaSession.setActionHandler('seekbackward', null);
       navigator.mediaSession.setActionHandler('seekforward', null);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
     };
   }, [handlePlay, handlePause]);
 
