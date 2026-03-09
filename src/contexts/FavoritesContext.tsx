@@ -7,6 +7,7 @@ interface FavoritesContextType {
   favorites: RadioStation[];
   toggleFavorite: (station: RadioStation) => void;
   isFavorite: (id: string) => boolean;
+  updateFavorite: (station: RadioStation) => void;
   importFavorites: (stations: RadioStation[]) => number;
   recent: RadioStation[];
   addRecent: (station: RadioStation) => void;
@@ -15,7 +16,7 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | null>(null);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const { favorites, toggleFavorite, isFavorite, importFavorites } = useFavorites();
+  const { favorites, toggleFavorite, isFavorite, updateFavorite, importFavorites } = useFavorites();
   const { recent, addRecent } = useRecentStations();
 
   // Sync favorites to native Android Auto SharedPreferences
@@ -29,7 +30,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   }, [recent]);
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, importFavorites, recent, addRecent }}>
+    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, updateFavorite, importFavorites, recent, addRecent }}>
       {children}
     </FavoritesContext.Provider>
   );

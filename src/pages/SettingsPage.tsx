@@ -6,7 +6,7 @@ import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
 import { Wifi, Crown, Moon, Car, Cast, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, RefreshCw, Disc, ImageOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { getReplaceLowQuality, setReplaceLowQuality } from "@/hooks/useArtworkCache";
+import { getReplaceLowQuality, setReplaceLowQuality, scanFavoritesQuality } from "@/hooks/useArtworkCache";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import {
   Select,
@@ -107,7 +107,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const { language, setLanguage, t } = useTranslation();
   const { isPremium, unlockWithPassword, lockPremium, restorePurchases } = usePremium();
   const { isActive, formattedTime, startTimer, cancelTimer } = useSleepTimer();
-  const { favorites, importFavorites } = useFavoritesContext();
+  const { favorites, importFavorites, updateFavorite } = useFavoritesContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [premiumCode, setPremiumCode] = useState("");
   const [codeError, setCodeError] = useState(false);
@@ -425,11 +425,16 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
           <Switch
             checked={replaceLowQuality}
             className="h-7 w-12 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] [&>span]:h-6 [&>span]:w-6 [&>span]:shadow-[0_2px_6px_rgba(0,0,0,0.5)] [&>span]:data-[state=checked]:translate-x-5 [&>span]:data-[state=checked]:shadow-[0_0_8px_hsla(var(--primary)/0.5),0_2px_6px_rgba(0,0,0,0.5)]"
-            onCheckedChange={(checked) => {
+            onCheckedChange={async (checked) => {
               setReplaceLowQualityState(checked);
               setReplaceLowQuality(checked);
-              try { localStorage.removeItem("radiosphere_artwork_cache"); localStorage.removeItem("radiosphere_artwork_quality"); } catch {}
-              toast({ title: checked ? "🖼️ Artworks basse qualité remplacés" : "🖼️ Artworks originaux restaurés" });
+              if (checked) {
+                toast({ title: "🔍 Analyse des favoris en cours..." });
+                const count = await scanFavoritesQuality(favorites, updateFavorite);
+                toast({ title: count > 0 ? `🖼️ ${count} artwork(s) remplacé(s)` : "✅ Tous les artworks sont OK" });
+              } else {
+                toast({ title: "🖼️ Artworks originaux restaurés" });
+              }
             }}
           />
         </div>
