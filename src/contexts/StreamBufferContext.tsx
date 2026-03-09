@@ -116,25 +116,36 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     const controller = new AbortController();
     fetchControllerRef.current = controller;
 
+    // Utilisation du PROXY pour contourner le CORS et le Mixed Content (HTTP/HTTPS)
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(streamUrl)}`;
+    console.log("[StreamBuffer] Tentative de fetch via Proxy:", proxyUrl);
+
     try {
-      const response = await fetch(streamUrl, {
+      const response = await fetch(proxyUrl, {
         signal: controller.signal,
         headers: { 'Accept': '*/*' },
       });
+
       if (!response.ok || !response.body) {
+        console.error("[StreamBuffer] Erreur Proxy:", response.status);
         setBufferAvailable(false);
         setRecordingAvailable(false);
         return;
       }
+
       const contentType = response.headers.get('Content-Type') || 'audio/mpeg';
       detectedMimeRef.current = contentType.split(';')[0].trim();
+      console.log("[StreamBuffer] Flux connecté via Proxy. MIME:", detectedMimeRef.current);
+
       const reader = response.body.getReader();
+
       const readLoop = async () => {
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             if (!value || value.byteLength === 0) continue;
+
             const chunk: TimestampedChunk = {
               data: value,
               time: Date.now(),
@@ -143,26 +154,30 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
             cumulativeBytesRef.current += value.byteLength;
             chunksRef.current.push(chunk);
             totalBytesRef.current += value.byteLength;
+
             if (!bufferAvailableRef.current) {
               bufferAvailableRef.current = true;
               setBufferAvailable(true);
             }
+
             trimBuffer();
             updateBufferSeconds();
           }
         } catch (err: any) {
-          // Silently handle abort errors
+          // On ignore les erreurs d'annulation
         }
       };
       readLoop();
     } catch (e: any) {
+      if (e.name !== 'AbortError') {
+        console.error("[StreamBuffer] Échec critique du fetch:", e);
+      }
       setBufferAvailable(false);
       setRecordingAvailable(false);
     }
   }, [stopFetch, trimBuffer, updateBufferSeconds]);
 
-  // C'est ici que j'ai fait le changement : j'ai retiré !isPlaying de la condition de coupe
-  // et je force le startFetch dès qu'on a une streamUrl, même si l'audio n'est pas encore "playing"
+  // Surveillance de la station pour lancer le fetch
   useEffect(() => {
     const stationId = currentStation?.id ?? null;
 
@@ -174,6 +189,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
 
     if (stationId !== stationIdRef.current) {
+      console.log("[StreamBuffer] Nouvelle station détectée, démarrage fetch.");
       stationIdRef.current = stationId;
       clearBuffer();
       startFetch(currentStation.streamUrl);
