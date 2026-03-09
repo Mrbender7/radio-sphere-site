@@ -256,6 +256,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     const audio = audioRef.current;
     if (!audio) return;
     isPlayingRef.current = false;
+    pausedAtRef.current = Date.now();
     audio.pause();
     stopSilentLoop();
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
