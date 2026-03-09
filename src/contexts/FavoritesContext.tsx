@@ -30,7 +30,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   }, [recent]);
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, importFavorites, recent, addRecent }}>
+    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, updateFavorite, importFavorites, recent, addRecent }}>
       {children}
     </FavoritesContext.Provider>
   );
