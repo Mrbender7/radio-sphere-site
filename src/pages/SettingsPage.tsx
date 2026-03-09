@@ -114,7 +114,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const [customMinutes, setCustomMinutes] = useState("");
   const [unavailableStations, setUnavailableStations] = useState<RadioStation[]>([]);
   const [showUnavailableDialog, setShowUnavailableDialog] = useState(false);
-  const [replaceLowQuality, setReplaceLowQualityState] = useState(getReplaceLowQuality);
+  
   const premiumFeatures = [
     { icon: Moon, title: t("premium.sleepTimer"), desc: t("premium.sleepTimerDesc") },
     { icon: Disc, title: t("premium.recorder"), desc: t("premium.recorderDesc") },
