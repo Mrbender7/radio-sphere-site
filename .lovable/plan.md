@@ -1,64 +1,37 @@
 
 
-## Investigation: Disparition du contenu dynamique et du mini-player sur l'ecran de verrouillage
+## Plan : Unification Android Auto + Nettoyage MediaPlaybackService — TERMINÉ ✅
 
-### Bug identifie : `handlePlay` et `handlePause` ne mettent pas a jour `navigator.mediaSession`
+### Architecture finale
 
-Les fonctions `handlePlay` et `handlePause` sont les callbacks enregistres pour :
-1. Les **actions MediaSession** du navigateur/WebView (ecran de verrouillage)
-2. L'evenement **`mediaToggle`** de la notification native Android
+**Un seul service media : `RadioBrowserService`**, qui fonctionne en deux modes :
+1. **Mode Android Auto** : Browse tree + ExoPlayer natif (inchangé)
+2. **Mode Notification (Mirror)** : Reçoit les updates de `RadioAutoPlugin` via Intent `ACTION_UPDATE`, met à jour sa MediaSession unique et affiche une notification MediaStyle unifiée
 
-**Probleme** : ces deux fonctions ne mettent jamais a jour `navigator.mediaSession.playbackState` ni ne rafraichissent le `MediaMetadata`. Or, `play()` et `togglePlay()` le font correctement.
+### v2.5.2 — Corrections favoris + navigation Android Auto
 
-```text
-play()       → updateMediaSession() ✅  + mediaSession.playbackState ✅
-togglePlay() → updateMediaSession() ✅  + mediaSession.playbackState ✅
-handlePlay() → aucun des deux ❌
-handlePause()→ aucun des deux ❌
-```
+| Correction | Détail |
+|-----------|--------|
+| **onPlayFromMediaId** | Fallback en 4 étapes : currentStations → favorites → recents → API (fetchStationByUuid) |
+| **updateFavorites/updateRecents** | Méthodes statiques appelées par RadioAutoPlugin pour rafraîchir le browse tree en temps réel via `notifyChildrenChanged()` |
+| **fetchStationByUuid** | Nouvelle méthode pour récupérer une station par UUID depuis l'API radio-browser |
+| **buildBrowsableItem** | Ajout d'une icône placeholder pour les dossiers (pas de trou visuel) |
+| **Ordre des dossiers** | Top Stations → Mes Favoris → Récents |
+| **activeInstance** | Set dans onCreate, cleared dans onDestroy pour le pattern static |
 
-Quand l'utilisateur utilise les controles de l'ecran de verrouillage :
-- Le systeme Android appelle `handlePlay`/`handlePause`
-- Le `playbackState` MediaSession n'est pas mis a jour
-- Android interprete que la session est "morte" et retire la notification
+### Changements effectués
 
-### Correctif : `PlayerContext.tsx`
+| Fichier | Action |
+|---------|--------|
+| `android-auto/RadioBrowserService.java` | v2.5.2: onPlayFromMediaId fallback, updateFavorites/updateRecents static, fetchStationByUuid, folder icons |
+| `android-auto/RadioAutoPlugin.java` | v2.5.2: Appelle RadioBrowserService.updateFavorites/updateRecents après sync |
+| `android-auto/AndroidManifest-snippet.xml` | v2.5.2: Nettoyé, MediaPlaybackService supprimé |
+| `radiosphere_v2_5_0.ps1` | Templates inline mis à jour v2.5.2 |
+| `android-auto/MediaPlaybackService.java` | **Supprimé** (v2.5.1) |
 
-**`handlePlay`** — ajouter :
-```tsx
-if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-setState(s => {
-  if (s.currentStation) {
-    notifyNativePlaybackState(s.currentStation, true);
-    updateMediaSession(s.currentStation, true);  // <-- AJOUT
-  }
-  return { ...s, isPlaying: true };
-});
-```
-
-**`handlePause`** — ajouter :
-```tsx
-if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
-setState(s => {
-  if (s.currentStation) {
-    notifyNativePlaybackState(s.currentStation, false);
-    updateMediaSession(s.currentStation, false);  // <-- AJOUT
-  }
-  return { ...s, isPlaying: false };
-});
-```
-
-### Probleme secondaire : warnings ref sur TimebackMachine et CassetteAnimation
-
-Les logs console montrent :
-- "Function components cannot be given refs — Check the render method of `FullScreenPlayer`" pour `TimebackMachine`
-- "Function components cannot be given refs — Check the render method of `TimebackMachine`" pour `CassetteAnimation`
-
-Ce ne sont que des warnings (pas de crash), mais ils sont faciles a corriger en wrappant les composants avec `React.forwardRef` ou en supprimant les refs inutiles. Cependant, en examinant le code, **aucun ref n'est explicitement passe** a ces composants dans FullScreenPlayer ni TimebackMachine. Ces warnings viennent probablement de framer-motion ou d'un parent qui tente de passer un ref. Pas d'impact fonctionnel.
-
-### Fichier modifie
-- `src/contexts/PlayerContext.tsx` — `handlePlay` et `handlePause` : ajouter `mediaSession.playbackState` + `updateMediaSession()`
-
-### Dependance
-- `updateMediaSession` doit etre ajoute aux deps de `handlePlay` et `handlePause` (il est deja `useCallback` avec `[]` donc stable)
-
+### Ce qui n'a pas changé
+- `CastPlugin.java`, `CastOptionsProvider.java` — déjà corrects
+- `PlayerContext.tsx`, `useCast.ts` — logique Cast déjà en place
+- `StationCard.tsx` — placeholder déjà géré
+- `MediaToggleReceiver.java` — inchangé (appelle RadioAutoPlugin)
+- Browse tree, ExoPlayer, audio focus, stream resolution
