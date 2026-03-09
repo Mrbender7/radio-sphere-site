@@ -1,36 +1,37 @@
 
 
-## Analysis: StreamBuffer / Timeback Machine Architecture
+## Plan : Unification Android Auto + Nettoyage MediaPlaybackService — TERMINÉ ✅
 
-### Current State
-The `allorigins.win` proxy has already been fully removed from the codebase (confirmed via search). Both `StreamBufferContext` and `PlayerContext` now use the direct `streamUrl`. The code is architecturally sound.
+### Architecture finale
 
-### Remaining Problem: CORS on Web Preview
+**Un seul service media : `RadioBrowserService`**, qui fonctionne en deux modes :
+1. **Mode Android Auto** : Browse tree + ExoPlayer natif (inchangé)
+2. **Mode Notification (Mirror)** : Reçoit les updates de `RadioAutoPlugin` via Intent `ACTION_UPDATE`, met à jour sa MediaSession unique et affiche une notification MediaStyle unifiée
 
-The core issue is that `fetch(streamUrl)` in `StreamBufferContext` will fail with CORS errors in the browser for most radio streams (servers don't send `Access-Control-Allow-Origin`). The `<audio>` element in `PlayerContext` works because `<audio>` is exempt from CORS, but `fetch()` is not.
+### v2.5.2 — Corrections favoris + navigation Android Auto
 
-This is **unfixable in a pure browser context without a proxy**. However:
-- On **Android (Capacitor)**, CORS is bypassed natively by the WebView's `MIXED_CONTENT_ALWAYS_ALLOW` and network config
-- On **web preview**, the fetch will fail silently for most stations — this is expected behavior
+| Correction | Détail |
+|-----------|--------|
+| **onPlayFromMediaId** | Fallback en 4 étapes : currentStations → favorites → recents → API (fetchStationByUuid) |
+| **updateFavorites/updateRecents** | Méthodes statiques appelées par RadioAutoPlugin pour rafraîchir le browse tree en temps réel via `notifyChildrenChanged()` |
+| **fetchStationByUuid** | Nouvelle méthode pour récupérer une station par UUID depuis l'API radio-browser |
+| **buildBrowsableItem** | Ajout d'une icône placeholder pour les dossiers (pas de trou visuel) |
+| **Ordre des dossiers** | Top Stations → Mes Favoris → Récents |
+| **activeInstance** | Set dans onCreate, cleared dans onDestroy pour le pattern static |
 
-### Plan: Add Diagnostic Logging & Graceful Degradation
+### Changements effectués
 
-**1. `StreamBufferContext.tsx` — Add chunk logging and CORS error handling**
-- Add `console.log("[StreamBuffer] Chunk received:", value.byteLength)` in the readLoop (as recommended by the Android Studio analysis)
-- On fetch failure, log a clear message distinguishing CORS errors from other failures
-- When CORS blocks the fetch on web, set `bufferAvailable = false` gracefully without spamming errors
+| Fichier | Action |
+|---------|--------|
+| `android-auto/RadioBrowserService.java` | v2.5.2: onPlayFromMediaId fallback, updateFavorites/updateRecents static, fetchStationByUuid, folder icons |
+| `android-auto/RadioAutoPlugin.java` | v2.5.2: Appelle RadioBrowserService.updateFavorites/updateRecents après sync |
+| `android-auto/AndroidManifest-snippet.xml` | v2.5.2: Nettoyé, MediaPlaybackService supprimé |
+| `radiosphere_v2_5_0.ps1` | Templates inline mis à jour v2.5.2 |
+| `android-auto/MediaPlaybackService.java` | **Supprimé** (v2.5.1) |
 
-**2. `StreamBufferContext.tsx` — Stabilize station reference check**
-- The `useEffect` dependency on `currentStation?.id` is correct and stable (string comparison)
-- Add a guard: only restart fetch if `isPlaying` is true, to avoid unnecessary fetch attempts when the player is paused
-- Add `console.log` when the effect fires to confirm it's not looping
-
-**3. `StreamBufferContext.tsx` — `returnToLiveInternal` is already correct**
-- Uses direct `streamUrl` (proxy was removed)
-- No changes needed
-
-**Files modified:**
-- `src/contexts/StreamBufferContext.tsx` (add diagnostic logs, CORS-aware error handling, isPlaying guard)
-
-This is a minimal, targeted fix — no architectural changes, just logging and graceful degradation for the web context where CORS blocks `fetch()`.
-
+### Ce qui n'a pas changé
+- `CastPlugin.java`, `CastOptionsProvider.java` — déjà corrects
+- `PlayerContext.tsx`, `useCast.ts` — logique Cast déjà en place
+- `StationCard.tsx` — placeholder déjà géré
+- `MediaToggleReceiver.java` — inchangé (appelle RadioAutoPlugin)
+- Browse tree, ExoPlayer, audio focus, stream resolution
