@@ -130,8 +130,6 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.noFavoritesToExport": "Aucun favori à exporter",
     "favorites.refreshMetadata": "Mettre à jour les métadonnées",
     "favorites.purgeArtworkCache": "Purger le cache des artworks",
-    "settings.replaceLowQuality": "Remplacer les artworks basse qualité",
-    "settings.replaceLowQualityDesc": "Les logos de mauvaise qualité seront remplacés par le logo Radio Sphere HD",
     "settings.privacyPolicy": "Politique de confidentialité",
     "settings.reopenWelcome": "Revoir la page de bienvenue",
     "settings.resetApp": "Réinitialiser l'application",
