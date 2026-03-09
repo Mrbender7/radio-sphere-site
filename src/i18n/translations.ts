@@ -212,6 +212,11 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "Chargement du buffer...",
     "player.recordingNotAvailable": "Enregistrement indisponible",
     "player.recordingContinuesLive": "Retour au direct, enregistrement en cours...",
+    "player.fileSaved": "Fichier sauvegardé !",
+    "player.codec": "Codec",
+    "player.bitrate": "Débit",
+    "player.language": "Langue",
+    "player.noStreamInfo": "Aucune info relayée par le stream ou Radio Browser",
   },
   en: {
     "nav.home": "Home",
