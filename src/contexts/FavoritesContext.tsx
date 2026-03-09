@@ -7,6 +7,7 @@ interface FavoritesContextType {
   favorites: RadioStation[];
   toggleFavorite: (station: RadioStation) => void;
   isFavorite: (id: string) => boolean;
+  updateFavorite: (station: RadioStation) => void;
   importFavorites: (stations: RadioStation[]) => number;
   recent: RadioStation[];
   addRecent: (station: RadioStation) => void;

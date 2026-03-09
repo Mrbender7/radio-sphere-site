@@ -59,7 +59,7 @@ export function useFavorites() {
     return addedCount;
   }, []);
 
-  return { favorites, toggleFavorite, isFavorite, importFavorites };
+  return { favorites, toggleFavorite, isFavorite, updateFavorite, importFavorites };
 }
 
 export function useRecentStations() {
