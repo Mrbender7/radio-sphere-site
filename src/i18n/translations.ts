@@ -840,6 +840,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "Puffer wird geladen...",
     "player.recordingNotAvailable": "Aufnahme nicht verfügbar",
     "player.recordingContinuesLive": "Zurück zum Live, Aufnahme läuft weiter...",
+    "player.codec": "Codec",
+    "player.bitrate": "Bitrate",
+    "player.language": "Sprache",
+    "player.noStreamInfo": "Keine Info vom Stream oder Radio Browser",
   },
   ja: {
     "nav.home": "ホーム",
