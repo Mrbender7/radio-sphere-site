@@ -64,7 +64,7 @@ function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: Reac
       <div
         className={cn(
           "overflow-hidden transition-all duration-300 ease-in-out",
-          open ? "max-h-[500px] opacity-100 mt-3" : "max-h-0 opacity-0"
+          open ? "max-h-[800px] opacity-100 mt-3" : "max-h-0 opacity-0"
         )}
       >
         {children}
