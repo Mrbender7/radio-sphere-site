@@ -119,7 +119,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       // Skip heartbeat reload when playing a time-shift blob
       if (audio.src && audio.src.startsWith('blob:')) return;
 
-      const isDead = audio.paused ||
+      const isDead = (audio.paused && isPlayingRef.current) ||
         audio.networkState === 3 /* NETWORK_NO_SOURCE */ ||
         (audio.readyState < 2 && !audio.paused);
 
@@ -267,6 +267,11 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     });
     releaseWakeLock();
     stopHeartbeat();
+    // Cancel any scheduled retry timers (stalled/ended) to prevent auto-restart after intentional pause
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
   }, [releaseWakeLock, stopHeartbeat, updateMediaSession]);
 
   // Register Media Session action handlers
@@ -374,12 +379,17 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     audio.addEventListener("ended", handleEnded);
 
     const keepAlive = () => {
-      // Only resume when returning to foreground AND we were intentionally playing
-      if (document.visibilityState === 'visible' && isPlayingRef.current) {
-        audio.play().catch(() => {});
-        startSilentLoop();
-        requestWakeLock();
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+      // Delay check to let MediaSession handlePause/handlePlay execute first
+      // (Android triggers visibilitychange before the media button event lands)
+      if (document.visibilityState === 'visible') {
+        setTimeout(() => {
+          if (isPlayingRef.current) {
+            audio.play().catch(() => {});
+            startSilentLoop();
+            requestWakeLock();
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+          }
+        }, 500);
       }
     };
     document.addEventListener('visibilitychange', keepAlive);

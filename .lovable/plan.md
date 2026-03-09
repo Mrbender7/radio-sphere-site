@@ -1,74 +1,37 @@
 
 
-## Correctif : Double-clic pause + redemarrage intempestif
+## Plan : Unification Android Auto + Nettoyage MediaPlaybackService — TERMINÉ ✅
 
-### Cause racine identifiee
+### Architecture finale
 
-**Bug 1 (double-clic)** et **Bug 2 (redemarrage auto)** ont la meme origine : la fonction `keepAlive` (ligne 376).
+**Un seul service media : `RadioBrowserService`**, qui fonctionne en deux modes :
+1. **Mode Android Auto** : Browse tree + ExoPlayer natif (inchangé)
+2. **Mode Notification (Mirror)** : Reçoit les updates de `RadioAutoPlugin` via Intent `ACTION_UPDATE`, met à jour sa MediaSession unique et affiche une notification MediaStyle unifiée
 
-Quand l'utilisateur appuie sur pause depuis l'ecran de verrouillage ou le dynamic content, Android peut declencher un evenement `visibilitychange` (l'app revient brievement au premier plan) **avant** que le handler `handlePause` ne s'execute. La sequence problematique :
+### v2.5.2 — Corrections favoris + navigation Android Auto
 
-```text
-1. Utilisateur appuie pause sur ecran de verrouillage
-2. Android → visibilitychange 'visible' → keepAlive() voit isPlayingRef = true → audio.play() (async)
-3. handlePause() s'execute → isPlayingRef = false, audio.pause()
-4. audio.play() de l'etape 2 se resout APRES → relance la lecture
-5. L'icone a change (pause→play) mais l'audio joue toujours
-```
+| Correction | Détail |
+|-----------|--------|
+| **onPlayFromMediaId** | Fallback en 4 étapes : currentStations → favorites → recents → API (fetchStationByUuid) |
+| **updateFavorites/updateRecents** | Méthodes statiques appelées par RadioAutoPlugin pour rafraîchir le browse tree en temps réel via `notifyChildrenChanged()` |
+| **fetchStationByUuid** | Nouvelle méthode pour récupérer une station par UUID depuis l'API radio-browser |
+| **buildBrowsableItem** | Ajout d'une icône placeholder pour les dossiers (pas de trou visuel) |
+| **Ordre des dossiers** | Top Stations → Mes Favoris → Récents |
+| **activeInstance** | Set dans onCreate, cleared dans onDestroy pour le pattern static |
 
-Meme phenomene quand on rouvre l'app : `keepAlive` relance la lecture meme si l'utilisateur avait volontairement mis en pause.
+### Changements effectués
 
-Probleme secondaire : `handlePause` ne nettoie pas `retryTimerRef`, donc un timer `stalled`/`ended` programme avant la pause peut relancer la lecture 2s plus tard.
+| Fichier | Action |
+|---------|--------|
+| `android-auto/RadioBrowserService.java` | v2.5.2: onPlayFromMediaId fallback, updateFavorites/updateRecents static, fetchStationByUuid, folder icons |
+| `android-auto/RadioAutoPlugin.java` | v2.5.2: Appelle RadioBrowserService.updateFavorites/updateRecents après sync |
+| `android-auto/AndroidManifest-snippet.xml` | v2.5.2: Nettoyé, MediaPlaybackService supprimé |
+| `radiosphere_v2_5_0.ps1` | Templates inline mis à jour v2.5.2 |
+| `android-auto/MediaPlaybackService.java` | **Supprimé** (v2.5.1) |
 
-### Correctif dans `PlayerContext.tsx`
-
-**1. `keepAlive` — ajouter un delai de 500ms**
-
-Laisser le temps a `handlePause`/`handlePlay` de s'executer avant de verifier l'etat :
-
-```tsx
-const keepAlive = () => {
-  if (document.visibilityState === 'visible') {
-    setTimeout(() => {
-      if (isPlayingRef.current) {
-        audio.play().catch(() => {});
-        startSilentLoop();
-        requestWakeLock();
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-      }
-    }, 500);
-  }
-};
-```
-
-**2. `handlePause` — nettoyer `retryTimerRef`**
-
-Empecher les timers de relance programmes (stalled/ended) de redemarrer la lecture apres une pause intentionnelle :
-
-```tsx
-const handlePause = useCallback(() => {
-  // ... existing code ...
-  // AJOUT : annuler tout timer de relance programme
-  if (retryTimerRef.current) {
-    clearTimeout(retryTimerRef.current);
-    retryTimerRef.current = null;
-  }
-}, [releaseWakeLock, stopHeartbeat, updateMediaSession]);
-```
-
-**3. Heartbeat — distinguer pause intentionnelle de stream mort**
-
-Le heartbeat voit `audio.paused === true` et considere le stream comme mort. Si l'utilisateur a volontairement mis en pause, il ne faut pas recharger :
-
-```tsx
-// Dans le heartbeat, remplacer le check isDead
-const isDead = (audio.paused && isPlayingRef.current) ||  // paused mais on devrait jouer = mort
-  audio.networkState === 3 ||
-  (audio.readyState < 2 && !audio.paused);
-```
-
-Actuellement `audio.paused` seul declenche le reload. Avec `isPlayingRef.current` en garde, une pause intentionnelle (ref = false) n'est plus consideree comme un stream mort.
-
-### Fichier modifie
-- `src/contexts/PlayerContext.tsx` : 3 modifications (keepAlive, handlePause, heartbeat)
-
+### Ce qui n'a pas changé
+- `CastPlugin.java`, `CastOptionsProvider.java` — déjà corrects
+- `PlayerContext.tsx`, `useCast.ts` — logique Cast déjà en place
+- `StationCard.tsx` — placeholder déjà géré
+- `MediaToggleReceiver.java` — inchangé (appelle RadioAutoPlugin)
+- Browse tree, ExoPlayer, audio focus, stream resolution
