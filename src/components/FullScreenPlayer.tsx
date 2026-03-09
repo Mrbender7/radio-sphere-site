@@ -254,24 +254,20 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
 
             {/* Controls: TBM + Play/Pause centered */}
             <div className="flex items-center justify-center gap-5">
-              {/* TBM Button */}
+              {/* TBM Button — w-32 h-32 (doubled from w-16) */}
               <button
                 onClick={() => setShowTimeback(true)}
-                className={`w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 overflow-hidden ${
+                className={`w-32 h-32 rounded-full flex items-center justify-center transition-all active:scale-95 overflow-hidden ${
                   bufferAvailable
                     ? "animate-tbm-glow"
                     : ""
                 }`}
                 style={{
-                  background: bufferAvailable
-                    ? 'linear-gradient(145deg, hsl(220,90%,55%), hsl(260,80%,50%))'
-                    : 'linear-gradient(145deg, hsl(0,0%,28%), hsl(0,0%,18%))',
-                  border: bufferAvailable
-                    ? '2px solid hsla(220,90%,70%,0.6)'
-                    : '2px solid hsla(0,0%,40%,0.4)',
+                  background: 'hsl(0,0%,8%)',
+                  border: '2px solid hsla(0,0%,20%,0.6)',
                   boxShadow: bufferAvailable
                     ? undefined
-                    : 'inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.4)',
+                    : '0 0 8px hsla(0,0%,50%,0.15), 0 0 16px hsla(0,0%,50%,0.08), inset 0 1px 3px rgba(255,255,255,0.05), 0 2px 8px rgba(0,0,0,0.4)',
                 }}
               >
                 <img src={tbmLogo} alt="Timeback Machine" className="w-full h-full object-cover rounded-full" />
