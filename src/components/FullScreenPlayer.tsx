@@ -263,11 +263,11 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
                     : "animate-tbm-glow-idle"
                 }`}
                 style={{
-                  background: 'hsl(0,0%,8%)',
-                  border: '2px solid hsla(0,0%,20%,0.6)',
+                  background: 'hsl(0,0%,2%)',
+                  border: '2px solid hsla(0,0%,10%,0.5)',
                   boxShadow: bufferAvailable
                     ? undefined
-                    : '0 0 8px hsla(0,0%,50%,0.15), 0 0 16px hsla(0,0%,50%,0.08), inset 0 1px 3px rgba(255,255,255,0.05), 0 2px 8px rgba(0,0,0,0.4)',
+                    : '0 0 6px hsla(0,0%,45%,0.1), 0 0 14px hsla(0,0%,40%,0.06), 0 2px 8px rgba(0,0,0,0.5)',
                 }}
               >
                 <img src={tbmLogo} alt="Timeback Machine" className="w-full h-full object-cover rounded-full" />
