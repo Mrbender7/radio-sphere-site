@@ -92,6 +92,10 @@ export default {
           "0%, 100%": { boxShadow: "0 0 8px hsla(225,90%,58%,0.25), 0 0 20px hsla(250,80%,60%,0.15)" },
           "50%": { boxShadow: "0 0 16px hsla(225,90%,58%,0.45), 0 0 36px hsla(250,80%,60%,0.25)" },
         },
+        "tbm-glow": {
+          "0%, 100%": { boxShadow: "0 0 12px hsla(220,90%,60%,0.5), 0 0 24px hsla(280,80%,60%,0.3), 0 0 40px hsla(250,80%,50%,0.2)" },
+          "50%": { boxShadow: "0 0 24px hsla(220,90%,60%,0.8), 0 0 48px hsla(280,80%,60%,0.5), 0 0 64px hsla(250,80%,50%,0.35)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -100,6 +104,7 @@ export default {
         "logo-glow": "logo-glow 3s ease-in-out infinite",
         "play-breathe": "play-breathe 2.5s ease-in-out infinite",
         "card-glow": "card-glow 2.5s ease-in-out infinite",
+        "tbm-glow": "tbm-glow 2s ease-in-out infinite",
       },
     },
   },

@@ -23,6 +23,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     isRecording,
     recordingDuration,
     isLive,
+    bufferAvailable,
     currentSeekOffsetSeconds,
     startRecording,
     stopRecording,
@@ -179,6 +180,19 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
             ? `Buffer: ${formatTime(totalBuffer)} / 5:00`
             : t("player.bufferLoading") || "Chargement du buffer..."
           }
+        </div>
+
+        {/* Debug info */}
+        <div className="w-full max-w-sm rounded-lg bg-accent/30 border border-border/50 px-3 py-2 space-y-1">
+          <p className="text-[10px] font-mono text-muted-foreground">
+            <span className="text-foreground/60">Status:</span> {bufferAvailable ? '✅ Active' : '❌ Inactive'} | 
+            <span className="text-foreground/60"> Live:</span> {isLive ? '🟢' : '🔴'} | 
+            <span className="text-foreground/60"> Seek:</span> {currentSeekOffsetSeconds}s
+          </p>
+          <p className="text-[10px] font-mono text-muted-foreground">
+            <span className="text-foreground/60">Buffer:</span> {formatTime(totalBuffer)} / 5:00 | 
+            <span className="text-foreground/60"> Rec:</span> {isRecording ? `🔴 ${formatTime(recordingDuration)}` : 'Off'}
+          </p>
         </div>
 
 
