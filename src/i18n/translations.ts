@@ -422,6 +422,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "Loading buffer...",
     "player.recordingNotAvailable": "Recording not available",
     "player.recordingContinuesLive": "Back to live, recording continues...",
+    "player.codec": "Codec",
+    "player.bitrate": "Bitrate",
+    "player.language": "Language",
+    "player.noStreamInfo": "No info provided by the stream or Radio Browser",
   },
   es: {
     "nav.home": "Inicio",
