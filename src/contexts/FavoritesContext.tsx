@@ -15,7 +15,7 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | null>(null);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const { favorites, toggleFavorite, isFavorite, updateFavorite, importFavorites } = useFavorites();
+  const { favorites, toggleFavorite, isFavorite, importFavorites } = useFavorites();
   const { recent, addRecent } = useRecentStations();
 
   // Sync favorites to native Android Auto SharedPreferences
