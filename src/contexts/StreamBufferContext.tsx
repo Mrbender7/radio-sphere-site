@@ -116,18 +116,16 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     const controller = new AbortController();
     fetchControllerRef.current = controller;
 
-    // Utilisation du PROXY pour contourner le CORS et le Mixed Content (HTTP/HTTPS)
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(streamUrl)}`;
-    console.log("[StreamBuffer] Tentative de fetch via Proxy:", proxyUrl);
+    console.log("[StreamBuffer] Connexion directe au flux (pas de proxy) :", streamUrl);
 
     try {
-      const response = await fetch(proxyUrl, {
+      const response = await fetch(streamUrl, {
         signal: controller.signal,
         headers: { 'Accept': '*/*' },
       });
 
       if (!response.ok || !response.body) {
-        console.error("[StreamBuffer] Erreur Proxy:", response.status);
+        console.error("[StreamBuffer] Échec du fetch direct. Status:", response.status);
         setBufferAvailable(false);
         setRecordingAvailable(false);
         return;
@@ -135,7 +133,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
       const contentType = response.headers.get('Content-Type') || 'audio/mpeg';
       detectedMimeRef.current = contentType.split(';')[0].trim();
-      console.log("[StreamBuffer] Flux connecté via Proxy. MIME:", detectedMimeRef.current);
+      console.log("[StreamBuffer] Flux connecté. MIME:", detectedMimeRef.current);
 
       const reader = response.body.getReader();
 
@@ -164,13 +162,13 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
             updateBufferSeconds();
           }
         } catch (err: any) {
-          // On ignore les erreurs d'annulation
+          // On ignore les erreurs d'annulation normales
         }
       };
       readLoop();
     } catch (e: any) {
       if (e.name !== 'AbortError') {
-        console.error("[StreamBuffer] Échec critique du fetch:", e);
+        console.error("[StreamBuffer] Erreur lors du fetch direct :", e);
       }
       setBufferAvailable(false);
       setRecordingAvailable(false);
@@ -189,7 +187,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
 
     if (stationId !== stationIdRef.current) {
-      console.log("[StreamBuffer] Nouvelle station détectée, démarrage fetch.");
+      console.log("[StreamBuffer] Nouvelle station détectée, démarrage du fetch direct.");
       stationIdRef.current = stationId;
       clearBuffer();
       startFetch(currentStation.streamUrl);
@@ -268,11 +266,9 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
     const streamUrl = currentStation?.streamUrl;
     if (streamUrl) {
-      // Use proxy to avoid mixed-content block, same as original playback
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(streamUrl)}`;
-      console.log("[StreamBuffer] returnToLive via proxy:", proxyUrl);
+      console.log("[StreamBuffer] Retour au direct via URL directe :", streamUrl);
       globalAudio.pause();
-      globalAudio.src = proxyUrl;
+      globalAudio.src = streamUrl;
       globalAudio.load();
       globalAudio.play().catch(() => {});
     }
