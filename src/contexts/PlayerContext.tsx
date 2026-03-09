@@ -257,13 +257,17 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     isPlayingRef.current = false;
     audio.pause();
     stopSilentLoop();
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     setState(s => {
-      if (s.currentStation) notifyNativePlaybackState(s.currentStation, false);
+      if (s.currentStation) {
+        notifyNativePlaybackState(s.currentStation, false);
+        updateMediaSession(s.currentStation, false);
+      }
       return { ...s, isPlaying: false };
     });
     releaseWakeLock();
     stopHeartbeat();
-  }, [releaseWakeLock, stopHeartbeat]);
+  }, [releaseWakeLock, stopHeartbeat, updateMediaSession]);
 
   // Register Media Session action handlers
   useEffect(() => {
