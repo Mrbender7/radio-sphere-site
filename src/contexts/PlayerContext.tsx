@@ -379,12 +379,17 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     audio.addEventListener("ended", handleEnded);
 
     const keepAlive = () => {
-      // Only resume when returning to foreground AND we were intentionally playing
-      if (document.visibilityState === 'visible' && isPlayingRef.current) {
-        audio.play().catch(() => {});
-        startSilentLoop();
-        requestWakeLock();
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+      // Delay check to let MediaSession handlePause/handlePlay execute first
+      // (Android triggers visibilitychange before the media button event lands)
+      if (document.visibilityState === 'visible') {
+        setTimeout(() => {
+          if (isPlayingRef.current) {
+            audio.play().catch(() => {});
+            startSilentLoop();
+            requestWakeLock();
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+          }
+        }, 500);
       }
     };
     document.addEventListener('visibilitychange', keepAlive);
