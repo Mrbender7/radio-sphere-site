@@ -430,7 +430,6 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
               setReplaceLowQuality(checked);
               if (checked) {
                 toast({ title: "🔍 Analyse des favoris en cours..." });
-                const { favorites, updateFavorite } = useFavoritesCtx;
                 const count = await scanFavoritesQuality(favorites, updateFavorite);
                 toast({ title: count > 0 ? `🖼️ ${count} artwork(s) remplacé(s)` : "✅ Tous les artworks sont OK" });
               } else {
