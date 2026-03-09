@@ -76,6 +76,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const pendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pausedAtRef = useRef<number>(0);
   const currentStationRef = useRef<RadioStation | null>(null);
   const reloadStreamRef = useRef<() => void>(() => {});
   const [state, setState] = useState<PlayerState>({
@@ -255,6 +256,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     const audio = audioRef.current;
     if (!audio) return;
     isPlayingRef.current = false;
+    pausedAtRef.current = Date.now();
     audio.pause();
     stopSilentLoop();
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -278,12 +280,13 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
 
-    const noop = () => {};
     navigator.mediaSession.setActionHandler('play', handlePlay);
     navigator.mediaSession.setActionHandler('pause', handlePause);
     navigator.mediaSession.setActionHandler('stop', handlePause);
-    navigator.mediaSession.setActionHandler('seekbackward', noop);
-    navigator.mediaSession.setActionHandler('seekforward', noop);
+    navigator.mediaSession.setActionHandler('seekbackward', null);
+    navigator.mediaSession.setActionHandler('seekforward', null);
+    navigator.mediaSession.setActionHandler('previoustrack', null);
+    navigator.mediaSession.setActionHandler('nexttrack', null);
 
     return () => {
       navigator.mediaSession.setActionHandler('play', null);
@@ -291,6 +294,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       navigator.mediaSession.setActionHandler('stop', null);
       navigator.mediaSession.setActionHandler('seekbackward', null);
       navigator.mediaSession.setActionHandler('seekforward', null);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
     };
   }, [handlePlay, handlePause]);
 
@@ -357,22 +362,26 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     // SKIP when playing a blob: URL (time-shift seek-back)
     const handleStalled = () => {
       if (!isPlayingRef.current) return;
-      if (audio.src && audio.src.startsWith('blob:')) return; // time-shift blob, don't interfere
+      if (audio.src && audio.src.startsWith('blob:')) return;
+      if (Date.now() - pausedAtRef.current < 3000) return; // recent intentional pause, ignore
       console.log("[RadioSphere] Stream stalled, scheduling reload in 2s");
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       retryTimerRef.current = setTimeout(() => {
-        if (isPlayingRef.current && (audio.readyState < 2 || audio.networkState === 3)) {
+        if (isPlayingRef.current && Date.now() - pausedAtRef.current >= 3000 && (audio.readyState < 2 || audio.networkState === 3)) {
           reloadStreamRef.current();
         }
       }, 2000);
     };
     const handleEnded = () => {
       if (!isPlayingRef.current) return;
-      if (audio.src && audio.src.startsWith('blob:')) return; // time-shift blob ended naturally
+      if (audio.src && audio.src.startsWith('blob:')) return;
+      if (Date.now() - pausedAtRef.current < 3000) return; // recent intentional pause, ignore
       console.log("[RadioSphere] Stream ended, reloading in 2s");
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       retryTimerRef.current = setTimeout(() => {
-        reloadStreamRef.current();
+        if (Date.now() - pausedAtRef.current >= 3000) {
+          reloadStreamRef.current();
+        }
       }, 2000);
     };
     audio.addEventListener("stalled", handleStalled);
@@ -383,7 +392,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       // (Android triggers visibilitychange before the media button event lands)
       if (document.visibilityState === 'visible') {
         setTimeout(() => {
-          if (isPlayingRef.current) {
+          const recentPause = Date.now() - pausedAtRef.current < 2000;
+          if (isPlayingRef.current && !recentPause) {
             audio.play().catch(() => {});
             startSilentLoop();
             requestWakeLock();
@@ -539,6 +549,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
     if (state.isPlaying) {
       isPlayingRef.current = false;
+      pausedAtRef.current = Date.now();
       audio.pause();
       stopSilentLoop();
       stopHeartbeat();
