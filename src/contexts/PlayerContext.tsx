@@ -392,7 +392,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       // (Android triggers visibilitychange before the media button event lands)
       if (document.visibilityState === 'visible') {
         setTimeout(() => {
-          if (isPlayingRef.current) {
+          const recentPause = Date.now() - pausedAtRef.current < 2000;
+          if (isPlayingRef.current && !recentPause) {
             audio.play().catch(() => {});
             startSilentLoop();
             requestWakeLock();
