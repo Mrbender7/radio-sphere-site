@@ -949,8 +949,6 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.noFavoritesToExport": "エクスポートするお気に入りがありません",
     "favorites.refreshMetadata": "メタデータを更新",
     "favorites.purgeArtworkCache": "アートワークキャッシュを削除",
-    "settings.replaceLowQuality": "低品質アートワークを置換",
-    "settings.replaceLowQualityDesc": "低品質のロゴはRadio Sphere HDロゴに置き換えられます",
     "settings.privacyPolicy": "プライバシーポリシー",
     "settings.reopenWelcome": "ウェルカムページを再表示",
     "settings.resetApp": "アプリをリセット",

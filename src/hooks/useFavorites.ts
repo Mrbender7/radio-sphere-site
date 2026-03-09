@@ -56,7 +56,7 @@ export function useFavorites() {
     return addedCount;
   }, []);
 
-  return { favorites, toggleFavorite, isFavorite, updateFavorite, importFavorites };
+  return { favorites, toggleFavorite, isFavorite, importFavorites };
 }
 
 export function useRecentStations() {
