@@ -23,6 +23,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     isRecording,
     recordingDuration,
     isLive,
+    bufferAvailable,
     currentSeekOffsetSeconds,
     startRecording,
     stopRecording,
