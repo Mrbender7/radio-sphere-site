@@ -76,6 +76,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const pendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pausedAtRef = useRef<number>(0);
   const currentStationRef = useRef<RadioStation | null>(null);
   const reloadStreamRef = useRef<() => void>(() => {});
   const [state, setState] = useState<PlayerState>({
