@@ -1049,6 +1049,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "バッファ読み込み中...",
     "player.recordingNotAvailable": "録音は利用できません",
     "player.recordingContinuesLive": "ライブに戻りました。録音は継続中...",
+    "player.codec": "コーデック",
+    "player.bitrate": "ビットレート",
+    "player.language": "言語",
+    "player.noStreamInfo": "ストリームまたはRadio Browserからの情報なし",
   },
 };
 
