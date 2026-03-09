@@ -474,7 +474,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
               {t("premium.lock")}
             </Button>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-2 min-w-0 w-full">
               <Input
                 type="password"
                 placeholder={t("premium.passwordPlaceholder")}
