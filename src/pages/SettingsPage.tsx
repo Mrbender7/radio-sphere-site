@@ -4,9 +4,8 @@ import { useSleepTimer, SLEEP_TIMER_OPTIONS } from "@/contexts/SleepTimerContext
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
-import { Wifi, Crown, Moon, Car, Cast, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, RefreshCw, Disc, ImageOff } from "lucide-react";
+import { Wifi, Crown, Moon, Car, Cast, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, RefreshCw, Disc } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { getReplaceLowQuality, setReplaceLowQuality, scanFavoritesQuality } from "@/hooks/useArtworkCache";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import {
   Select,
@@ -107,7 +106,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const { language, setLanguage, t } = useTranslation();
   const { isPremium, unlockWithPassword, lockPremium, restorePurchases } = usePremium();
   const { isActive, formattedTime, startTimer, cancelTimer } = useSleepTimer();
-  const { favorites, importFavorites, updateFavorite } = useFavoritesContext();
+  const { favorites, importFavorites } = useFavoritesContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [premiumCode, setPremiumCode] = useState("");
   const [codeError, setCodeError] = useState(false);
@@ -115,7 +114,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const [customMinutes, setCustomMinutes] = useState("");
   const [unavailableStations, setUnavailableStations] = useState<RadioStation[]>([]);
   const [showUnavailableDialog, setShowUnavailableDialog] = useState(false);
-  const [replaceLowQuality, setReplaceLowQualityState] = useState(getReplaceLowQuality);
+  
   const premiumFeatures = [
     { icon: Moon, title: t("premium.sleepTimer"), desc: t("premium.sleepTimerDesc") },
     { icon: Disc, title: t("premium.recorder"), desc: t("premium.recorderDesc") },
@@ -418,27 +417,6 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
         </div>
       </CollapsibleSection>
 
-      {/* Replace low-quality artworks toggle */}
-      <CollapsibleSection icon={ImageOff} title={t("settings.replaceLowQuality")}>
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[10px] text-muted-foreground leading-relaxed flex-1">{t("settings.replaceLowQualityDesc")}</p>
-          <Switch
-            checked={replaceLowQuality}
-            className="h-7 w-12 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] [&>span]:h-6 [&>span]:w-6 [&>span]:shadow-[0_2px_6px_rgba(0,0,0,0.5)] [&>span]:data-[state=checked]:translate-x-5 [&>span]:data-[state=checked]:shadow-[0_0_8px_hsla(var(--primary)/0.5),0_2px_6px_rgba(0,0,0,0.5)]"
-            onCheckedChange={async (checked) => {
-              setReplaceLowQualityState(checked);
-              setReplaceLowQuality(checked);
-              if (checked) {
-                toast({ title: "🔍 Analyse des favoris en cours..." });
-                const count = await scanFavoritesQuality(favorites, updateFavorite);
-                toast({ title: count > 0 ? `🖼️ ${count} artwork(s) remplacé(s)` : "✅ Tous les artworks sont OK" });
-              } else {
-                toast({ title: "🖼️ Artworks originaux restaurés" });
-              }
-            }}
-          />
-        </div>
-      </CollapsibleSection>
 
       <CollapsibleSection
         icon={Crown}

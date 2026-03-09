@@ -1,48 +1,37 @@
 
 
-## Plan : Suppression totale de la logique d'analyse d'artwork
+## Plan : Unification Android Auto + Nettoyage MediaPlaybackService — TERMINÉ ✅
 
-### Contexte
-Le TBM fonctionne sur APK/emulateur (CORS contourne par la WebView Android). Sur la preview web, `fetch()` est bloque par CORS -- c'est normal et attendu. Pas de bug dans StreamBufferContext, il est propre.
+### Architecture finale
 
-La demande : supprimer toute la logique de scan/remplacement des artworks basse qualite. Garder uniquement le fallback `onError` sur le placeholder HD.
+**Un seul service media : `RadioBrowserService`**, qui fonctionne en deux modes :
+1. **Mode Android Auto** : Browse tree + ExoPlayer natif (inchangé)
+2. **Mode Notification (Mirror)** : Reçoit les updates de `RadioAutoPlugin` via Intent `ACTION_UPDATE`, met à jour sa MediaSession unique et affiche une notification MediaStyle unifiée
 
-### Fichiers a modifier
+### v2.5.2 — Corrections favoris + navigation Android Auto
 
-**1. Supprimer `src/hooks/useArtworkCache.ts`**
-- Ce fichier entier n'a plus de raison d'exister. Il contient `scanFavoritesQuality`, `getReplaceLowQuality`, `setReplaceLowQuality`, `validateImage`.
-- L'export `stationPlaceholder` est importe directement depuis `@/assets/station-placeholder.png` partout ou c'est necessaire.
+| Correction | Détail |
+|-----------|--------|
+| **onPlayFromMediaId** | Fallback en 4 étapes : currentStations → favorites → recents → API (fetchStationByUuid) |
+| **updateFavorites/updateRecents** | Méthodes statiques appelées par RadioAutoPlugin pour rafraîchir le browse tree en temps réel via `notifyChildrenChanged()` |
+| **fetchStationByUuid** | Nouvelle méthode pour récupérer une station par UUID depuis l'API radio-browser |
+| **buildBrowsableItem** | Ajout d'une icône placeholder pour les dossiers (pas de trou visuel) |
+| **Ordre des dossiers** | Top Stations → Mes Favoris → Récents |
+| **activeInstance** | Set dans onCreate, cleared dans onDestroy pour le pattern static |
 
-**2. `src/pages/SettingsPage.tsx`**
-- Supprimer l'import de `useArtworkCache` (ligne 9)
-- Supprimer l'import `ImageOff` du destructuring lucide (ligne 7)
-- Supprimer le state `replaceLowQuality` (ligne 118)
-- Supprimer toute la section "Replace low-quality artworks toggle" (lignes 421-441)
+### Changements effectués
 
-**3. `src/contexts/FavoritesContext.tsx`**
-- Retirer `updateFavorite` de l'interface et du Provider (lignes 10, 19, 33)
-- Cette fonction n'etait utilisee que par le scan d'artworks
+| Fichier | Action |
+|---------|--------|
+| `android-auto/RadioBrowserService.java` | v2.5.2: onPlayFromMediaId fallback, updateFavorites/updateRecents static, fetchStationByUuid, folder icons |
+| `android-auto/RadioAutoPlugin.java` | v2.5.2: Appelle RadioBrowserService.updateFavorites/updateRecents après sync |
+| `android-auto/AndroidManifest-snippet.xml` | v2.5.2: Nettoyé, MediaPlaybackService supprimé |
+| `radiosphere_v2_5_0.ps1` | Templates inline mis à jour v2.5.2 |
+| `android-auto/MediaPlaybackService.java` | **Supprimé** (v2.5.1) |
 
-**4. `src/hooks/useFavorites.ts`**
-- Retirer la fonction `updateFavorite` (lignes 35-37) et son export (ligne 62)
-
-**5. `src/i18n/translations.ts`**
-- Supprimer les cles `settings.replaceLowQuality` et `settings.replaceLowQualityDesc` dans les 5 langues
-- Garder `favorites.purgeArtworkCache` (traduction existante, meme si pas utilisee en code -- nettoyage optionnel)
-
-**6. `src/components/SmartArtwork.tsx`** -- Aucun changement
-- Deja simplifie : affiche l'URL directe, fallback `onError` sur placeholder. Parfait tel quel.
-
-**7. `src/contexts/StreamBufferContext.tsx`** -- Aucun changement
-- Propre, pas de proxy, pas de reference au cache artwork. Fonctionne sur Android, bloque par CORS sur web (attendu).
-
-**8. `archives/radiosphere_v2_5_0.ps1`** -- Aucun changement
-- Ne contient aucune reference au cache artwork.
-
-### Resume des suppressions
-- 1 fichier supprime (`useArtworkCache.ts`)
-- 1 section UI supprimee (toggle dans Settings)
-- 1 fonction supprimee (`updateFavorite` dans useFavorites + FavoritesContext)
-- ~10 cles i18n supprimees
-- 1 localStorage key plus jamais ecrite (`radiosphere_replace_low_quality`)
-
+### Ce qui n'a pas changé
+- `CastPlugin.java`, `CastOptionsProvider.java` — déjà corrects
+- `PlayerContext.tsx`, `useCast.ts` — logique Cast déjà en place
+- `StationCard.tsx` — placeholder déjà géré
+- `MediaToggleReceiver.java` — inchangé (appelle RadioAutoPlugin)
+- Browse tree, ExoPlayer, audio focus, stream resolution
