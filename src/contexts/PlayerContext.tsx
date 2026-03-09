@@ -549,6 +549,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
     if (state.isPlaying) {
       isPlayingRef.current = false;
+      pausedAtRef.current = Date.now();
       audio.pause();
       stopSilentLoop();
       stopHeartbeat();
