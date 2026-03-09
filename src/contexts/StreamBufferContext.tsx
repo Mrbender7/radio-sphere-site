@@ -192,20 +192,22 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const stationId = currentStation?.id ?? null;
 
-    if (!currentStation?.streamUrl) {
+    if (!currentStation?.streamUrl || !isPlaying) {
       stopFetch();
-      clearBuffer();
-      stationIdRef.current = null;
+      if (!currentStation?.streamUrl) {
+        clearBuffer();
+        stationIdRef.current = null;
+      }
       return;
     }
 
     if (stationId !== stationIdRef.current) {
-      console.log("[StreamBuffer] Nouvelle station détectée, démarrage du fetch direct.");
+      console.log("[StreamBuffer] New station detected, starting fetch:", stationId);
       stationIdRef.current = stationId;
       clearBuffer();
       startFetch(currentStation.streamUrl);
     }
-  }, [currentStation?.id, currentStation?.streamUrl, startFetch, stopFetch, clearBuffer]);
+  }, [currentStation?.id, currentStation?.streamUrl, isPlaying, startFetch, stopFetch, clearBuffer]);
 
   useEffect(() => {
     return () => {
