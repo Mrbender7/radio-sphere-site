@@ -456,7 +456,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
         </div>
 
         {/* Unlock/Lock zone inside premium */}
-        <div className="mt-4 pt-3 border-t border-border">
+        <div className="mt-4 pt-3 border-t border-border overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
             <KeyRound className="w-4 h-4 text-amber-400" />
             <h3 className="text-xs font-semibold text-foreground">
