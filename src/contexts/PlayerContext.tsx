@@ -239,13 +239,17 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     isPlayingRef.current = true;
     audio.play().catch(() => { isPlayingRef.current = false; });
     startSilentLoop();
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     setState(s => {
-      if (s.currentStation) notifyNativePlaybackState(s.currentStation, true);
+      if (s.currentStation) {
+        notifyNativePlaybackState(s.currentStation, true);
+        updateMediaSession(s.currentStation, true);
+      }
       return { ...s, isPlaying: true };
     });
     requestWakeLock();
     startHeartbeat();
-  }, [requestWakeLock, startHeartbeat]);
+  }, [requestWakeLock, startHeartbeat, updateMediaSession]);
 
   const handlePause = useCallback(() => {
     const audio = audioRef.current;
