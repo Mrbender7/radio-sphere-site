@@ -2,6 +2,34 @@
 
 ---
 
+## v1.1.3 — 9 mars 2026 — *Fix double-clic pause, redémarrage auto, boutons navigation*
+
+**Statut :** En préparation  
+**Package :** `com.fhm.radiosphere`  
+**Plateforme :** Android (Capacitor)
+
+### Corrections
+
+#### Double-clic nécessaire pour mettre en pause (écran de verrouillage / dynamic content)
+- 🐛 Le bouton pause nécessitait 2 appuis depuis l'écran de verrouillage ou le dynamic content Android
+- 🔧 Cause : `keepAlive` (visibilitychange) et les handlers `stalled`/`ended` relançaient la lecture avant que la pause ne soit prise en compte
+- ✅ Fix : ajout d'un `pausedAtRef` (timestamp) enregistré à chaque pause intentionnelle ; `keepAlive`, `handleStalled` et `handleEnded` ignorent les relances si une pause a eu lieu dans les 2-3 dernières secondes
+
+#### Station redémarre après mise en arrière-plan
+- 🐛 Après une pause manuelle, réduire/ramener l'app provoquait un redémarrage automatique 2-3s plus tard
+- 🔧 Cause : les timers de retry (`stalled`/`ended`) et `keepAlive` ne tenaient pas compte d'une pause récente
+- ✅ Fix : garde `pausedAtRef` dans `keepAlive` (2s), `handleStalled` (3s) et `handleEnded` (3s) + double vérification dans les callbacks de retry
+
+#### Boutons de navigation inutiles sur le lecteur de l'écran de verrouillage
+- 🐛 Les boutons avant/arrière et précédent/suivant apparaissaient sur le dynamic content et l'écran de verrouillage
+- 🔧 Cause : `seekbackward`/`seekforward` avaient un handler `noop` qui activait les boutons ; `previoustrack`/`nexttrack` n'étaient pas désactivés
+- ✅ Fix : tous les handlers inutiles (`seekbackward`, `seekforward`, `previoustrack`, `nexttrack`) passés à `null` pour les masquer
+
+### Fichiers modifiés
+- `src/contexts/PlayerContext.tsx` — pausedAtRef, gardes keepAlive/stalled/ended, handlers MediaSession null
+
+---
+
 ## v1.1.2 — 9 mars 2026 — *Correctif écran de verrouillage + nettoyage artwork*
 
 **Statut :** En préparation  
