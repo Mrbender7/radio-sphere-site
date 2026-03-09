@@ -362,22 +362,26 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     // SKIP when playing a blob: URL (time-shift seek-back)
     const handleStalled = () => {
       if (!isPlayingRef.current) return;
-      if (audio.src && audio.src.startsWith('blob:')) return; // time-shift blob, don't interfere
+      if (audio.src && audio.src.startsWith('blob:')) return;
+      if (Date.now() - pausedAtRef.current < 3000) return; // recent intentional pause, ignore
       console.log("[RadioSphere] Stream stalled, scheduling reload in 2s");
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       retryTimerRef.current = setTimeout(() => {
-        if (isPlayingRef.current && (audio.readyState < 2 || audio.networkState === 3)) {
+        if (isPlayingRef.current && Date.now() - pausedAtRef.current >= 3000 && (audio.readyState < 2 || audio.networkState === 3)) {
           reloadStreamRef.current();
         }
       }, 2000);
     };
     const handleEnded = () => {
       if (!isPlayingRef.current) return;
-      if (audio.src && audio.src.startsWith('blob:')) return; // time-shift blob ended naturally
+      if (audio.src && audio.src.startsWith('blob:')) return;
+      if (Date.now() - pausedAtRef.current < 3000) return; // recent intentional pause, ignore
       console.log("[RadioSphere] Stream ended, reloading in 2s");
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
       retryTimerRef.current = setTimeout(() => {
-        reloadStreamRef.current();
+        if (Date.now() - pausedAtRef.current >= 3000) {
+          reloadStreamRef.current();
+        }
       }, 2000);
     };
     audio.addEventListener("stalled", handleStalled);
