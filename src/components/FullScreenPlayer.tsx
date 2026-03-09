@@ -156,9 +156,9 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
       </div>
 
       {/* Artwork */}
-      <div className="flex-1 flex items-center justify-center px-10">
+      <div className="flex-1 flex items-center justify-center px-14">
         <div
-          className="aspect-square rounded-2xl bg-accent shadow-2xl flex items-center justify-center overflow-hidden w-full max-w-[300px]"
+          className="aspect-square rounded-2xl bg-accent shadow-2xl flex items-center justify-center overflow-hidden w-full max-w-[225px]"
           style={{ boxShadow: '0 20px 60px -10px hsla(250, 80%, 50%, 0.5), 0 10px 30px -5px hsla(220, 90%, 60%, 0.3)' }}
         >
           {currentStation.logo ? (
