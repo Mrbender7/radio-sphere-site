@@ -129,7 +129,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "Compris",
     "favorites.noFavoritesToExport": "Aucun favori à exporter",
     "favorites.refreshMetadata": "Mettre à jour les métadonnées",
-    "favorites.purgeArtworkCache": "Purger le cache des artworks",
+    
     "settings.privacyPolicy": "Politique de confidentialité",
     "settings.reopenWelcome": "Revoir la page de bienvenue",
     "settings.resetApp": "Réinitialiser l'application",
@@ -333,7 +333,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "Understood",
     "favorites.noFavoritesToExport": "No favorites to export",
     "favorites.refreshMetadata": "Refresh metadata",
-    "favorites.purgeArtworkCache": "Purge artwork cache",
+    
     "settings.privacyPolicy": "Privacy Policy",
     "settings.reopenWelcome": "Reopen welcome page",
     "settings.resetApp": "Reset application",
@@ -538,7 +538,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "Entendido",
     "favorites.noFavoritesToExport": "No hay favoritos para exportar",
     "favorites.refreshMetadata": "Actualizar metadatos",
-    "favorites.purgeArtworkCache": "Purgar caché de imágenes",
+    
     "settings.privacyPolicy": "Política de privacidad",
     "settings.reopenWelcome": "Reabrir página de bienvenida",
     "settings.resetApp": "Restablecer aplicación",
@@ -743,7 +743,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "Verstanden",
     "favorites.noFavoritesToExport": "Keine Favoriten zum Exportieren",
     "favorites.refreshMetadata": "Metadaten aktualisieren",
-    "favorites.purgeArtworkCache": "Artwork-Cache leeren",
+    
     "settings.privacyPolicy": "Datenschutzrichtlinie",
     "settings.reopenWelcome": "Willkommensseite erneut öffnen",
     "settings.resetApp": "App zurücksetzen",
@@ -948,7 +948,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.understood": "了解",
     "favorites.noFavoritesToExport": "エクスポートするお気に入りがありません",
     "favorites.refreshMetadata": "メタデータを更新",
-    "favorites.purgeArtworkCache": "アートワークキャッシュを削除",
+    
     "settings.privacyPolicy": "プライバシーポリシー",
     "settings.reopenWelcome": "ウェルカムページを再表示",
     "settings.resetApp": "アプリをリセット",
