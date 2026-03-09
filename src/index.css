@@ -108,3 +108,14 @@
 .live-pulse {
   animation: live-pulse 2s ease-in-out infinite;
 }
+
+/* SmartArtwork shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Vintage filter for station logos in cassette */
+.vintage-filter {
+  filter: sepia(0.6) brightness(0.8) contrast(1.1) saturate(0.7);
+}

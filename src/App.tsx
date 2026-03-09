@@ -4,29 +4,46 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LanguageProvider } from "@/contexts/LanguageContext";
+import { FavoritesProvider, useFavoritesContext } from "@/contexts/FavoritesContext";
+import { PlayerProvider } from "@/contexts/PlayerContext";
+import { StreamBufferProvider } from "@/contexts/StreamBufferContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  // Notification permissions are now handled by WelcomePage (user gesture)
-  // and UserGuideModal (re-request). No auto-prompt at startup.
+function CoreProviders({ children }: { children: React.ReactNode }) {
+  const { addRecent } = useFavoritesContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <PlayerProvider onStationPlay={addRecent}>
+      <StreamBufferProvider>
+        {children}
+      </StreamBufferProvider>
+    </PlayerProvider>
   );
-};
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <LanguageProvider>
+        <FavoritesProvider>
+          <CoreProviders>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </CoreProviders>
+        </FavoritesProvider>
+      </LanguageProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
