@@ -208,7 +208,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
                   {isPlaying && <AudioVisualizer size="medium" />}
                   {/* Hidden measurer */}
                   <span ref={measureRef} className="text-3xl sm:text-4xl font-heading font-bold whitespace-nowrap absolute invisible pointer-events-none">{currentStation.name}</span>
-                  <div ref={textContainerRef} className="overflow-hidden flex-1 min-w-0">
+                  <div ref={textContainerRef} className="overflow-hidden flex-1 min-w-0 max-w-[60vw]">
                     <p
                       className={`text-3xl sm:text-4xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap ${needsMarquee ? "w-fit animate-marquee" : ""}`}
                       style={needsMarquee ? { animationDuration: `${marqueeDuration}s` } : undefined}
