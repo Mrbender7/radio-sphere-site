@@ -6,7 +6,7 @@ import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
 import { Wifi, Crown, Moon, Car, Cast, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, RefreshCw, Disc, ImageOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { getReplaceLowQuality, setReplaceLowQuality } from "@/hooks/useArtworkCache";
+import { getReplaceLowQuality, setReplaceLowQuality, scanFavoritesQuality } from "@/hooks/useArtworkCache";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import {
   Select,
