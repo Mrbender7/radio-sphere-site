@@ -508,7 +508,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
                   }
                 }}
                 size="sm"
-                className="h-9 px-3 text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-500 hover:to-orange-600"
+                className="h-9 px-3 text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-500 hover:to-orange-600 flex-shrink-0"
               >
                 <Unlock className="w-3.5 h-3.5" />
               </Button>
