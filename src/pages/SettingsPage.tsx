@@ -493,7 +493,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
                 }}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
-                  "flex-1 h-9 text-xs bg-secondary border-border",
+                  "flex-1 min-w-0 h-9 text-xs bg-secondary border-border",
                   codeError && "border-destructive"
                 )}
               />
