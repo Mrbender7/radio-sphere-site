@@ -64,7 +64,7 @@ function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: Reac
       <div
         className={cn(
           "overflow-hidden transition-all duration-300 ease-in-out",
-          open ? "max-h-[500px] opacity-100 mt-3" : "max-h-0 opacity-0"
+          open ? "max-h-[800px] opacity-100 mt-3" : "max-h-0 opacity-0"
         )}
       >
         {children}
@@ -456,7 +456,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
         </div>
 
         {/* Unlock/Lock zone inside premium */}
-        <div className="mt-4 pt-3 border-t border-border">
+        <div className="mt-4 pt-3 border-t border-border overflow-hidden">
           <div className="flex items-center gap-2 mb-2">
             <KeyRound className="w-4 h-4 text-amber-400" />
             <h3 className="text-xs font-semibold text-foreground">
@@ -474,7 +474,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
               {t("premium.lock")}
             </Button>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-2 min-w-0 w-full">
               <Input
                 type="password"
                 placeholder={t("premium.passwordPlaceholder")}
@@ -493,7 +493,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
                 }}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
-                  "flex-1 h-9 text-xs bg-secondary border-border",
+                  "flex-1 min-w-0 h-9 text-xs bg-secondary border-border",
                   codeError && "border-destructive"
                 )}
               />
@@ -508,7 +508,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
                   }
                 }}
                 size="sm"
-                className="h-9 px-3 text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-500 hover:to-orange-600"
+                className="h-9 px-3 text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-500 hover:to-orange-600 flex-shrink-0"
               >
                 <Unlock className="w-3.5 h-3.5" />
               </Button>
