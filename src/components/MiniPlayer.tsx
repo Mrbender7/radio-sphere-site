@@ -50,7 +50,9 @@ export function MiniPlayer() {
           <img src={stationPlaceholder} alt={currentStation.name} className="w-full h-full object-cover" />
         )}
       </div>
-      {/* Text zone — flex-1 min-w-0 ensures it shrinks to fit between thumbnail and right-side controls */}
+      {/* Visualizer between artwork and text */}
+      {isPlaying && <AudioVisualizer size="medium" />}
+      {/* Text zone */}
       <div className="flex-1 min-w-0">
         {/* Hidden measurer */}
         <span ref={measureRef} className="text-lg font-heading font-bold whitespace-nowrap absolute invisible pointer-events-none">{currentStation.name}</span>
