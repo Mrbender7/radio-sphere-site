@@ -141,8 +141,13 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              console.log("[StreamBuffer] Stream ended (done=true).");
+              break;
+            }
             if (!value || value.byteLength === 0) continue;
+
+            console.log("[StreamBuffer] Chunk received:", value.byteLength);
 
             const chunk: TimestampedChunk = {
               data: value,
@@ -156,13 +161,16 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
             if (!bufferAvailableRef.current) {
               bufferAvailableRef.current = true;
               setBufferAvailable(true);
+              console.log("[StreamBuffer] Buffer now available.");
             }
 
             trimBuffer();
             updateBufferSeconds();
           }
         } catch (err: any) {
-          // On ignore les erreurs d'annulation normales
+          if (err?.name !== 'AbortError') {
+            console.warn("[StreamBuffer] readLoop error:", err);
+          }
         }
       };
       readLoop();
