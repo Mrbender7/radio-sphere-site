@@ -299,23 +299,31 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
 
         {/* Codec / Bitrate / Language info */}
         <div className="grid grid-cols-3 gap-3 py-4 px-4 rounded-xl bg-accent/50">
-          {currentStation.codec && (
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Codec</p>
-              <p className="text-sm font-semibold text-foreground">{currentStation.codec}</p>
-            </div>
-          )}
-          {currentStation.bitrate > 0 && (
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Bitrate</p>
-              <p className="text-sm font-semibold text-foreground">{currentStation.bitrate} kbps</p>
-            </div>
-          )}
-          {currentStation.language && (
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground">Langue</p>
-              <p className="text-sm font-semibold text-foreground">{currentStation.language}</p>
-            </div>
+          {(!currentStation.codec && !(currentStation.bitrate > 0) && !currentStation.language) ? (
+            <p className="col-span-3 text-xs text-muted-foreground text-center">
+              {t("player.noStreamInfo")}
+            </p>
+          ) : (
+            <>
+              {currentStation.codec && (
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">{t("player.codec")}</p>
+                  <p className="text-sm font-semibold text-foreground">{currentStation.codec}</p>
+                </div>
+              )}
+              {currentStation.bitrate > 0 && (
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">{t("player.bitrate")}</p>
+                  <p className="text-sm font-semibold text-foreground">{currentStation.bitrate} kbps</p>
+                </div>
+              )}
+              {currentStation.language && (
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">{t("player.language")}</p>
+                  <p className="text-sm font-semibold text-foreground">{currentStation.language}</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

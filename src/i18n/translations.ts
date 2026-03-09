@@ -212,6 +212,11 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "Chargement du buffer...",
     "player.recordingNotAvailable": "Enregistrement indisponible",
     "player.recordingContinuesLive": "Retour au direct, enregistrement en cours...",
+    "player.fileSaved": "Fichier sauvegardé !",
+    "player.codec": "Codec",
+    "player.bitrate": "Débit",
+    "player.language": "Langue",
+    "player.noStreamInfo": "Aucune info relayée par le stream ou Radio Browser",
   },
   en: {
     "nav.home": "Home",
@@ -417,6 +422,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "Loading buffer...",
     "player.recordingNotAvailable": "Recording not available",
     "player.recordingContinuesLive": "Back to live, recording continues...",
+    "player.codec": "Codec",
+    "player.bitrate": "Bitrate",
+    "player.language": "Language",
+    "player.noStreamInfo": "No info provided by the stream or Radio Browser",
   },
   es: {
     "nav.home": "Inicio",
@@ -622,6 +631,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "Cargando búfer...",
     "player.recordingNotAvailable": "Grabación no disponible",
     "player.recordingContinuesLive": "Volviendo al directo, grabación en curso...",
+    "player.codec": "Códec",
+    "player.bitrate": "Bitrate",
+    "player.language": "Idioma",
+    "player.noStreamInfo": "Sin información del stream o Radio Browser",
   },
   de: {
     "nav.home": "Startseite",
@@ -827,6 +840,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "Puffer wird geladen...",
     "player.recordingNotAvailable": "Aufnahme nicht verfügbar",
     "player.recordingContinuesLive": "Zurück zum Live, Aufnahme läuft weiter...",
+    "player.codec": "Codec",
+    "player.bitrate": "Bitrate",
+    "player.language": "Sprache",
+    "player.noStreamInfo": "Keine Info vom Stream oder Radio Browser",
   },
   ja: {
     "nav.home": "ホーム",
@@ -1032,6 +1049,10 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bufferLoading": "バッファ読み込み中...",
     "player.recordingNotAvailable": "録音は利用できません",
     "player.recordingContinuesLive": "ライブに戻りました。録音は継続中...",
+    "player.codec": "コーデック",
+    "player.bitrate": "ビットレート",
+    "player.language": "言語",
+    "player.noStreamInfo": "ストリームまたはRadio Browserからの情報なし",
   },
 };
 
