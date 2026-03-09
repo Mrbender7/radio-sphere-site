@@ -332,13 +332,11 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
       {/* Footer */}
       <div className="px-6 pb-[calc(max(env(safe-area-inset-bottom,16px),1rem)+1rem)]">
         <button
-          onClick={handleReturnToLive}
-          className={`w-full py-3 rounded-xl text-sm font-semibold transition-all ${
-            isLive
-              ? "bg-accent/50 text-muted-foreground"
-              : "bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg shadow-green-500/30"
-          }`}
-          disabled={isLive}
+          onClick={() => {
+            if (!isLive) returnToLive();
+            onClose();
+          }}
+          className="w-full py-3 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg shadow-green-500/30 active:scale-[0.98]"
         >
           {t("player.returnToLive")}
         </button>
