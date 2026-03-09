@@ -267,6 +267,11 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     });
     releaseWakeLock();
     stopHeartbeat();
+    // Cancel any scheduled retry timers (stalled/ended) to prevent auto-restart after intentional pause
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
   }, [releaseWakeLock, stopHeartbeat, updateMediaSession]);
 
   // Register Media Session action handlers
