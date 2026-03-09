@@ -268,8 +268,11 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
     const streamUrl = currentStation?.streamUrl;
     if (streamUrl) {
+      // Use proxy to avoid mixed-content block, same as original playback
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(streamUrl)}`;
+      console.log("[StreamBuffer] returnToLive via proxy:", proxyUrl);
       globalAudio.pause();
-      globalAudio.src = streamUrl;
+      globalAudio.src = proxyUrl;
       globalAudio.load();
       globalAudio.play().catch(() => {});
     }
