@@ -2,6 +2,44 @@
 
 ---
 
+## v1.1.2 — 9 mars 2026 — *Correctif écran de verrouillage + nettoyage artwork*
+
+**Statut :** En préparation  
+**Package :** `com.fhm.radiosphere`  
+**Plateforme :** Android (Capacitor)
+
+### Corrections
+
+#### Mini-player / contenu dynamique disparu sur écran de verrouillage
+- 🐛 Les contrôles de l'écran de verrouillage disparaissaient après une interaction play/pause via la notification native
+- 🔧 Cause : `handlePlay` et `handlePause` (callbacks MediaSession + notification native `mediaToggle`) ne mettaient pas à jour `navigator.mediaSession.playbackState` ni ne rafraîchissaient le `MediaMetadata` via `updateMediaSession()`
+- ✅ Fix : ajout explicite de `navigator.mediaSession.playbackState` et appel à `updateMediaSession()` dans les deux handlers
+
+### Nettoyage
+
+#### Suppression complète du cache artwork
+- 🗑️ Suppression du hook `useArtworkCache.ts` (scan artwork, remplacement basse qualité)
+- 🗑️ Suppression de `updateFavorite` dans `useFavorites.ts` et `FavoritesContext.tsx`
+- 🗑️ Suppression du toggle "Remplacer les artworks basse qualité" dans `SettingsPage.tsx`
+- 🗑️ Suppression des clés i18n `settings.replaceLowQuality` et `settings.replaceLowQualityDesc` (5 langues)
+- `SmartArtwork.tsx` simplifié : URL directe + fallback `onError` sur placeholder
+
+#### Nettoyage i18n
+- 🗑️ Suppression des clés i18n orphelines `favorites.purgeArtworkCache` (5 langues)
+
+### Fichiers modifiés
+- `src/contexts/PlayerContext.tsx` — correctif MediaSession
+- `src/components/SmartArtwork.tsx` — simplification
+- `src/pages/SettingsPage.tsx` — suppression toggle artwork
+- `src/contexts/FavoritesContext.tsx` — suppression `updateFavorite`
+- `src/hooks/useFavorites.ts` — suppression `updateFavorite`
+- `src/i18n/translations.ts` — suppression clés obsolètes
+
+### Fichiers supprimés
+- `src/hooks/useArtworkCache.ts`
+
+---
+
 ## v1.1.1 — 7 mars 2026 — *Fix pause & auto-restart*
 
 **Statut :** En préparation  
