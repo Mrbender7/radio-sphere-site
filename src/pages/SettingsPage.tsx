@@ -5,7 +5,6 @@ import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
 import { Wifi, Crown, Moon, Car, Cast, CheckCircle, Database, Globe, ChevronDown, TimerOff, Lock, Unlock, KeyRound, Heart, Download, Upload, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, RefreshCw, Disc } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import {
   Select,
@@ -114,7 +113,6 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const [customMinutes, setCustomMinutes] = useState("");
   const [unavailableStations, setUnavailableStations] = useState<RadioStation[]>([]);
   const [showUnavailableDialog, setShowUnavailableDialog] = useState(false);
-  
   const premiumFeatures = [
     { icon: Moon, title: t("premium.sleepTimer"), desc: t("premium.sleepTimerDesc") },
     { icon: Disc, title: t("premium.recorder"), desc: t("premium.recorderDesc") },
@@ -413,11 +411,10 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
             {t("favorites.refreshMetadata")}
           </Button>
 
-
         </div>
       </CollapsibleSection>
 
-
+      {/* Premium section — with unlock/lock inside */}
       <CollapsibleSection
         icon={Crown}
         title={t("premium.title")}

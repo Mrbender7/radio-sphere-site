@@ -287,29 +287,19 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   // v2.2.9: Listen for MediaStyle notification toggle (native MediaPlaybackService)
   useEffect(() => {
     let mediaToggleRemove: (() => void) | null = null;
-    const isNativeAndroid = !!(window as any).Capacitor?.isNativePlatform?.() &&
-      (window as any).Capacitor?.getPlatform?.() === 'android';
-
-    if (!isNativeAndroid) {
-      return;
-    }
-
-    import('@/plugins/RadioAutoPlugin')
-      .then(({ RadioAutoPlugin }) => {
-        // Reuse the already-registered plugin instance (avoid double registration)
-        return RadioAutoPlugin.addListener('mediaToggle', () => {
-          console.log("[RadioSphere] mediaToggle event from native notification");
-          if (isPlayingRef.current) {
-            handlePause();
-          } else {
-            handlePlay();
-          }
-        });
-      })
-      .then((listener: { remove: () => void }) => {
+    import('@/plugins/RadioAutoPlugin').then(({ RadioAutoPlugin }) => {
+      // Reuse the already-registered plugin instance (avoid double registration)
+      RadioAutoPlugin.addListener('mediaToggle', () => {
+        console.log("[RadioSphere] mediaToggle event from native notification");
+        if (isPlayingRef.current) {
+          handlePause();
+        } else {
+          handlePlay();
+        }
+      }).then((listener: { remove: () => void }) => {
         mediaToggleRemove = () => listener.remove();
-      })
-      .catch(() => {});
+      });
+    }).catch(() => {});
 
     return () => {
       if (mediaToggleRemove) mediaToggleRemove();

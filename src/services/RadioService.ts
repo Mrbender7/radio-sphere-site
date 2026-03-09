@@ -240,10 +240,10 @@ export const radioBrowserProvider: RadioProvider = {
       reverse: params.reverse ?? "true",
       hidebroken: "true",
     };
-    if (params.name) query.name = params.name.trim();
+    if (params.name) query.name = params.name;
     if (params.country) query.country = params.country;
-    if (params.tag) query.tag = params.tag.trim().toLowerCase();
-    if (params.tagList) query.tagList = params.tagList.trim().toLowerCase();
+    if (params.tag) query.tag = params.tag;
+    if (params.tagList) query.tagList = params.tagList;
     if (params.language) query.language = params.language;
 
     const data = await fetchWithMirrors("stations/search", query, params.signal);
