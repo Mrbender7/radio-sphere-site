@@ -109,6 +109,7 @@ export default {
         "play-breathe": "play-breathe 2.5s ease-in-out infinite",
         "card-glow": "card-glow 2.5s ease-in-out infinite",
         "tbm-glow": "tbm-glow 2s ease-in-out infinite",
+        "tbm-glow-idle": "tbm-glow-idle 3s ease-in-out infinite",
       },
     },
   },
