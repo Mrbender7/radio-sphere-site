@@ -178,8 +178,8 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
       )}
 
       {/* LIVE badge — centered */}
-      <div className="flex items-center justify-center py-2">
-        <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
+      <div className="flex items-center justify-center py-1">
+        <div className={`flex items-center gap-1.5 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
           isPlaying
             ? "text-green-400 live-pulse"
             : "text-red-400"
