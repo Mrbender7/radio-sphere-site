@@ -260,7 +260,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
                 className={`w-32 h-32 rounded-full flex items-center justify-center transition-all active:scale-95 overflow-hidden ${
                   bufferAvailable
                     ? "animate-tbm-glow"
-                    : ""
+                    : "animate-tbm-glow-idle"
                 }`}
                 style={{
                   background: 'hsl(0,0%,8%)',
