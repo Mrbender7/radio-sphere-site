@@ -1012,6 +1012,8 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
             if (foregroundStarted) { stopForeground(true); foregroundStarted = false; }
+            forceResetPlayerForSwitch();
+            stopSelf();
             return START_NOT_STICKY;
         }
         if (ACTION_UPDATE.equals(action)) {
