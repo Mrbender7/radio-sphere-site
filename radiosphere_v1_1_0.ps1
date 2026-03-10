@@ -1058,10 +1058,7 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         }
         mediaSession.setMetadata(metaBuilder.build());
         int state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
-        long actions = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE
-            | PlaybackStateCompat.ACTION_STOP | PlaybackStateCompat.ACTION_PLAY_PAUSE;
-        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-            .setActions(actions).setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f).build());
+        updatePlaybackState(state);
         Notification notification = buildUnifiedNotification(name, isPlaying, artwork);
         if (!foregroundStarted) {
             if (Build.VERSION.SDK_INT >= 34) {
