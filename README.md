@@ -1,19 +1,58 @@
-Discover Radio Sphere, the ultimate app to explore radio waves from all over the world. From Liège to Tokyo or New York, experience radio without borders.
+🌍 Radio Sphere
+The ultimate gateway to global radio waves.
 
-Why choose Radio Sphere?
+Discover Radio Sphere, the ultimate app to explore radio frequencies from all over the world. From the streets of Liège to the neon lights of Tokyo or the energy of New York, experience radio without borders.
 
-Global Access: Listen to thousands of international stations in high quality.
+✨ Why Choose Radio Sphere?
+🌐 Global Access: Listen to thousands of international stations in high-fidelity audio.
 
-Intuitive Interface: Modern and fluid navigation to find your favorite frequencies in a heartbeat.
+🎨 Intuitive Interface: A modern, fluid, and dark-mode-ready navigation designed to find your favorite frequencies in a heartbeat.
 
-Multilingual: The app speaks your language.
+🗣️ Multilingual: The app speaks your language, automatically adapting to your locale.
 
-🚀 Premium Features (Pro Sphere):
+🚀 Lightweight & Fast: Optimized for performance, even on slower connections.
 
-Android Auto: Take your favorite stations on the road with a safe, optimized interface.
+💎 Pro Sphere (Premium Features)
+Take your listening experience to the next level with our Pro tier.
 
-Google Cast (Chromecast): Stream audio to your speakers or TV for total home immersion.
+🚗 Android Auto
+Take your favorite stations on the road. Radio Sphere features a safe, fully optimized interface for your car’s dashboard.
 
-Sleep Timer: Fall asleep to your favorite station; the app turns off automatically.
+📺 Google Cast (Chromecast)
+Total home immersion. Stream your favorite audio directly to your smart speakers or TV with one tap.
 
-TimeBack Machine: Don’t miss a thing! Record live radio to listen back to your favorite shows when ever you want.
+⏳ Sleep Timer
+Fall asleep to the sound of the world. Set the timer, and the app will turn off automatically so you can rest easy.
+
+⏪ TimeBack Machine (Exclusive)
+Don’t miss a thing! Our unique buffering technology allows you to:
+
+Seek Back: Missed a joke or a song title? Rewind live radio.
+
+Record: Save live segments directly to your device to listen back whenever you want.
+
+🛠️ Tech Stack
+Core: React / Vite
+
+Bridge: Capacitor (Native Android Integration)
+
+Audio Engine: ExoPlayer (Native) & Web Audio API
+
+Payment: Google Play Billing Library
+
+🚀 How to build
+Clone the repo:
+
+Bash
+git clone https://github.com/Mrbender7/remix-of-radio-sphere.git
+Install dependencies:
+
+Bash
+npm install --legacy-peer-deps
+Run the build script:
+Use the provided PowerShell script for a full automated Android build:
+
+PowerShell
+./radiosphere_v1_1_0.ps1
+📄 License
+This project is licensed under the MIT License.
