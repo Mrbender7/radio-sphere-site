@@ -1165,6 +1165,11 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
     }
 
     private final MediaSessionCompat.Callback mediaSessionCallback = new MediaSessionCompat.Callback() {
+        private void notifyJsToToggle() {
+            Intent intent = new Intent(BROADCAST_TOGGLE);
+            intent.setPackage(getPackageName());
+            sendBroadcast(intent);
+        }
         @Override public void onPlayFromMediaId(String mediaId, Bundle extras) {
             if (mediaId == null) return;
             Log.d(TAG, "onPlayFromMediaId: " + mediaId);
@@ -1200,11 +1205,14 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
         @Override public void onPrepare() { onPlay(); }
         @Override public void onPlay() {
             if (currentStation != null) startAsForeground(currentStation.name, true);
-            if (requestAudioFocus()) { player.play(); updatePlaybackState(PlaybackStateCompat.STATE_PLAYING); }
+            updatePlaybackState(PlaybackStateCompat.STATE_PLAYING);
+            notifyJsToToggle();
         }
         @Override public void onPause() {
-            player.pause(); updatePlaybackState(PlaybackStateCompat.STATE_PAUSED);
+            player.pause();
+            updatePlaybackState(PlaybackStateCompat.STATE_PAUSED);
             if (currentStation != null) startAsForeground(currentStation.name, false);
+            notifyJsToToggle();
         }
         @Override public void onStop() {
             player.stop(); abandonAudioFocus(); updatePlaybackState(PlaybackStateCompat.STATE_STOPPED);
