@@ -1472,8 +1472,8 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
 
     private void updatePlaybackState(int state) {
         long actions = PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE
-            | PlaybackStateCompat.ACTION_STOP | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-            | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS | PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+            | PlaybackStateCompat.ACTION_STOP | PlaybackStateCompat.ACTION_PLAY_PAUSE
+            | PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
             | PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID;
         PlaybackStateCompat.Builder builder = new PlaybackStateCompat.Builder()
             .setActions(actions).setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f);
