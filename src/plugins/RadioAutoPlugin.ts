@@ -5,12 +5,15 @@ import { RadioStation } from '@/types/radio';
  * RadioAutoPlugin — Capacitor plugin interface for Android Auto integration.
  * Syncs favorites, recents, and playback state from the WebView to native SharedPreferences
  * so the native MediaBrowserService can read them.
+ *
+ * v1.1.3: Added stopService() for clean service termination.
  */
 
 export interface RadioAutoPluginInterface {
   syncFavorites(options: { stations: string }): Promise<void>;
   syncRecents(options: { stations: string }): Promise<void>;
   clearAppData(): Promise<void>;
+  stopService(): Promise<void>;
   notifyPlaybackState(options: {
     stationId: string;
     name: string;
@@ -127,5 +130,18 @@ export async function notifyNativePlaybackState(
     console.log('[RadioAuto] Playback state notified:', station.name, isPlaying);
   } catch (e) {
     console.log('[RadioAuto] notifyPlaybackState not available (expected in browser)', e);
+  }
+}
+
+/**
+ * Stop the native RadioBrowserService cleanly
+ */
+export async function stopNativeService(): Promise<void> {
+  if (!isCapacitorAndroid()) return;
+  try {
+    await RadioAutoPlugin.stopService();
+    console.log('[RadioAuto] Native service stopped');
+  } catch (e) {
+    console.log('[RadioAuto] stopService not available (expected in browser)', e);
   }
 }
