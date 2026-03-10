@@ -1674,24 +1674,23 @@ npx cap sync
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
-Write-Host ">>> Script v1.1.0 Termine ! Google Play Billing" -ForegroundColor Green
+Write-Host ">>> Script v1.1.3 Termine ! Correctifs natifs MediaSession" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "CHANGEMENTS v1.1.0 :" -ForegroundColor Yellow
-Write-Host "  GOOGLE PLAY BILLING :" -ForegroundColor Cyan
-Write-Host "    - BillingPlugin.java genere (queryPurchases, purchasePremium, restorePurchases)" -ForegroundColor White
-Write-Host "    - BillingClient 6.1.0 ajoute dans build.gradle" -ForegroundColor White
-Write-Host "    - Permission com.android.vending.BILLING ajoutee au Manifest" -ForegroundColor White
-Write-Host "    - BillingPlugin enregistre dans MainActivity.java" -ForegroundColor White
-Write-Host "    - Acknowledge automatique des achats" -ForegroundColor White
-Write-Host "    - Produit in-app: premium_lifetime (achat unique)" -ForegroundColor White
-Write-Host "  PREMIUM :" -ForegroundColor Cyan
-Write-Host "    - isPremium n'est plus true par defaut (fin periode de test)" -ForegroundColor White
-Write-Host "    - PremiumContext verifie le statut reel au demarrage" -ForegroundColor White
-Write-Host "    - Bouton 'Restaurer les achats' fonctionnel" -ForegroundColor White
-Write-Host "    - Fallback web: mode mot de passe conserve pour debug" -ForegroundColor White
+Write-Host "CORRECTIFS v1.1.3 :" -ForegroundColor Yellow
+Write-Host "  ECRAN DE VERROUILLAGE / DYNAMIC CONTENT :" -ForegroundColor Cyan
+Write-Host "    - Boutons Next/Previous retires (ACTION_SKIP_TO_NEXT/PREVIOUS supprimes)" -ForegroundColor White
+Write-Host "    - Double-clic pause corrige (onPlay/onPause notifient le JS via broadcast)" -ForegroundColor White
+Write-Host "    - onPlay ne lance plus player.play() natif (le JS gere la lecture)" -ForegroundColor White
+Write-Host "  REDEMARRAGE AUTO :" -ForegroundColor Cyan
+Write-Host "    - AudioFocus GAIN ne relance plus player.play() (restaure seulement le volume)" -ForegroundColor White
+Write-Host "  SERVICE ZOMBIE :" -ForegroundColor Cyan
+Write-Host "    - ACTION_STOP appelle forceResetPlayerForSwitch() + stopSelf()" -ForegroundColor White
+Write-Host "    - Nouvelle methode stopService() dans RadioAutoPlugin" -ForegroundColor White
+Write-Host "  NOTIFICATION :" -ForegroundColor Cyan
+Write-Host "    - updateMirrorNotification utilise updatePlaybackState() unifie" -ForegroundColor White
 Write-Host ""
-Write-Host "  (Inclut tous les changements v1.0 : Android Auto, Chromecast, etc.)" -ForegroundColor DarkGray
+Write-Host "  (Inclut tous les changements v1.1.0 : Google Play Billing, Android Auto, Chromecast, etc.)" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "IMPORTANT : DESINSTALLER L'ANCIENNE APK AVANT D'INSTALLER !" -ForegroundColor Red
 Write-Host ""
@@ -1700,4 +1699,5 @@ Write-Host ""
 Write-Host "ANDROID AUTO : Activer 'Sources inconnues' dans Parametres > Developpeur" -ForegroundColor Yellow
 Write-Host "               de l'app Android Auto sur le smartphone" -ForegroundColor Yellow
 Write-Host ""
-Write-Host ">>> npx cap open android" -ForegroundColor Cyan
+Write-Host ">>> Ouverture d'Android Studio..." -ForegroundColor Cyan
+npx cap open android
