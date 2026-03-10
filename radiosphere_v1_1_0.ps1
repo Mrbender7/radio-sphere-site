@@ -284,8 +284,8 @@ if (Test-Path $ManifestPath) {
     Write-Host "    Manifest: CastOptionsProvider package set to $ActualPackage" -ForegroundColor DarkGray
 }
 
-# --- RadioAutoPlugin.java (v2.5.1 -- unified, points to RadioBrowserService) ---
-Write-Host "    Generation RadioAutoPlugin.java (v2.5.1)..." -ForegroundColor DarkGray
+# --- RadioAutoPlugin.java (v1.1.3 -- unified, stopService added) ---
+Write-Host "    Generation RadioAutoPlugin.java (v1.1.3)..." -ForegroundColor DarkGray
 $RadioAutoPluginJava = @'
 package __PACKAGE__;
 
@@ -406,11 +406,24 @@ public class RadioAutoPlugin extends Plugin {
     public void notifyToggleFromNotification() {
         notifyListeners("mediaToggle", new com.getcapacitor.JSObject());
     }
+
+    @PluginMethod
+    public void stopService(PluginCall call) {
+        Context ctx = getContext();
+        Intent serviceIntent = new Intent(ctx, RadioBrowserService.class);
+        serviceIntent.setAction(RadioBrowserService.ACTION_STOP);
+        try {
+            ctx.startService(serviceIntent);
+        } catch (Exception e) {
+            // Service not running, ignore
+        }
+        call.resolve();
+    }
 }
 '@
 $RadioAutoPluginJava = $RadioAutoPluginJava -replace '__PACKAGE__', $ActualPackage
 [System.IO.File]::WriteAllText((Join-Path $PackageDir "RadioAutoPlugin.java"), $RadioAutoPluginJava, $UTF8NoBOM)
-Write-Host "    RadioAutoPlugin.java genere avec succes" -ForegroundColor Green
+Write-Host "    RadioAutoPlugin.java genere avec succes (v1.1.3)" -ForegroundColor Green
 
 # --- MediaToggleReceiver.java ---
 Write-Host "    Generation MediaToggleReceiver.java..." -ForegroundColor DarkGray
