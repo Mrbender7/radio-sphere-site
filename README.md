@@ -49,18 +49,19 @@ Fall asleep to the sound of the world. Set the timer, and the app will turn off 
 
 ## 🚀 How to build
 
-1. **Clone the repo:**
+   **Clone the repo:**
    ```bash
    git clone [https://github.com/Mrbender7/remix-of-radio-sphere.git](https://github.com/Mrbender7/remix-of-radio-sphere.git)
 
    Install dependencies:
+   npm install --legacy-peer-deps
 
-Bash
-npm install --legacy-peer-deps
-Run the build script:
-Use the provided PowerShell script for a full automated Android build:
+   PowerShell
+   ./radiosphere_v1_1_0.ps1
+   
+   📄 License
+   This project is licensed under the MIT License.
 
-PowerShell
-./radiosphere_v1_1_0.ps1
-📄 License
-This project is licensed under the MIT License.
+
+
+
