@@ -1,10 +1,10 @@
 # radiosphere_v1_1_0.ps1
-# v1.1.0 -- Google Play Billing + Fin periode de test Premium
+# v1.1.3 -- Correctifs ecran de verrouillage, double-clic pause, redemarrage auto, service zombie
 $RepoUrl = "https://github.com/Mrbender7/remix-of-radio-sphere"
 $ProjectFolder = "radiosphere-1.1.0"
 $UTF8NoBOM = New-Object System.Text.UTF8Encoding($False)
 
-Write-Host ">>> Lancement du Build v1.1.0 - Google Play Billing" -ForegroundColor Cyan
+Write-Host ">>> Lancement du Build v1.1.3 - Correctifs natifs MediaSession" -ForegroundColor Cyan
 
 if (Test-Path $ProjectFolder) { Remove-Item -Recurse -Force $ProjectFolder }
 git clone $RepoUrl $ProjectFolder
