@@ -15,7 +15,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
  * Receives favorites, recents, and playback state from the WebView
  * and stores them in SharedPreferences so RadioBrowserService can read them.
  *
- * v2.5.2: Calls RadioBrowserService.updateFavorites/updateRecents for live browse tree refresh.
+ * v1.1.3: Added stopService() method + notifyJsToToggle in onPlay/onPause.
  */
 @CapacitorPlugin(name = "RadioAutoPlugin")
 public class RadioAutoPlugin extends Plugin {
@@ -50,7 +50,6 @@ public class RadioAutoPlugin extends Plugin {
     public void syncFavorites(PluginCall call) {
         String stations = call.getString("stations", "[]");
         getPrefs().edit().putString(KEY_FAVORITES, stations).apply();
-        // Notify running service to refresh browse tree
         RadioBrowserService.updateFavorites(stations);
         call.resolve();
     }
@@ -59,7 +58,6 @@ public class RadioAutoPlugin extends Plugin {
     public void syncRecents(PluginCall call) {
         String stations = call.getString("stations", "[]");
         getPrefs().edit().putString(KEY_RECENTS, stations).apply();
-        // Notify running service to refresh browse tree
         RadioBrowserService.updateRecents(stations);
         call.resolve();
     }
@@ -131,6 +129,22 @@ public class RadioAutoPlugin extends Plugin {
             }
         }
 
+        call.resolve();
+    }
+
+    /**
+     * v1.1.3: Stop the RadioBrowserService cleanly from JS
+     */
+    @PluginMethod
+    public void stopService(PluginCall call) {
+        Context ctx = getContext();
+        Intent serviceIntent = new Intent(ctx, RadioBrowserService.class);
+        serviceIntent.setAction(RadioBrowserService.ACTION_STOP);
+        try {
+            ctx.startService(serviceIntent);
+        } catch (Exception e) {
+            // Service not running, ignore
+        }
         call.resolve();
     }
 }

@@ -2,6 +2,57 @@
 
 ---
 
+## v1.1.3 — 10 mars 2026 — *Correctifs écran de verrouillage, double-clic pause, redémarrage auto, service zombie*
+
+**Statut :** En préparation  
+**Package :** `com.fhm.radiosphere`  
+**Plateforme :** Android (Capacitor)
+
+### Corrections
+
+#### Boutons Next/Previous sur l'écran de verrouillage et dynamic content
+- 🐛 Les boutons avant/arrière et précédent/suivant apparaissaient sur le dynamic content et l'écran de verrouillage
+- 🔧 Cause : `updatePlaybackState()` déclarait `ACTION_SKIP_TO_NEXT | ACTION_SKIP_TO_PREVIOUS`, ce qui signalait à Android que l'app supportait le skip
+- ✅ Fix : retrait de ces deux flags dans `updatePlaybackState()` — seuls Play, Pause, Stop et PlayPause restent
+
+#### Double-clic nécessaire pour mettre en pause (écran de verrouillage / dynamic content)
+- 🐛 Le bouton pause nécessitait 2 appuis depuis l'écran de verrouillage
+- 🔧 Cause : `onPlay()` appelait directement `player.play()` sur l'ExoPlayer natif, et `onPause()` ne prévenait pas le JS — les deux lecteurs étaient désynchronisés
+- ✅ Fix : `onPlay()` ne lance plus `player.play()` et envoie un broadcast `TOGGLE_PLAYBACK` au JS ; `onPause()` envoie aussi le broadcast pour synchroniser l'état
+
+#### Station redémarre après mise en arrière-plan (2-3 secondes)
+- 🐛 Après une pause manuelle, réduire l'app provoquait un redémarrage automatique
+- 🔧 Cause : `AUDIOFOCUS_GAIN` dans `audioFocusChangeListener` appelait `player.play()`, relançant l'ExoPlayer natif
+- ✅ Fix : `AUDIOFOCUS_GAIN` ne fait plus que restaurer le volume (`player.setVolume(1.0f)`)
+
+#### Service zombie après fermeture de l'app
+- 🐛 Le service `RadioBrowserService` survivait après la fermeture de l'app
+- 🔧 Cause : `ACTION_STOP` faisait seulement `stopForeground(true)` sans terminer le service
+- ✅ Fix : `ACTION_STOP` appelle désormais `forceResetPlayerForSwitch()` + `stopSelf()`
+
+### Améliorations
+
+#### Nouvelle méthode `stopService` dans RadioAutoPlugin
+- Permet au JS d'envoyer `ACTION_STOP` au service natif pour un arrêt propre
+
+#### Notification miroir unifiée
+- `updateMirrorNotification()` utilise maintenant `updatePlaybackState(state)` au lieu de construire un `PlaybackStateCompat` en ligne, garantissant la cohérence des actions déclarées
+
+#### Script PS1 : lancement automatique
+- `npx cap open android` est maintenant exécuté automatiquement en fin de script
+
+### Fichiers modifiés (dans le PS1)
+- `RadioBrowserService.java` — 4 correctifs natifs
+- `RadioAutoPlugin.java` — ajout `stopService()`
+
+### Fichiers modifiés (dans le repo)
+- `radiosphere_v1_1_0.ps1` — v1.1.3
+- `src/plugins/RadioAutoPlugin.ts` — interface `stopService`
+- `android-auto/RadioAutoPlugin.java` — référence mise à jour
+- `VERSIONS.md` — documentation v1.1.3
+
+---
+
 ## v1.1.3 — 9 mars 2026 — *Fix double-clic pause, redémarrage auto, boutons navigation*
 
 **Statut :** En préparation  
