@@ -907,8 +907,8 @@ public class RadioBrowserService extends MediaBrowserServiceCompat {
                 updatePlaybackState(PlaybackStateCompat.STATE_PAUSED);
                 break;
             case AudioManager.AUDIOFOCUS_GAIN:
-                player.setVolume(1.0f); player.play();
-                updatePlaybackState(PlaybackStateCompat.STATE_PLAYING);
+                player.setVolume(1.0f);
+                // v1.1.3: Ne PAS relancer player.play() ici pour eviter les redemarrages fantomes
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 player.setVolume(0.2f);
