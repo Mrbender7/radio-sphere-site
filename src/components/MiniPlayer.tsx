@@ -23,15 +23,18 @@ export function MiniPlayer() {
         const overflow = textWidth > containerWidth;
         setNeedsMarquee(overflow);
         if (overflow) {
-          // Duration = text width / speed → constant scroll speed
           setMarqueeDuration(textWidth / MARQUEE_SPEED);
         }
       }
     };
-    check();
+    // Delay check to let layout settle after visualizer appears/disappears
+    const raf = requestAnimationFrame(check);
     window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, [currentStation?.name]);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", check);
+    };
+  }, [currentStation?.name, isPlaying]);
 
   if (!currentStation) return null;
 
