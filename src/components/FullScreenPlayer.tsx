@@ -44,10 +44,14 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         }
       }
     };
-    check();
+    // Delay check to let layout settle after visualizer appears/disappears
+    const raf = requestAnimationFrame(check);
     window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, [currentStation?.name]);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", check);
+    };
+  }, [currentStation?.name, isPlaying]);
 
   if (!isFullScreen || !currentStation) return null;
 
