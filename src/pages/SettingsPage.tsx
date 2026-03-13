@@ -110,6 +110,9 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [premiumCode, setPremiumCode] = useState("");
   const [codeError, setCodeError] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [showSecretDialog, setShowSecretDialog] = useState(false);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [radioBrowserOpen, setRadioBrowserOpen] = useState(false);
   const [customMinutes, setCustomMinutes] = useState("");
   const [unavailableStations, setUnavailableStations] = useState<RadioStation[]>([]);
