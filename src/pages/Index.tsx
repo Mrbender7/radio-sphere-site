@@ -147,7 +147,6 @@ const Index = () => {
         <FullScreenPlayer onTagClick={handleTagClick} />
         <ExitConfirmDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
       </SleepTimerProvider>
-    </PremiumProvider>
   );
 };
 

@@ -19,7 +19,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   const { currentStation, isPlaying, isBuffering, togglePlay, volume, setVolume, isFullScreen, closeFullScreen, isCasting, castDeviceName } = usePlayer();
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const { t } = useTranslation();
-  const { isPremium } = usePremium();
+  
   const { isRecording, isLive, bufferAvailable, recordingAvailable } = useStreamBuffer();
 
   const [showTimeback, setShowTimeback] = useState(false);
