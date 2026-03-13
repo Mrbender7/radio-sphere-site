@@ -43,7 +43,7 @@ export function PremiumPage() {
         )}
       </div>
 
-      <div className="space-y-4 mb-8">
+      <div className={`space-y-4 mb-8 relative ${!isPremium ? 'opacity-50 grayscale' : ''}`}>
         {features.map(({ icon: Icon, title, desc }) => (
           <div key={title} className="flex items-start gap-4 p-4 rounded-xl bg-accent">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
