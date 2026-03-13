@@ -6,7 +6,7 @@ interface FooterProps {
   // onNavigatePrivacy removed - now uses external link
 }
 
-export function Footer({ onNavigatePrivacy }: FooterProps) {
+export function Footer(_props: FooterProps) {
   const { t } = useTranslation();
 
   return (
