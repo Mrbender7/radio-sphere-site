@@ -484,6 +484,8 @@ const translations: Record<Language, Record<string, string>> = {
     "premium.recorder": "Grabadora",
     "premium.recorderDesc": "Graba tus programas en MP3 y rebobina hasta 5 minutos atrás",
     "premium.monthly": "Compra única — 9,99€",
+    "premium.buyLifetime": "Desbloquear para siempre",
+    "premium.priceNote": "Precio indicativo. El monto final puede variar según el país.",
     "premium.yearly": "",
     "premium.yearlySave": "",
     "premium.cancel": "Restaurar compra",
