@@ -1,4 +1,4 @@
-import { Home, Search, Heart, Settings, Radio, Smartphone } from "lucide-react";
+import { Home, Compass, Heart, Info, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
@@ -10,9 +10,9 @@ import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 const navItems = [
   { id: "home" as TabId, labelKey: "nav.home", icon: Home },
-  { id: "search" as TabId, labelKey: "nav.search", icon: Search },
+  { id: "search" as TabId, labelKey: "nav.explore", icon: Compass },
   { id: "library" as TabId, labelKey: "nav.favorites", icon: Heart },
-  { id: "settings" as TabId, labelKey: "nav.settings", icon: Settings },
+  { id: "about" as TabId, labelKey: "nav.about", icon: Info },
 ];
 
 interface DesktopSidebarProps {
@@ -109,16 +109,16 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         <div className="rounded-xl bg-gradient-to-br from-primary/20 to-[hsl(280,80%,60%,0.15)] border border-primary/10 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Smartphone className="w-4 h-4 text-primary" />
-            <span className="text-xs font-semibold text-foreground">{t("app.downloadTitle") || "Application Mobile"}</span>
+            <span className="text-xs font-semibold text-foreground">{t("app.downloadTitle")}</span>
           </div>
           <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-            {t("app.downloadDesc") || "Écoutez vos radios partout avec l'app Android."}
+            {t("app.downloadDesc")}
           </p>
           <button
             className="w-full py-2 rounded-lg bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
             onClick={() => window.open("#", "_blank")}
           >
-            {t("app.downloadBtn") || "Bientôt disponible"}
+            {t("app.downloadBtn")}
           </button>
         </div>
       </div>

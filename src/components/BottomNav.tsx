@@ -1,12 +1,12 @@
-import { Home, Search, Heart, Settings } from "lucide-react";
+import { Home, Compass, Heart, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 
 const tabConfig = [
   { id: "home", labelKey: "nav.home", icon: Home },
-  { id: "search", labelKey: "nav.search", icon: Search },
+  { id: "search", labelKey: "nav.explore", icon: Compass },
   { id: "library", labelKey: "nav.favorites", icon: Heart },
-  { id: "settings", labelKey: "nav.settings", icon: Settings },
+  { id: "about", labelKey: "nav.about", icon: Info },
 ] as const;
 
 export type TabId = (typeof tabConfig)[number]["id"];
