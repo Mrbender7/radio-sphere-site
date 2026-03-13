@@ -598,8 +598,78 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
         </AlertDialog>
       )}
 
-      {/* App version */}
-      <p className="text-center text-[10px] text-muted-foreground mb-6">Radio Sphere v1.1</p>
+      {/* App version — easter egg: 7 taps to open secret unlock */}
+      <p
+        className="text-center text-[10px] text-muted-foreground mb-6 select-none cursor-default"
+        onClick={() => {
+          const next = tapCount + 1;
+          setTapCount(next);
+          if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+          tapTimerRef.current = setTimeout(() => setTapCount(0), 2000);
+          if (next >= 7) {
+            setTapCount(0);
+            setShowSecretDialog(true);
+            setPremiumCode("");
+            setCodeError(false);
+          }
+        }}
+      >
+        Radio Sphere v1.1
+      </p>
+
+      {/* Secret premium unlock dialog */}
+      <Dialog open={showSecretDialog} onOpenChange={setShowSecretDialog}>
+        <DialogContent className="max-w-xs rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-sm">🔓 Mode testeur</DialogTitle>
+            <DialogDescription className="text-xs">
+              Entrez le code d'accès pour débloquer le Premium.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              type="password"
+              placeholder="Code d'accès"
+              value={premiumCode}
+              onChange={(e) => { setPremiumCode(e.target.value); setCodeError(false); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const ok = unlockWithPassword(premiumCode);
+                  if (ok) {
+                    setPremiumCode("");
+                    setShowSecretDialog(false);
+                    toast({ title: "🎉 Premium débloqué !" });
+                  } else {
+                    setCodeError(true);
+                  }
+                }
+              }}
+              className={cn("h-9 text-xs bg-secondary border-border", codeError && "border-destructive")}
+              autoFocus
+            />
+            {codeError && <p className="text-[10px] text-destructive">{t("premium.wrongPassword")}</p>}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                const ok = unlockWithPassword(premiumCode);
+                if (ok) {
+                  setPremiumCode("");
+                  setShowSecretDialog(false);
+                  toast({ title: "🎉 Premium débloqué !" });
+                } else {
+                  setCodeError(true);
+                }
+              }}
+              size="sm"
+              className="w-full text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-500 hover:to-orange-600"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              Valider
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Unavailable stations dialog after import */}
       <Dialog open={showUnavailableDialog} onOpenChange={setShowUnavailableDialog}>
