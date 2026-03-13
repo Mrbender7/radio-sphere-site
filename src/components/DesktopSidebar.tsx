@@ -1,6 +1,7 @@
 import { Home, Compass, Heart, Info, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
@@ -21,7 +22,7 @@ interface DesktopSidebarProps {
 }
 
 export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) {
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const { favorites } = useFavoritesContext();
   const { play, currentStation, isPlaying } = usePlayer();
 
@@ -104,7 +105,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         </div>
       </div>
 
-      {/* Contact & Copyright */}
+      {/* Contact, Language & Copyright */}
       <div className="px-4 pb-6 pt-4 space-y-3">
         <a
           href="mailto:info@radiosphere.be"
@@ -113,6 +114,23 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           <Mail className="w-4 h-4" />
           info@radiosphere.be
         </a>
+        <div className="flex items-center gap-1.5 px-4">
+          {LANGUAGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setLanguage(opt.value)}
+              className={cn(
+                "text-lg transition-all rounded-md px-1 py-0.5",
+                language === opt.value
+                  ? "scale-110 ring-1 ring-primary/40 bg-primary/10"
+                  : "opacity-50 hover:opacity-100 hover:scale-105"
+              )}
+              title={opt.label}
+            >
+              {opt.flag}
+            </button>
+          ))}
+        </div>
         <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
           © 2026 Radio Sphere — Créé par Franck Malherbe
         </p>

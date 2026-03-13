@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { BookOpen, Home, Search, Heart, Settings, ChevronDown, Moon, Car, Cast, Crown, ShieldAlert, RefreshCw, Disc } from "lucide-react";
+import { BookOpen, Home, Search, Heart, Settings, ChevronDown, Moon, Cast, ShieldAlert, RefreshCw, Disc } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { requestAllPermissions } from "@/utils/permissions";
 
@@ -11,10 +11,9 @@ const SECTIONS = [
   { id: "favorites", icon: Heart, titleKey: "guide.favorites", contentKey: "guide.favoritesContent" },
   { id: "settings", icon: Settings, titleKey: "guide.settings", contentKey: "guide.settingsContent" },
   { id: "permissions", icon: ShieldAlert, titleKey: "guide.permissions", contentKey: "guide.permissionsContent" },
-  { id: "sleepTimer", icon: Moon, titleKey: "guide.sleepTimer", contentKey: "guide.sleepTimerContent", premium: true },
-  { id: "recorder", icon: Disc, titleKey: "guide.recorder", contentKey: "guide.recorderContent", premium: true },
-  { id: "androidAuto", icon: Car, titleKey: "guide.androidAuto", contentKey: "guide.androidAutoContent", premium: true },
-  { id: "chromecast", icon: Cast, titleKey: "guide.chromecast", contentKey: "guide.chromecastContent", premium: true },
+  { id: "sleepTimer", icon: Moon, titleKey: "guide.sleepTimer", contentKey: "guide.sleepTimerContent" },
+  { id: "recorder", icon: Disc, titleKey: "guide.recorder", contentKey: "guide.recorderContent" },
+  { id: "chromecast", icon: Cast, titleKey: "guide.chromecast", contentKey: "guide.chromecastContent" },
 ] as const;
 
 interface UserGuideModalProps {
@@ -49,9 +48,8 @@ export function UserGuideModal({ onReopenWelcome }: UserGuideModalProps) {
         </DialogHeader>
 
         <div className="space-y-2 mt-2">
-          {SECTIONS.map(({ id, icon: Icon, titleKey, contentKey, ...rest }) => {
+        {SECTIONS.map(({ id, icon: Icon, titleKey, contentKey }) => {
             const isOpen = openSection === id;
-            const isPremium = 'premium' in rest && rest.premium;
             const isPermissions = id === "permissions";
             return (
               <div key={id} className="rounded-xl bg-accent overflow-hidden">
@@ -62,7 +60,6 @@ export function UserGuideModal({ onReopenWelcome }: UserGuideModalProps) {
                 >
                   <Icon className="w-4.5 h-4.5 text-primary shrink-0" />
                   <span className="text-sm font-semibold text-foreground flex-1">{t(titleKey)}</span>
-                  {isPremium && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
                   <ChevronDown
                     className={cn(
                       "w-4 h-4 text-muted-foreground transition-transform duration-300",
