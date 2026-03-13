@@ -107,7 +107,7 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
         {t("settings.privacyPolicy")}
       </a>
 
-      <p className="text-[10px] text-muted-foreground mt-3 opacity-60">Radio Sphere v2.5.0</p>
+      <p className="text-[10px] text-muted-foreground mt-3 opacity-60">radiosphere.be</p>
     </div>
   );
 }
