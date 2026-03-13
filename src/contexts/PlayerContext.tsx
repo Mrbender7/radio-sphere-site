@@ -5,6 +5,7 @@ import { reportStationClick } from "@/services/RadioService";
 import { notifyNativePlaybackState } from "@/plugins/RadioAutoPlugin";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useCast } from "@/hooks/useCast";
+import { SSLWarningDialog } from "@/components/SSLWarningDialog";
 
 // Note: The old Capawesome foreground service has been removed in v2.2.9.
 // Lock screen / notification controls are now handled by the native MediaPlaybackService
