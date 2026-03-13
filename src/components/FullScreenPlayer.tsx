@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { usePremium } from "@/contexts/PremiumContext";
+
 import { useStreamBuffer } from "@/contexts/StreamBufferContext";
 import { Play, Pause, ChevronDown, Volume2, Heart, Loader2, Share2, Cast, Radio, Download } from "lucide-react";
 import { CastButton } from "@/components/CastButton";
@@ -19,7 +19,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   const { currentStation, isPlaying, isBuffering, togglePlay, volume, setVolume, isFullScreen, closeFullScreen, isCasting, castDeviceName } = usePlayer();
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const { t } = useTranslation();
-  const { isPremium } = usePremium();
+  
   const { isRecording, isLive, bufferAvailable, recordingAvailable } = useStreamBuffer();
 
   const [showTimeback, setShowTimeback] = useState(false);

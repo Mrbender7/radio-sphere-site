@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { PremiumProvider } from "@/contexts/PremiumContext";
+
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { SleepTimerProvider } from "@/contexts/SleepTimerContext";
@@ -119,8 +119,7 @@ const Index = () => {
   };
 
   return (
-    <PremiumProvider>
-      <SleepTimerProvider>
+    <SleepTimerProvider>
         <SleepTimerIndicator />
         <div className="flex h-full bg-background">
           {/* Desktop sidebar */}
@@ -148,7 +147,6 @@ const Index = () => {
         <FullScreenPlayer onTagClick={handleTagClick} />
         <ExitConfirmDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
       </SleepTimerProvider>
-    </PremiumProvider>
   );
 };
 
