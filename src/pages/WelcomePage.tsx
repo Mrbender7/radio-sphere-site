@@ -24,8 +24,7 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
   const [selectedLang, setSelectedLang] = useState<Language>("fr");
   const t = (key: string) => translations[selectedLang][key] ?? key;
 
-  const handleContinue = async () => {
-    await requestAllPermissions();
+  const handleContinue = () => {
     onComplete(selectedLang);
   };
 
