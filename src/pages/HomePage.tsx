@@ -51,7 +51,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
         </div>
       </div>
 
-      <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 pb-4">
+      <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 lg:px-8 pb-4">
 
       {recent.length > 0 && (
         <section className="mb-3">
