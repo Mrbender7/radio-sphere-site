@@ -20,7 +20,7 @@ import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
 import { useBackButton } from "@/hooks/useBackButton";
 import type { Language } from "@/i18n/translations";
-import { clearNativeAppData } from "@/plugins/RadioAutoPlugin";
+
 
 const ONBOARDING_KEY = "radiosphere_onboarded";
 
