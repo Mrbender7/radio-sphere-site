@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ShieldAlert } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
+import React from "react";
 
 interface SSLWarningDialogProps {
   open: boolean;
