@@ -1,6 +1,6 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useStreamBuffer } from "@/contexts/StreamBufferContext";
-import { usePremium } from "@/contexts/PremiumContext";
+
 import { useTranslation } from "@/contexts/LanguageContext";
 import { CassetteAnimation } from "@/components/CassetteAnimation";
 import { ChevronDown, Play, Pause, Square, Circle, Rewind, FastForward, Radio } from "lucide-react";
