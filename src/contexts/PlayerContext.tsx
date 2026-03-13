@@ -345,6 +345,22 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         console.warn("[RadioSphere] Blob playback error ignored (time-shift), StreamBuffer will handle recovery");
         return;
       }
+
+      // Detect mixed content / SSL errors: if the original stream URL was HTTP on an HTTPS page
+      const station = currentStationRef.current;
+      const isPageSecure = window.location.protocol === 'https:';
+      const isStreamInsecure = station?.streamUrl?.startsWith('http://');
+      if (isPageSecure && isStreamInsecure && station && !sslAcceptedUrls.current.has(station.streamUrl)) {
+        console.warn("[RadioSphere] SSL/mixed-content error detected for:", station.streamUrl);
+        setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
+        stopSilentLoop();
+        stopHeartbeat();
+        notifyNativePlaybackState(null, false);
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+        setSslWarning({ station });
+        return;
+      }
+
       setState(s => ({ ...s, isPlaying: false }));
       stopSilentLoop();
       stopHeartbeat();
