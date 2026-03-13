@@ -123,20 +123,20 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           <ShieldCheck className="w-3.5 h-3.5" />
           {t("settings.privacyPolicy")}
         </a>
-        <div className="flex items-center gap-1.5 px-4">
+        <div className="flex items-center gap-2 px-4">
           {LANGUAGE_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               onClick={() => setLanguage(opt.value)}
               className={cn(
-                "text-lg transition-all rounded-md px-1 py-0.5",
+                "transition-all rounded-full overflow-hidden",
                 language === opt.value
-                  ? "scale-110 ring-1 ring-primary/40 bg-primary/10"
-                  : "opacity-50 hover:opacity-100 hover:scale-105"
+                  ? "ring-2 ring-primary scale-110"
+                  : "opacity-50 hover:opacity-100 hover:scale-105 grayscale hover:grayscale-0"
               )}
               title={opt.label}
             >
-              {opt.flag}
+              <img src={opt.flagUrl} alt={opt.label} className="w-6 h-6 object-cover rounded-full" />
             </button>
           ))}
         </div>
