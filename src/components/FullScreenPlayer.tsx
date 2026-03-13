@@ -33,10 +33,12 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   const [marqueeDuration, setMarqueeDuration] = useState(10);
 
   useEffect(() => {
+    const container = textContainerRef.current;
+    if (!container) return;
     const check = () => {
-      if (measureRef.current && textContainerRef.current) {
+      if (measureRef.current && container) {
         const textWidth = measureRef.current.scrollWidth;
-        const containerWidth = textContainerRef.current.clientWidth;
+        const containerWidth = container.clientWidth;
         const overflow = textWidth > containerWidth;
         setNeedsMarquee(overflow);
         if (overflow) {
@@ -44,14 +46,13 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         }
       }
     };
-    // Delay check to let layout settle after visualizer appears/disappears
-    const raf = requestAnimationFrame(check);
-    window.addEventListener("resize", check);
+    const observer = new ResizeObserver(check);
+    observer.observe(container);
+    check();
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", check);
+      observer.disconnect();
     };
-  }, [currentStation?.name, isPlaying]);
+  }, [currentStation?.name]);
 
   if (!isFullScreen || !currentStation) return null;
 
@@ -208,11 +209,11 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 {/* Station name with visualizer + marquee */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   {isPlaying && <AudioVisualizer size="medium" />}
                   {/* Hidden measurer */}
                   <span ref={measureRef} className="text-3xl sm:text-4xl font-heading font-bold whitespace-nowrap absolute invisible pointer-events-none">{currentStation.name}</span>
-                  <div ref={textContainerRef} className="overflow-hidden flex-1 min-w-0 max-w-[55vw]">
+                  <div ref={textContainerRef} className="overflow-hidden flex-1 min-w-0">
                     <p
                       className={`text-3xl sm:text-4xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap ${needsMarquee ? "w-fit animate-marquee" : ""}`}
                       style={needsMarquee ? { animationDuration: `${marqueeDuration}s` } : undefined}
