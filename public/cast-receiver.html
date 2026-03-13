@@ -388,11 +388,28 @@
     const context = cast.framework.CastReceiverContext.getInstance();
     const playerManager = context.getPlayerManager();
 
+    // Error listener for diagnostics
+    playerManager.addEventListener(
+      cast.framework.events.EventType.ERROR,
+      (event) => {
+        console.error('[RS Receiver] Playback error:', JSON.stringify(event));
+      }
+    );
+
     playerManager.setMessageInterceptor(
       cast.framework.messages.MessageType.LOAD,
       request => {
         const media = request.media;
         if (media) {
+          // Force HTTPS on stream URL to avoid mixed content blocking
+          if (media.contentId && media.contentId.startsWith('http://')) {
+            console.log('[RS Receiver] Forcing HTTPS on contentId:', media.contentId);
+            media.contentId = media.contentId.replace('http://', 'https://');
+          }
+          if (media.contentUrl && media.contentUrl.startsWith('http://')) {
+            media.contentUrl = media.contentUrl.replace('http://', 'https://');
+          }
+
           const title = media.metadata?.title || 'Station';
           const imageUrl = media.metadata?.images?.[0]?.url || '';
           const tags = media.customData?.tags || [];
@@ -427,8 +444,11 @@
       }
     );
 
-    // Start receiver
-    context.start();
+    // Start receiver with PlaybackConfig optimized for live audio streams
+    const playbackConfig = new cast.framework.PlaybackConfig();
+    playbackConfig.autoResumeDuration = 5;
+    playbackConfig.initialBandwidth = 128000;
+    context.start({ playbackConfig });
   </script>
 </body>
 </html>

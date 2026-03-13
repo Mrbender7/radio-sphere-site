@@ -316,12 +316,13 @@ public class CastPlugin extends Plugin {
                     org.json.JSONObject customData = new org.json.JSONObject();
                     try { customData.put("tags", tags); customData.put("stationId", stationId); } catch (Exception e) {}
 
-                    // v2.4.5: Log original URL for diagnostics, keep as-is (no forced HTTPS)
-                    // If your Cast App ID supports cleartext, HTTP will work.
-                    // If not, try HTTPS variant of the stream URL.
-                    Log.d(TAG, "Loading URL to Cast: " + streamUrl);
+                    // v2.5.3: Force HTTPS to avoid mixed content blocking on custom receivers
+                    String castUrl = streamUrl.startsWith("http://")
+                        ? streamUrl.replace("http://", "https://")
+                        : streamUrl;
+                    Log.d(TAG, "Loading URL to Cast: " + castUrl + " (original: " + streamUrl + ")");
 
-                    MediaInfo mediaInfo = new MediaInfo.Builder(streamUrl)
+                    MediaInfo mediaInfo = new MediaInfo.Builder(castUrl)
                         .setStreamType(MediaInfo.STREAM_TYPE_LIVE)
                         .setContentType("audio/*")
                         .setMetadata(metadata)
