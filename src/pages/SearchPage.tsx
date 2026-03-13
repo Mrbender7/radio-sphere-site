@@ -84,9 +84,19 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const { t } = useTranslation();
   const PAGE_SIZE = 40;
 
+  // Map special genre aliases to multiple search tags
+  const GENRE_TAG_MAP: Record<string, string[]> = {
+    mousemusic: ["park", "disney", "disneyland", "children"],
+  };
+
   useEffect(() => {
     if (initialGenre) {
-      setGenres([initialGenre]);
+      const expandedTags = GENRE_TAG_MAP[initialGenre];
+      if (expandedTags) {
+        setGenres(expandedTags);
+      } else {
+        setGenres([initialGenre]);
+      }
       setQuery("");
       setCountry("");
       setLanguages([]);

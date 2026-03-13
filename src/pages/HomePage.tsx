@@ -10,7 +10,7 @@ import { GenreAnimation } from "@/components/GenreAnimations";
 import { CastButton } from "@/components/CastButton";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
-const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
+const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "mousemusic", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
 
 interface HomePageProps {
   recent: RadioStation[];
@@ -180,6 +180,7 @@ const GENRE_COLORS: Record<string, string> = {
   jazz: "from-amber-700 to-yellow-500",
   latin: "from-red-600 to-yellow-500",
   metal: "from-gray-800 to-zinc-500",
+  mousemusic: "from-purple-600 to-yellow-400",
   news: "from-slate-700 to-gray-400",
   pop: "from-pink-600 to-rose-400",
   "r&b": "from-rose-700 to-pink-500",
