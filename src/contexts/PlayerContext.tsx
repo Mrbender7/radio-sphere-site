@@ -299,9 +299,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
   }, [handlePlay, handlePause]);
 
-  // Old Capawesome foreground service listener removed in v2.2.9
-  // Notification buttons are now handled by MediaPlaybackService via mediaToggle event
-
   // v2.2.9: Listen for MediaStyle notification toggle (native MediaPlaybackService)
   useEffect(() => {
     let mediaToggleRemove: (() => void) | null = null;
@@ -334,17 +331,11 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
   }, [handlePlay, handlePause]);
 
-  // Notification permissions are now centralized in WelcomePage + UserGuideModal
-  // No auto-prompt here to avoid duplicate dialogs
-
   useEffect(() => {
     const audio = audioRef.current;
     audio.volume = state.volume;
 
     const handleError = () => {
-      // Skip error handling for blob: URLs (time-shift seek-back) —
-      // transient decoding errors are normal when blob starts mid-frame.
-      // StreamBufferContext will handle auto-return-to-live.
       if (audio.src && audio.src.startsWith('blob:')) {
         console.warn("[RadioSphere] Blob playback error ignored (time-shift), StreamBuffer will handle recovery");
         return;
@@ -358,8 +349,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
     audio.addEventListener("error", handleError);
 
-    // Stalled / ended listeners — auto-reload dead streams
-    // SKIP when playing a blob: URL (time-shift seek-back)
     const handleStalled = () => {
       if (!isPlayingRef.current) return;
       if (audio.src && audio.src.startsWith('blob:')) return;
@@ -388,8 +377,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     audio.addEventListener("ended", handleEnded);
 
     const keepAlive = () => {
-      // Delay check to let MediaSession handlePause/handlePlay execute first
-      // (Android triggers visibilitychange before the media button event lands)
       if (document.visibilityState === 'visible') {
         setTimeout(() => {
           const recentPause = Date.now() - pausedAtRef.current < 2000;
@@ -424,6 +411,31 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         return;
       }
 
+      // --- CASTING MODE: Bypass local audio completely ---
+      if (isCasting) {
+        console.log("[RadioSphere] Cast is active, playing only on TV");
+        const audio = audioRef.current;
+        audio.pause();
+        stopSilentLoop();
+        stopHeartbeat();
+
+        retryCountRef.current = 0;
+        isPlayingRef.current = true;
+        setState(s => ({ ...s, currentStation: station, isBuffering: false, isPlaying: true }));
+
+        const secureLogo = station.logo?.replace('http://', 'https://');
+        updateMediaSession({ ...station, logo: secureLogo }, true);
+        notifyNativePlaybackState(station, true);
+
+        onStationPlay?.(station);
+        reportStationClick(station.id);
+        requestWakeLock();
+
+        castLoadMedia(station);
+        return; // CRUCIAL: Stop execution here to prevent local streaming
+      }
+
+      // --- LOCAL PLAYBACK MODE ---
       const audio = audioRef.current;
 
       // --- Cleanup previous pending listeners/timeouts ---
@@ -515,10 +527,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       reportStationClick(station.id);
       requestWakeLock();
 
-      // Send to Chromecast if casting
-      if (isCasting) {
-        castLoadMedia(station);
-      }
     } catch (e) {
       console.error("[RadioSphere] Unexpected error in play()", e);
       setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
@@ -595,12 +603,14 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       console.log("[RadioSphere] Cast connected — pausing local audio");
       audio.pause();
       stopSilentLoop();
+      stopHeartbeat();
     } else if (!isCasting && wasCastingRef.current) {
       // Cast just disconnected → resume local audio if we were playing
       console.log("[RadioSphere] Cast disconnected — resuming local audio");
       if (state.isPlaying && state.currentStation) {
-        audio.play().catch(() => {});
-        startSilentLoop();
+        // Use reloadStreamRef to completely re-init the local HTMLAudioElement 
+        // since we bypassed its loading while casting!
+        reloadStreamRef.current();
       }
     }
     wasCastingRef.current = isCasting;
