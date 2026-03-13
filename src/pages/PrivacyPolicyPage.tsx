@@ -33,6 +33,7 @@ export function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
               <p className="font-semibold text-foreground">Radio Sphere — radiosphere.be</p>
             </div>
             <p className="text-xs text-muted-foreground">{t("privacy.lastUpdated")}: 13 mars 2026</p>
+            <p className="text-xs text-muted-foreground mt-1">Web Player — radiosphere.be</p>
           </section>
 
           <section>
