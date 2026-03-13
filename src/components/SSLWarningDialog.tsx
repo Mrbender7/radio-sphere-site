@@ -18,7 +18,7 @@ interface SSLWarningDialogProps {
   onCancel: () => void;
 }
 
-export function SSLWarningDialog({ open, stationName, onAcceptRisk, onCancel }: SSLWarningDialogProps) {
+export const SSLWarningDialog = React.forwardRef<HTMLDivElement, SSLWarningDialogProps>(function SSLWarningDialog({ open, stationName, onAcceptRisk, onCancel }, _ref) {
   const { t } = useTranslation();
 
   return (
