@@ -10,47 +10,46 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 
 const FALLBACK_COUNTRIES = [
-  { label: "Argentina 🇦🇷", value: "Argentina" },
-  { label: "Australia 🇦🇺", value: "Australia" },
-  { label: "Austria 🇦🇹", value: "Austria" },
-  { label: "Belgium 🇧🇪", value: "Belgium" },
-  { label: "Brazil 🇧🇷", value: "Brazil" },
-  { label: "Canada 🇨🇦", value: "Canada" },
-  { label: "Chile 🇨🇱", value: "Chile" },
-  { label: "China 🇨🇳", value: "China" },
-  { label: "Colombia 🇨🇴", value: "Colombia" },
-  { label: "Czechia 🇨🇿", value: "Czech Republic" },
-  { label: "Denmark 🇩🇰", value: "Denmark" },
-  { label: "Egypt 🇪🇬", value: "Egypt" },
-  { label: "Finland 🇫🇮", value: "Finland" },
-  { label: "France 🇫🇷", value: "France" },
-  { label: "Germany 🇩🇪", value: "Germany" },
-  { label: "Greece 🇬🇷", value: "Greece" },
-  { label: "India 🇮🇳", value: "India" },
-  { label: "Ireland 🇮🇪", value: "Ireland" },
-  { label: "Italy 🇮🇹", value: "Italy" },
-  { label: "Japan 🇯🇵", value: "Japan" },
-  { label: "Mexico 🇲🇽", value: "Mexico" },
-  { label: "Morocco 🇲🇦", value: "Morocco" },
-  { label: "Netherlands 🇳🇱", value: "Netherlands" },
-  { label: "New Zealand 🇳🇿", value: "New Zealand" },
-  { label: "Norway 🇳🇴", value: "Norway" },
-  { label: "Poland 🇵🇱", value: "Poland" },
-  { label: "Portugal 🇵🇹", value: "Portugal" },
-  { label: "Romania 🇷🇴", value: "Romania" },
-  { label: "South Africa 🇿🇦", value: "South Africa" },
-  { label: "Spain 🇪🇸", value: "Spain" },
-  { label: "Sweden 🇸🇪", value: "Sweden" },
-  { label: "Switzerland 🇨🇭", value: "Switzerland" },
-  { label: "Turkey 🇹🇷", value: "Turkey" },
-  { label: "UK 🇬🇧", value: "The United Kingdom Of Great Britain And Northern Ireland" },
-  { label: "USA 🇺🇸", value: "The United States Of America" },
+  { label: "Argentina", value: "Argentina", code: "ar" },
+  { label: "Australia", value: "Australia", code: "au" },
+  { label: "Austria", value: "Austria", code: "at" },
+  { label: "Belgium", value: "Belgium", code: "be" },
+  { label: "Brazil", value: "Brazil", code: "br" },
+  { label: "Canada", value: "Canada", code: "ca" },
+  { label: "Chile", value: "Chile", code: "cl" },
+  { label: "China", value: "China", code: "cn" },
+  { label: "Colombia", value: "Colombia", code: "co" },
+  { label: "Czechia", value: "Czech Republic", code: "cz" },
+  { label: "Denmark", value: "Denmark", code: "dk" },
+  { label: "Egypt", value: "Egypt", code: "eg" },
+  { label: "Finland", value: "Finland", code: "fi" },
+  { label: "France", value: "France", code: "fr" },
+  { label: "Germany", value: "Germany", code: "de" },
+  { label: "Greece", value: "Greece", code: "gr" },
+  { label: "India", value: "India", code: "in" },
+  { label: "Ireland", value: "Ireland", code: "ie" },
+  { label: "Italy", value: "Italy", code: "it" },
+  { label: "Japan", value: "Japan", code: "jp" },
+  { label: "Mexico", value: "Mexico", code: "mx" },
+  { label: "Morocco", value: "Morocco", code: "ma" },
+  { label: "Netherlands", value: "Netherlands", code: "nl" },
+  { label: "New Zealand", value: "New Zealand", code: "nz" },
+  { label: "Norway", value: "Norway", code: "no" },
+  { label: "Poland", value: "Poland", code: "pl" },
+  { label: "Portugal", value: "Portugal", code: "pt" },
+  { label: "Romania", value: "Romania", code: "ro" },
+  { label: "South Africa", value: "South Africa", code: "za" },
+  { label: "Spain", value: "Spain", code: "es" },
+  { label: "Sweden", value: "Sweden", code: "se" },
+  { label: "Switzerland", value: "Switzerland", code: "ch" },
+  { label: "Turkey", value: "Turkey", code: "tr" },
+  { label: "UK", value: "The United Kingdom Of Great Britain And Northern Ireland", code: "gb" },
+  { label: "USA", value: "The United States Of America", code: "us" },
 ];
 
-function countryCodeToFlag(iso: string): string {
-  if (!iso || iso.length !== 2) return "";
-  const codePoints = iso.toUpperCase().split("").map(c => 0x1F1E6 + c.charCodeAt(0) - 65);
-  return String.fromCodePoint(...codePoints);
+function buildFlagUrl(code?: string): string | null {
+  if (!code || code.length !== 2) return null;
+  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
 const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
@@ -111,10 +110,14 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   });
 
   const countryList = useMemo(() => {
-    if (!apiCountries || apiCountries.length === 0) return FALLBACK_COUNTRIES;
+    if (!apiCountries || apiCountries.length === 0) {
+      return FALLBACK_COUNTRIES.map((c) => ({ ...c, flagUrl: buildFlagUrl(c.code) }));
+    }
     return apiCountries.map((c: CountryInfo) => ({
-      label: `${c.name} ${countryCodeToFlag(c.iso_3166_1)}`,
+      label: c.name,
       value: c.name,
+      code: c.iso_3166_1.toLowerCase(),
+      flagUrl: buildFlagUrl(c.iso_3166_1),
     }));
   }, [apiCountries]);
 
@@ -584,7 +587,7 @@ function MultiSelectDropdown({ label, items, selected, onToggle, searchable }: {
   );
 }
 
-function CountryDropdown({ countries, value, onChange, placeholder }: { countries: { label: string; value: string }[]; value: string; onChange: (v: string) => void; placeholder: string }) {
+function CountryDropdown({ countries, value, onChange, placeholder }: { countries: { label: string; value: string; code?: string; flagUrl?: string | null }[]; value: string; onChange: (v: string) => void; placeholder: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [canScrollUp, setCanScrollUp] = useState(false);
@@ -618,7 +621,7 @@ function CountryDropdown({ countries, value, onChange, placeholder }: { countrie
     ? countries.filter(c => c.label.toLowerCase().includes(search.toLowerCase()))
     : countries;
 
-  const selectedLabel = countries.find(c => c.value === value)?.label;
+  const selectedCountry = countries.find(c => c.value === value);
 
   return (
     <div className="relative" ref={ref}>
@@ -626,7 +629,14 @@ function CountryDropdown({ countries, value, onChange, placeholder }: { countrie
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between gap-2 bg-accent rounded-lg px-3 py-2.5 text-sm text-foreground"
       >
-        <span className="truncate">{selectedLabel || placeholder}</span>
+        <span className="truncate inline-flex items-center gap-2">
+          {selectedCountry?.flagUrl ? (
+            <img src={selectedCountry.flagUrl} alt={selectedCountry.label} className="w-4 h-4 rounded-full object-cover" loading="lazy" />
+          ) : selectedCountry?.code ? (
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase w-4 text-center">{selectedCountry.code}</span>
+          ) : null}
+          {selectedCountry?.label || placeholder}
+        </span>
         <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
       {open && (
@@ -659,6 +669,11 @@ function CountryDropdown({ countries, value, onChange, placeholder }: { countrie
                 >
                   {value === c.value && <Check className="w-4 h-4 text-primary shrink-0" />}
                   {value !== c.value && <div className="w-4 h-4 shrink-0" />}
+                  {c.flagUrl ? (
+                    <img src={c.flagUrl} alt={c.label} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                  ) : c.code ? (
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase w-4 text-center shrink-0">{c.code}</span>
+                  ) : null}
                   <span className="truncate">{c.label}</span>
                 </button>
               ))}
