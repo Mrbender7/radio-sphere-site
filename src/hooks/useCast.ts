@@ -300,7 +300,10 @@ export function useCast() {
           if (!session) return;
 
           const chr = window.chrome;
-          const mediaInfo = new chr.cast.media.MediaInfo(station.streamUrl, "audio/mpeg");
+          // v2.5.3: Force HTTPS + LIVE stream type + generic audio content type
+          const streamUrlSafe = station.streamUrl.replace('http://', 'https://');
+          const mediaInfo = new chr.cast.media.MediaInfo(streamUrlSafe, "audio/*");
+          mediaInfo.streamType = chr.cast.media.StreamType.LIVE;
           mediaInfo.metadata = new chr.cast.media.MusicTrackMediaMetadata();
           mediaInfo.metadata.title = station.name;
           mediaInfo.metadata.artist = "Radio Sphere";
