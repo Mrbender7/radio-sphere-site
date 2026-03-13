@@ -1183,6 +1183,7 @@ const translations: Record<Language, Record<string, string>> = {
     "genre.techno": "テクノ",
     "genre.trance": "トランス",
     "genre.world": "ワールド",
+    "genre.mousemusic": "Mouse & Music",
     "cast.castingTo": "キャスト中",
     "cast.controlFromPhone": "スマートフォンから操作できます",
     "cast.connected": "接続済み",

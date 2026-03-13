@@ -180,6 +180,7 @@ const GENRE_COLORS: Record<string, string> = {
   jazz: "from-amber-700 to-yellow-500",
   latin: "from-red-600 to-yellow-500",
   metal: "from-gray-800 to-zinc-500",
+  mousemusic: "from-purple-600 to-yellow-400",
   news: "from-slate-700 to-gray-400",
   pop: "from-pink-600 to-rose-400",
   "r&b": "from-rose-700 to-pink-500",

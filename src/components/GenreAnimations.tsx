@@ -53,6 +53,7 @@ const GENRE_IMAGES: Record<string, string> = {
   techno: imgTechno,
   trance: imgTrance,
   world: imgWorld,
+  mousemusic: imgMousemusic,
 };
 
 export function GenreAnimation({ genre }: GenreAnimationProps) {
