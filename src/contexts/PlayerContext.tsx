@@ -5,6 +5,7 @@ import { reportStationClick } from "@/services/RadioService";
 import { notifyNativePlaybackState } from "@/plugins/RadioAutoPlugin";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useCast } from "@/hooks/useCast";
+import { SSLWarningDialog } from "@/components/SSLWarningDialog";
 
 // Note: The old Capawesome foreground service has been removed in v2.2.9.
 // Lock screen / notification controls are now handled by the native MediaPlaybackService
@@ -86,6 +87,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     volume: 0.8,
     isFullScreen: false,
   });
+
+  // SSL warning state
+  const [sslWarning, setSslWarning] = useState<{ station: RadioStation } | null>(null);
+  const sslAcceptedUrls = useRef<Set<string>>(new Set());
 
   // isPlayingRef is now updated synchronously in play/pause handlers — no useEffect needed
 
@@ -340,6 +345,22 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         console.warn("[RadioSphere] Blob playback error ignored (time-shift), StreamBuffer will handle recovery");
         return;
       }
+
+      // Detect mixed content / SSL errors: if the original stream URL was HTTP on an HTTPS page
+      const station = currentStationRef.current;
+      const isPageSecure = window.location.protocol === 'https:';
+      const isStreamInsecure = station?.streamUrl?.startsWith('http://');
+      if (isPageSecure && isStreamInsecure && station && !sslAcceptedUrls.current.has(station.streamUrl)) {
+        console.warn("[RadioSphere] SSL/mixed-content error detected for:", station.streamUrl);
+        setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
+        stopSilentLoop();
+        stopHeartbeat();
+        notifyNativePlaybackState(null, false);
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+        setSslWarning({ station });
+        return;
+      }
+
       setState(s => ({ ...s, isPlaying: false }));
       stopSilentLoop();
       stopHeartbeat();
@@ -403,11 +424,20 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const play = useCallback(async (station: RadioStation) => {
+  const playInternal = useCallback(async (station: RadioStation, bypassSSL = false) => {
     try {
       if (!station.streamUrl) {
         console.error('[RadioSphere] Cannot play station with no stream URL.');
         toast({ title: t("player.error"), description: t("player.streamUnavailable"), variant: "destructive" });
+        return;
+      }
+
+      // Detect mixed content (HTTP stream on HTTPS page)
+      const isPageSecure = window.location.protocol === 'https:';
+      const isStreamInsecure = station.streamUrl.startsWith('http://');
+      if (isPageSecure && isStreamInsecure && !bypassSSL && !sslAcceptedUrls.current.has(station.streamUrl)) {
+        console.warn("[RadioSphere] Insecure stream detected:", station.streamUrl);
+        setSslWarning({ station });
         return;
       }
 
@@ -534,6 +564,22 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     }
   }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, isCasting, castLoadMedia]);
 
+  const play = useCallback((station: RadioStation) => {
+    playInternal(station, false);
+  }, [playInternal]);
+
+  const handleSSLAccept = useCallback(() => {
+    if (sslWarning) {
+      sslAcceptedUrls.current.add(sslWarning.station.streamUrl);
+      setSslWarning(null);
+      playInternal(sslWarning.station, true);
+    }
+  }, [sslWarning, playInternal]);
+
+  const handleSSLCancel = useCallback(() => {
+    setSslWarning(null);
+  }, []);
+
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!state.currentStation) return;
@@ -633,6 +679,12 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   return (
     <PlayerContext.Provider value={{ ...state, play, togglePlay, setVolume, openFullScreen, closeFullScreen, isCastAvailable, isCasting, castDeviceName, castUiMode, castInitState, startCast, stopCast }}>
       {children}
+      <SSLWarningDialog
+        open={!!sslWarning}
+        stationName={sslWarning?.station.name || ""}
+        onAcceptRisk={handleSSLAccept}
+        onCancel={handleSSLCancel}
+      />
     </PlayerContext.Provider>
   );
 }
