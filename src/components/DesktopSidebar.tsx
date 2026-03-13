@@ -1,4 +1,4 @@
-import { Home, Compass, Heart, Info, Smartphone } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
@@ -104,23 +104,18 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         </div>
       </div>
 
-      {/* App download CTA */}
-      <div className="px-4 pb-6 pt-4">
-        <div className="rounded-xl bg-gradient-to-br from-primary/20 to-[hsl(280,80%,60%,0.15)] border border-primary/10 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Smartphone className="w-4 h-4 text-primary" />
-            <span className="text-xs font-semibold text-foreground">{t("app.downloadTitle")}</span>
-          </div>
-          <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-            {t("app.downloadDesc")}
-          </p>
-          <button
-            className="w-full py-2 rounded-lg bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
-            onClick={() => window.open("#", "_blank")}
-          >
-            {t("app.downloadBtn")}
-          </button>
-        </div>
+      {/* Contact & Copyright */}
+      <div className="px-4 pb-6 pt-4 space-y-3">
+        <a
+          href="mailto:info@radiosphere.be"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs text-muted-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
+        >
+          <Mail className="w-4 h-4" />
+          info@radiosphere.be
+        </a>
+        <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
+          © 2026 Radio Sphere — Créé par Franck Malherbe
+        </p>
       </div>
     </aside>
   );

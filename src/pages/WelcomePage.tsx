@@ -1,7 +1,6 @@
 import { useState } from "react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { Globe, Radio, Heart, Search, Music, ChevronRight, ShieldCheck } from "lucide-react";
-import { requestAllPermissions } from "@/utils/permissions";
 import type { Language } from "@/i18n/translations";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import translations from "@/i18n/translations";
@@ -24,8 +23,7 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
   const [selectedLang, setSelectedLang] = useState<Language>("fr");
   const t = (key: string) => translations[selectedLang][key] ?? key;
 
-  const handleContinue = async () => {
-    await requestAllPermissions();
+  const handleContinue = () => {
     onComplete(selectedLang);
   };
 
@@ -108,7 +106,7 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
         {t("settings.privacyPolicy")}
       </a>
 
-      <p className="text-[10px] text-muted-foreground mt-3 opacity-60">Radio Sphere v2.5.0</p>
+      <p className="text-[10px] text-muted-foreground mt-3 opacity-60">radiosphere.be</p>
     </div>
   );
 }

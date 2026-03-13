@@ -428,9 +428,9 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
           </AlertDialog>
         )}
 
-        {/* Version */}
+        {/* Copyright */}
         <p className="text-center text-[10px] text-muted-foreground mb-6 select-none">
-          Radio Sphere v1.1
+          © {new Date().getFullYear()} Radio Sphere
         </p>
 
         {/* Unavailable stations dialog */}
