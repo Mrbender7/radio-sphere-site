@@ -64,7 +64,7 @@ const Index = () => {
   }, []);
 
   const handleResetApp = useCallback(async () => {
-    try { await clearNativeAppData(); } catch {}
+    try { localStorage.clear(); sessionStorage.clear(); } catch {}
     try { localStorage.clear(); sessionStorage.clear(); } catch {}
     try {
       const dbs = await window.indexedDB.databases();
