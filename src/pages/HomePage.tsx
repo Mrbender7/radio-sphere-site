@@ -10,7 +10,7 @@ import { GenreAnimation } from "@/components/GenreAnimations";
 import { CastButton } from "@/components/CastButton";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
-const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
+const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "mousemusic", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
 
 interface HomePageProps {
   recent: RadioStation[];
