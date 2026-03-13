@@ -3,7 +3,7 @@ import { ShieldCheck, Mail, ExternalLink } from "lucide-react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 interface FooterProps {
-  onNavigatePrivacy?: () => void;
+  // onNavigatePrivacy removed - now uses external link
 }
 
 export function Footer({ onNavigatePrivacy }: FooterProps) {
