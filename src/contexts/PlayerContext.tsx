@@ -88,6 +88,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     isFullScreen: false,
   });
 
+  // SSL warning state
+  const [sslWarning, setSslWarning] = useState<{ station: RadioStation } | null>(null);
+  const sslAcceptedUrls = useRef<Set<string>>(new Set());
+
   // isPlayingRef is now updated synchronously in play/pause handlers — no useEffect needed
 
   useEffect(() => {
