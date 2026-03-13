@@ -587,7 +587,7 @@ function MultiSelectDropdown({ label, items, selected, onToggle, searchable }: {
   );
 }
 
-function CountryDropdown({ countries, value, onChange, placeholder }: { countries: { label: string; value: string }[]; value: string; onChange: (v: string) => void; placeholder: string }) {
+function CountryDropdown({ countries, value, onChange, placeholder }: { countries: { label: string; value: string; code?: string; flagUrl?: string | null }[]; value: string; onChange: (v: string) => void; placeholder: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [canScrollUp, setCanScrollUp] = useState(false);
@@ -621,7 +621,7 @@ function CountryDropdown({ countries, value, onChange, placeholder }: { countrie
     ? countries.filter(c => c.label.toLowerCase().includes(search.toLowerCase()))
     : countries;
 
-  const selectedLabel = countries.find(c => c.value === value)?.label;
+  const selectedCountry = countries.find(c => c.value === value);
 
   return (
     <div className="relative" ref={ref}>
@@ -629,7 +629,14 @@ function CountryDropdown({ countries, value, onChange, placeholder }: { countrie
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between gap-2 bg-accent rounded-lg px-3 py-2.5 text-sm text-foreground"
       >
-        <span className="truncate">{selectedLabel || placeholder}</span>
+        <span className="truncate inline-flex items-center gap-2">
+          {selectedCountry?.flagUrl ? (
+            <img src={selectedCountry.flagUrl} alt={selectedCountry.label} className="w-4 h-4 rounded-full object-cover" loading="lazy" />
+          ) : selectedCountry?.code ? (
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase w-4 text-center">{selectedCountry.code}</span>
+          ) : null}
+          {selectedCountry?.label || placeholder}
+        </span>
         <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
       {open && (
@@ -662,6 +669,11 @@ function CountryDropdown({ countries, value, onChange, placeholder }: { countrie
                 >
                   {value === c.value && <Check className="w-4 h-4 text-primary shrink-0" />}
                   {value !== c.value && <div className="w-4 h-4 shrink-0" />}
+                  {c.flagUrl ? (
+                    <img src={c.flagUrl} alt={c.label} className="w-4 h-4 rounded-full object-cover shrink-0" loading="lazy" />
+                  ) : c.code ? (
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase w-4 text-center shrink-0">{c.code}</span>
+                  ) : null}
                   <span className="truncate">{c.label}</span>
                 </button>
               ))}
