@@ -1,6 +1,7 @@
 import { Home, Compass, Heart, Info, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
