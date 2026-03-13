@@ -106,7 +106,8 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
             <SelectContent>
               {LANGUAGE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
-                  {opt.flag} {opt.label}
+                  <span className="inline-flex items-center gap-2"><img src={opt.flagUrl} alt={opt.label} className="w-5 h-4 object-cover rounded-sm" /> {opt.label}</span>
+                </SelectItem>
                 </SelectItem>
               ))}
             </SelectContent>
