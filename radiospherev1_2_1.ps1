@@ -472,7 +472,7 @@ import android.Manifest; import android.content.Context; import android.content.
 @CapacitorPlugin(name = "CastPlugin", permissions = { @Permission(alias = "network", strings = { "android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION", "android.permission.NEARBY_WIFI_DEVICES" }) })
 public class CastPlugin extends Plugin {
     private static final String TAG = "CastPlugin";
-    private static final String CAST_APP_ID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+    private static final String CAST_APP_ID = "65257ADB";
     private CastContext castContext; private MediaRouter mediaRouter; private MediaRouteSelector mediaRouteSelector;
     private boolean devicesAvailable = false; private PluginCall savedInitCall = null;
     private final SessionManagerListener<CastSession> sessionListener = new SessionManagerListener<CastSession>() {
@@ -512,7 +512,7 @@ $CastOptionsProviderJava = @'
 package __PACKAGE__;
 import android.content.Context; import com.google.android.gms.cast.CastMediaControlIntent; import com.google.android.gms.cast.framework.CastOptions; import com.google.android.gms.cast.framework.OptionsProvider; import com.google.android.gms.cast.framework.SessionProvider; import java.util.List;
 public class CastOptionsProvider implements OptionsProvider {
-    @Override public CastOptions getCastOptions(Context context) { return new CastOptions.Builder().setReceiverApplicationId(CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID).build(); }
+    @Override public CastOptions getCastOptions(Context context) { return new CastOptions.Builder().setReceiverApplicationId("65257ADB").build(); }
     @Override public List<SessionProvider> getAdditionalSessionProviders(Context context) { return null; }
 }
 '@
@@ -1175,9 +1175,13 @@ if ($MainAct) {
 }
 
 # ===================================================================
-# 8. Sync final
+# 8. Sync final et Ouverture
 # ===================================================================
 npx cap sync
+
+Write-Host ""
+Write-Host ">>> Ouverture d'Android Studio..." -ForegroundColor Cyan
+npx cap open android
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
