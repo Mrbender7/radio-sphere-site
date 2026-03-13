@@ -33,10 +33,12 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   const [marqueeDuration, setMarqueeDuration] = useState(10);
 
   useEffect(() => {
+    const container = textContainerRef.current;
+    if (!container) return;
     const check = () => {
-      if (measureRef.current && textContainerRef.current) {
+      if (measureRef.current && container) {
         const textWidth = measureRef.current.scrollWidth;
-        const containerWidth = textContainerRef.current.clientWidth;
+        const containerWidth = container.clientWidth;
         const overflow = textWidth > containerWidth;
         setNeedsMarquee(overflow);
         if (overflow) {
@@ -44,14 +46,13 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         }
       }
     };
-    // Delay check to let layout settle after visualizer appears/disappears
-    const raf = requestAnimationFrame(check);
-    window.addEventListener("resize", check);
+    const observer = new ResizeObserver(check);
+    observer.observe(container);
+    check();
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", check);
+      observer.disconnect();
     };
-  }, [currentStation?.name, isPlaying]);
+  }, [currentStation?.name]);
 
   if (!isFullScreen || !currentStation) return null;
 
