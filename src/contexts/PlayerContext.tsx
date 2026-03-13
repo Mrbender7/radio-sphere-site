@@ -663,6 +663,12 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   return (
     <PlayerContext.Provider value={{ ...state, play, togglePlay, setVolume, openFullScreen, closeFullScreen, isCastAvailable, isCasting, castDeviceName, castUiMode, castInitState, startCast, stopCast }}>
       {children}
+      <SSLWarningDialog
+        open={!!sslWarning}
+        stationName={sslWarning?.station.name || ""}
+        onAcceptRisk={handleSSLAccept}
+        onCancel={handleSSLCancel}
+      />
     </PlayerContext.Provider>
   );
 }
