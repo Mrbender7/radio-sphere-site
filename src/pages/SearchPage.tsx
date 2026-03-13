@@ -361,6 +361,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
           items={LANGUAGES}
           selected={languages}
           onToggle={toggleLanguage}
+          searchable
         />
       </div>
 
