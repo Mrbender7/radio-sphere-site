@@ -33,10 +33,15 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   const [marqueeDuration, setMarqueeDuration] = useState(10);
 
   useEffect(() => {
+    if (!isFullScreen) return;
+
     const container = textContainerRef.current;
     if (!container) return;
+
+    let rafId = 0;
+
     const check = () => {
-      if (measureRef.current && container) {
+      if (measureRef.current) {
         const textWidth = measureRef.current.scrollWidth;
         const containerWidth = container.clientWidth;
         const overflow = textWidth > containerWidth;
@@ -46,13 +51,21 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         }
       }
     };
-    const observer = new ResizeObserver(check);
+
+    const scheduleCheck = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(check);
+    };
+
+    const observer = new ResizeObserver(scheduleCheck);
     observer.observe(container);
-    check();
+    scheduleCheck();
+
     return () => {
+      cancelAnimationFrame(rafId);
       observer.disconnect();
     };
-  }, [currentStation?.name]);
+  }, [currentStation?.name, isFullScreen, isPlaying]);
 
   if (!isFullScreen || !currentStation) return null;
 
