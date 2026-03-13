@@ -531,11 +531,12 @@ public class CastPlugin extends Plugin {
         try { getActivity().runOnUiThread(() -> { try { if (mediaRouter != null) { androidx.mediarouter.app.MediaRouteChooserDialog d = new androidx.mediarouter.app.MediaRouteChooserDialog(getActivity()); d.setRouteSelector(mediaRouteSelector); d.show(); call.resolve(); } else { call.reject("Not init"); } } catch (Exception e) { call.reject(e.getMessage()); } }); } catch (Exception e) { call.reject(e.getMessage()); } }
     @PluginMethod public void endSession(PluginCall call) { try { getActivity().runOnUiThread(() -> { try { if (castContext != null) { CastSession s = castContext.getSessionManager().getCurrentCastSession(); if (s != null) castContext.getSessionManager().endCurrentSession(true); } call.resolve(); } catch (Exception e) { call.reject(e.getMessage()); } }); } catch (Exception e) { call.reject(e.getMessage()); } }
     @PluginMethod public void loadMedia(PluginCall call) { String u = call.getString("streamUrl", ""); String t = call.getString("title", "Radio Sphere"); String l = call.getString("logo", "");
-        Log.d(TAG, "Loading URL to Cast: " + u);
+        String castUrl = u.startsWith("http://") ? u.replace("http://", "https://") : u;
+        Log.d(TAG, "Loading URL to Cast: " + castUrl + " (original: " + u + ")");
         try { getActivity().runOnUiThread(() -> { try { CastSession s = castContext != null ? castContext.getSessionManager().getCurrentCastSession() : null; if (s == null) { call.reject("No session"); return; }
         RemoteMediaClient r = s.getRemoteMediaClient(); if (r == null) { call.reject("No client"); return; }
         MediaMetadata m = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MUSIC_TRACK); m.putString(MediaMetadata.KEY_TITLE, t); m.putString(MediaMetadata.KEY_ARTIST, "Radio Sphere"); if (!l.isEmpty()) m.addImage(new WebImage(Uri.parse(l.replace("http://", "https://"))));
-        MediaInfo info = new MediaInfo.Builder(u).setStreamType(MediaInfo.STREAM_TYPE_LIVE).setContentType("audio/*").setMetadata(m).build();
+        MediaInfo info = new MediaInfo.Builder(castUrl).setStreamType(MediaInfo.STREAM_TYPE_LIVE).setContentType("audio/*").setMetadata(m).build();
         r.load(new MediaLoadRequestData.Builder().setMediaInfo(info).setAutoplay(true).build()); call.resolve();
         } catch (Exception e) { call.reject(e.getMessage()); } }); } catch (Exception e) { call.reject(e.getMessage()); } }
     @PluginMethod public void togglePlayPause(PluginCall call) { try { getActivity().runOnUiThread(() -> { try { CastSession s = castContext != null ? castContext.getSessionManager().getCurrentCastSession() : null; if (s != null && s.getRemoteMediaClient() != null) { RemoteMediaClient c = s.getRemoteMediaClient(); if (c.isPlaying()) c.pause(); else c.play(); } call.resolve(); } catch (Exception e) { call.reject(e.getMessage()); } }); } catch (Exception e) { call.reject(e.getMessage()); } }
