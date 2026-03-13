@@ -16,7 +16,7 @@ interface TimebackMachineProps {
 
 export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineProps) {
   const { currentStation, isPlaying, togglePlay } = usePlayer();
-  const { isPremium } = usePremium();
+  const isPremium = true; // Premium features always enabled on web
   const { t } = useTranslation();
   const {
     bufferSeconds,
