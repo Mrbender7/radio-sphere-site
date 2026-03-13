@@ -104,7 +104,7 @@ interface SettingsPageProps {
 
 export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps) {
   const { language, setLanguage, t } = useTranslation();
-  const { isPremium, unlockWithPassword, lockPremium, restorePurchases } = usePremium();
+  const { isPremium, unlockWithPassword, lockPremium, restorePurchases, purchasePremium } = usePremium();
   const { isActive, formattedTime, startTimer, cancelTimer } = useSleepTimer();
   const { favorites, importFavorites } = useFavoritesContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -433,7 +433,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
         }
       >
         <div className="relative">
-          <div className={cn(!isPremium && "pointer-events-none opacity-50")}>
+          <div className={cn(!isPremium && "opacity-50 grayscale")}>
             <p className="text-xs text-muted-foreground mb-3">{t("premium.subtitle")}</p>
 
             <div className="space-y-2 mb-3">
@@ -449,14 +449,21 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
             </div>
             <p className="text-[9px] text-muted-foreground text-center mt-2">{t("premium.disclaimer")}</p>
           </div>
-          {!isPremium && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <span className="text-2xl font-black uppercase tracking-widest opacity-25 -rotate-12 border-4 border-primary px-5 py-3 rounded-xl text-primary select-none">
-                {t("premium.comingSoon")}
-              </span>
-            </div>
-          )}
         </div>
+
+        {/* Buy button — only visible when not premium */}
+        {!isPremium && (
+          <div className="mt-4 pt-3 border-t border-border space-y-2">
+            <Button
+              onClick={() => purchasePremium()}
+              className="w-full h-12 text-sm font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-500 hover:to-orange-600 rounded-lg shadow-lg shadow-amber-500/30 gap-2"
+            >
+              <Crown className="w-4 h-4" />
+              {t("premium.buyLifetime")} — 9,99 €
+            </Button>
+            <p className="text-[9px] text-muted-foreground text-center">{t("premium.priceNote")}</p>
+          </div>
+        )}
 
         {/* Lock button — only visible when premium is active */}
         {isPremium && (
