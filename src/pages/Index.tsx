@@ -119,8 +119,7 @@ const Index = () => {
   };
 
   return (
-    <PremiumProvider>
-      <SleepTimerProvider>
+    <SleepTimerProvider>
         <SleepTimerIndicator />
         <div className="flex h-full bg-background">
           {/* Desktop sidebar */}
