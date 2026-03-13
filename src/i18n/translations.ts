@@ -906,6 +906,8 @@ const translations: Record<Language, Record<string, string>> = {
     "premium.recorder": "レコーダー",
     "premium.recorderDesc": "番組をMP3で録音し、最大5分前まで巻き戻し可能",
     "premium.monthly": "買い切り — €9.99",
+    "premium.buyLifetime": "永久にアンロック",
+    "premium.priceNote": "参考価格。最終金額は国によって異なる場合があります。",
     "premium.yearly": "",
     "premium.yearlySave": "",
     "premium.cancel": "購入を復元",
