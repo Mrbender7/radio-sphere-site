@@ -3,10 +3,10 @@ import { ShieldCheck, Mail, ExternalLink } from "lucide-react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 interface FooterProps {
-  onNavigatePrivacy?: () => void;
+  // onNavigatePrivacy removed - now uses external link
 }
 
-export function Footer({ onNavigatePrivacy }: FooterProps) {
+export function Footer(_props: FooterProps) {
   const { t } = useTranslation();
 
   return (
@@ -27,13 +27,15 @@ export function Footer({ onNavigatePrivacy }: FooterProps) {
           {/* Links */}
           <div className="flex flex-col gap-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("footer.links")}</h4>
-            <button
-              onClick={onNavigatePrivacy}
+            <a
+              href="https://radiosphere.be/privacy-policy.html"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-foreground/70 hover:text-primary transition-colors w-fit"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               {t("settings.privacyPolicy")}
-            </button>
+            </a>
             <a
               href="https://www.radio-browser.info/"
               target="_blank"
