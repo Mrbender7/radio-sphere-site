@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { BookOpen, Home, Search, Heart, Settings, ChevronDown, Moon, Car, Cast, Crown, ShieldAlert, RefreshCw, Disc } from "lucide-react";
+import { BookOpen, Home, Search, Heart, Settings, ChevronDown, Moon, Cast, ShieldAlert, RefreshCw, Disc } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { requestAllPermissions } from "@/utils/permissions";
 
@@ -11,10 +11,9 @@ const SECTIONS = [
   { id: "favorites", icon: Heart, titleKey: "guide.favorites", contentKey: "guide.favoritesContent" },
   { id: "settings", icon: Settings, titleKey: "guide.settings", contentKey: "guide.settingsContent" },
   { id: "permissions", icon: ShieldAlert, titleKey: "guide.permissions", contentKey: "guide.permissionsContent" },
-  { id: "sleepTimer", icon: Moon, titleKey: "guide.sleepTimer", contentKey: "guide.sleepTimerContent", premium: true },
-  { id: "recorder", icon: Disc, titleKey: "guide.recorder", contentKey: "guide.recorderContent", premium: true },
-  { id: "androidAuto", icon: Car, titleKey: "guide.androidAuto", contentKey: "guide.androidAutoContent", premium: true },
-  { id: "chromecast", icon: Cast, titleKey: "guide.chromecast", contentKey: "guide.chromecastContent", premium: true },
+  { id: "sleepTimer", icon: Moon, titleKey: "guide.sleepTimer", contentKey: "guide.sleepTimerContent" },
+  { id: "recorder", icon: Disc, titleKey: "guide.recorder", contentKey: "guide.recorderContent" },
+  { id: "chromecast", icon: Cast, titleKey: "guide.chromecast", contentKey: "guide.chromecastContent" },
 ] as const;
 
 interface UserGuideModalProps {
