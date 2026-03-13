@@ -1,4 +1,4 @@
-import { Home, Compass, Heart, Info, Smartphone } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
