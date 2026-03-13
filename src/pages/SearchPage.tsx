@@ -110,10 +110,14 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   });
 
   const countryList = useMemo(() => {
-    if (!apiCountries || apiCountries.length === 0) return FALLBACK_COUNTRIES;
+    if (!apiCountries || apiCountries.length === 0) {
+      return FALLBACK_COUNTRIES.map((c) => ({ ...c, flagUrl: buildFlagUrl(c.code) }));
+    }
     return apiCountries.map((c: CountryInfo) => ({
-      label: `${c.name} ${countryCodeToFlag(c.iso_3166_1)}`,
+      label: c.name,
       value: c.name,
+      code: c.iso_3166_1.toLowerCase(),
+      flagUrl: buildFlagUrl(c.iso_3166_1),
     }));
   }, [apiCountries]);
 
