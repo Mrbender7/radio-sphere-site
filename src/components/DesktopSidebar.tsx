@@ -22,7 +22,7 @@ interface DesktopSidebarProps {
 }
 
 export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) {
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const { favorites } = useFavoritesContext();
   const { play, currentStation, isPlaying } = usePlayer();
 
