@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Sphere App - Privacy Policy | Google Play Store</title>
+    <meta name="description" content="Radio Sphere mobile app privacy policy for Google Play Store. TimeBack Machine, Premium features, local storage.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0b14;
+            --card-bg: rgba(25, 25, 45, 0.6);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-start: #4a90ff;
+            --accent-end: #a855f7;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, rgba(74, 144, 255, 0.1), transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .play-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(74, 144, 255, 0.1);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            color: var(--accent-start);
+            margin-top: 1rem;
+        }
+
+        .lang-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .lang-btn {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover { 
+            border-color: rgba(255, 255, 255, 0.3); 
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+        }
+
+        .lang-section { 
+            display: none; 
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .lang-section.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .policy h2 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 0.2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .policy .date {
+            font-size: 0.85rem;
+            color: var(--accent-start);
+            margin-bottom: 2rem;
+            display: block;
+            margin-top: 1rem;
+        }
+
+        .policy p {
+            font-size: 1rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .policy h3 {
+            font-size: 1.15rem;
+            color: #fff;
+            margin: 2rem 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .policy h3::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-start);
+            border-radius: 50%;
+        }
+
+        .policy ul {
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+            list-style-type: none;
+        }
+
+        .policy ul li {
+            font-size: 0.95rem;
+            margin-bottom: 0.8rem;
+            color: var(--text-muted);
+            position: relative;
+        }
+
+        .policy ul li::before {
+            content: "•";
+            position: absolute;
+            left: -15px;
+            color: var(--accent-end);
+        }
+
+        .policy ul li strong { 
+            color: #fff; 
+            font-weight: 600;
+        }
+
+        .highlight-box {
+            background: rgba(74, 144, 255, 0.08);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .highlight-box strong {
+            color: var(--accent-start);
+        }
+
+        .policy footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .policy footer a {
+            color: var(--accent-start);
+            text-decoration: none;
+        }
+
+        .policy footer a:hover {
+            text-decoration: underline;
+        }
+
+        .app-store-section {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .app-store-section p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            .card { padding: 1.5rem; }
+            .header h1 { font-size: 1.5rem; }
+            .lang-btn { padding: 0.5rem 0.9rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>Radio Sphere</h1>
+                <p class="subtitle">Mobile Application Privacy Policy</p>
+                <div class="play-badge">📱 Google Play Store Version</div>
+            </div>
+
+            <div class="lang-switcher">
+                <button class="lang-btn active" id="btn-en" onclick="showLang('en')">🇬🇧 English</button>
+                <button class="lang-btn" id="btn-fr" onclick="showLang('fr')">🇫🇷 Français</button>
+                <button class="lang-btn" id="btn-de" onclick="showLang('de')">🇩🇪 Deutsch</button>
+            </div>
+
+            <!-- ENGLISH - Google Play optimized -->
+            <div id="en" class="lang-section active">
+                <div class="policy">
+                    <h2>Privacy Policy</h2>
+                    <span class="date">Last updated: March 7, 2026 | Effective Date: March 7, 2026</span>
+
+                    <div class="highlight-box">
+                        <p><strong>No data collection.</strong> Radio Sphere does not collect, store, or transmit any personal data to our servers. All your data remains on your device.</p>
+                    </div>
+
+                    <h3>Information We Do Not Collect</h3>
+                    <p>Radio Sphere is designed with privacy-first principles:</p>
+                    <ul>
+                        <li>No account registration required</li>
+                        <li>No email addresses collected</li>
+                        <li>No usage analytics or tracking</li>
+                        <li>No advertising IDs</li>
+                        <li>No cookies</li>
+                    </ul>
+
+                    <h3>Data Stored Locally on Your Device</h3>
+                    <p>The following data is stored <strong>only on your device</strong> and never transmitted:</p>
+                    <ul>
+                        <li><strong>Favorite radio stations</strong> - Your saved stations list</li>
+                        <li><strong>TimeBack recordings</strong> - Audio recordings stored locally and encrypted</li>
+                        <li><strong>App preferences</strong> - Language, sleep timer settings</li>
+                        <li><strong>Purchase status</strong> - Premium subscription verification via Google Play</li>
+                    </ul>
+
+                    <h3>Third-Party Services</h3>
+                    <p>Radio Sphere uses the following third-party services:</p>
+                    <ul>
+                        <li><strong>Radio Browser API (radio-browser.info):</strong> Provides radio station listings. Your IP address is transmitted solely for technical audio streaming purposes.</li>
+                        <li><strong>Google Play Billing:</strong> Processes in-app purchases. Google handles all payment data; we never see your financial information.</li>
+                        <li><strong>Google Cast / Android Auto:</strong> Optional features that may share diagnostic data with Google according to their privacy policy.</li>
+                    </ul>
+
+                    <h3>Your Rights (GDPR / CCPA)</h3>
+                    <p>Since we store no data on our servers, you have complete control:</p>
+                    <ul>
+                        <li><strong>Right to deletion:</strong> Uninstall the app to permanently delete all data</li>
+                        <li><strong>Right to portability:</strong> Export favorites as CSV from the app settings</li>
+                        <li><strong>Right to access:</strong> All your data is visible within the app</li>
+                    </ul>
+
+                    <h3>Children's Privacy</h3>
+                    <p>Radio Sphere is not intended for children under 13. We do not knowingly collect data from children.</p>
+
+                    <h3>Changes to This Policy</h3>
+                    <p>We may update this privacy policy. Changes will be posted here with an updated effective date.</p>
+
+                    <h3>Contact Us</h3>
+                    <p>For privacy-related questions:</p>
+                    <footer>
+                        Developer: Franck H. Malherbe<br>
+                        Email: <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
+                        Address: Liège, Belgium
+                    </footer>
+                </div>
+            </div>
+
+            <!-- FRANÇAIS -->
+            <div id="fr" class="lang-section">
+                <div class="policy">
+                    <h2>Politique de Confidentialité</h2>
+                    <span class="date">Dernière mise à jour : 7 mars 2026 | Date d'effet : 7 mars 2026</span>
+
+                    <div class="highlight-box">
+                        <p><strong>Aucune collecte de données.</strong> Radio Sphere ne collecte, ne stocke ni ne transmet aucune donnée personnelle à nos serveurs. Toutes vos données restent sur votre appareil.</p>
+                    </div>
+
+                    <h3>Informations que nous ne collectons pas</h3>
+                    <p>Radio Sphere est conçu avec des principes de confidentialité prioritaires :</p>
+                    <ul>
+                        <li>Aucune inscription de compte requise</li>
+                        <li>Aucune adresse email collectée</li>
+                        <li>Aucune analyse d'utilisation ou suivi</li>
+                        <li>Aucun identifiant publicitaire</li>
+                        <li>Aucun cookie</li>
+                    </ul>
+
+                    <h3>Données stockées localement</h3>
+                    <p>Les données suivantes sont stockées <strong>uniquement sur votre appareil</strong> :</p>
+                    <ul>
+                        <li><strong>Stations favorites</strong> - Votre liste de stations enregistrées</li>
+                        <li><strong>Enregistrements TimeBack</strong> - Stockés localement et chiffrés</li>
+                        <li><strong>Préférences</strong> - Langue, paramètres minuteur</li>
+                        <li><strong>Statut d'achat</strong> - Vérification via Google Play</li>
+                    </ul>
+
+                    <h3>Services tiers</h3>
+                    <ul>
+                        <li><strong>Radio Browser API :</strong> Fournit les listes de stations. Votre IP est transmise uniquement pour le streaming technique.</li>
+                        <li><strong>Google Play Billing :</strong> Gère les achats in-app. Google traite les paiements, nous n'avons jamais accès à vos données financières.</li>
+                    </ul>
+
+                    <h3>Vos droits (RGPD)</h3>
+                    <ul>
+                        <li><strong>Droit à l'effacement :</strong> Désinstallez l'application pour supprimer toutes les données</li>
+                        <li><strong>Droit à la portabilité :</strong> Exportez vos favoris en CSV depuis les paramètres</li>
+                        <li><strong>Droit d'accès :</strong> Toutes vos données sont visibles dans l'app</li>
+                    </ul>
+
+                    <h3>Contact</h3>
+                    <footer>
+                        Développeur : Franck H. Malherbe<br>
+                        Email : <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
+                        Liège, Belgique
+                    </footer>
+                </div>
+            </div>
+
+            <!-- DEUTSCH -->
+            <div id="de" class="lang-section">
+                <div class="policy">
+                    <h2>Datenschutzrichtlinie</h2>
+                    <span class="date">Letzte Aktualisierung: 7. März 2026 | Gültig ab: 7. März 2026</span>
+
+                    <div class="highlight-box">
+                        <p><strong>Keine Datenerfassung.</strong> Radio Sphere sammelt, speichert oder überträgt keine persönlichen Daten an unsere Server. Alle Ihre Daten verbleiben auf Ihrem Gerät.</p>
+                    </div>
+
+                    <h3>Informationen, die wir nicht sammeln</h3>
+                    <ul>
+                        <li>Keine Kontoanmeldung erforderlich</li>
+                        <li>Keine E-Mail-Adressen gesammelt</li>
+                        <li>Keine Nutzungsanalyse oder Tracking</li>
+                        <li>Keine Werbe-IDs</li>
+                        <li>Keine Cookies</li>
+                    </ul>
+
+                    <h3>Lokal gespeicherte Daten</h3>
+                    <ul>
+                        <li><strong>Favoriten:</strong> Ihre gespeicherten Sender</li>
+                        <li><strong>TimeBack-Aufnahmen:</strong> Lokal verschlüsselt gespeichert</li>
+                        <li><strong>Einstellungen:</strong> Sprache, Timer-Einstellungen</li>
+                        <li><strong>Kaufstatus:</strong> Premium-Aboverifizierung via Google Play</li>
+                    </ul>
+
+                    <h3>Drittanbieter-Dienste</h3>
+                    <ul>
+                        <li><strong>Radio Browser API:</strong> Bietet Radiosender-Listen. Ihre IP wird nur für technisches Streaming übertragen.</li>
+                        <li><strong>Google Play Billing:</strong> Verarbeitet In-App-Käufe. Google verarbeitet alle Zahlungsdaten.</li>
+                    </ul>
+
+                    <h3>Ihre Rechte (DSGVO)</h3>
+                    <ul>
+                        <li><strong>Recht auf Löschung:</strong> Deinstallieren Sie die App, um alle Daten zu löschen</li>
+                        <li><strong>Recht auf Datenübertragbarkeit:</strong> Exportieren Sie Favoriten als CSV</li>
+                        <li><strong>Recht auf Zugang:</strong> Alle Ihre Daten sind in der App sichtbar</li>
+                    </ul>
+
+                    <h3>Kontakt</h3>
+                    <footer>
+                        Entwickler: Franck H. Malherbe<br>
+                        Email: <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
+                        Lüttich, Belgien
+                    </footer>
+                </div>
+            </div>
+
+            <div class="app-store-section">
+                <p>📋 This privacy policy is specifically formatted for Google Play Store requirements.<br>App Package: <code>be.radiosphere.app</code></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLang(lang) {
+            document.querySelectorAll('.lang-section').forEach(s => {
+                s.classList.remove('active');
+            });
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            const selectedSection = document.getElementById(lang);
+            if (selectedSection) selectedSection.classList.add('active');
+            const btn = document.getElementById('btn-' + lang);
+            if (btn) btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
