@@ -695,6 +695,8 @@ const translations: Record<Language, Record<string, string>> = {
     "premium.recorder": "Rekorder",
     "premium.recorderDesc": "Nimm deine Sendungen als MP3 auf und spule bis zu 5 Minuten zurück",
     "premium.monthly": "Einmalkauf — 9,99€",
+    "premium.buyLifetime": "Für immer freischalten",
+    "premium.priceNote": "Richtpreis. Der Endbetrag kann je nach Land variieren.",
     "premium.yearly": "",
     "premium.yearlySave": "",
     "premium.cancel": "Kauf wiederherstellen",
