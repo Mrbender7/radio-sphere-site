@@ -40,12 +40,13 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="bg-background px-4 pt-6 pb-4">
+      <div className="bg-background px-4 lg:px-8 pt-6 pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 lg:hidden">
             <img src={radioSphereLogo} alt="Radio Sphere" className="w-12 h-12 rounded-xl mix-blend-screen animate-logo-glow" />
             <h1 className="text-2xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap">Radio Sphere</h1>
           </div>
+          <h1 className="hidden lg:block text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("nav.home")}</h1>
           <CastButton />
         </div>
       </div>
