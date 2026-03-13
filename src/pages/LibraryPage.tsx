@@ -57,8 +57,8 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   }, [favorites, t]);
 
   return (
-    <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 pb-32">
-      <h1 className="text-2xl font-heading font-bold mt-6 mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
+    <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 lg:px-8 pb-32">
+      <h1 className="text-2xl lg:text-3xl font-heading font-bold mt-6 mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
         {t("favorites.title")}
         {favorites.length > 0 && (
           <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-[hsl(280,80%,60%)] text-white leading-none">{favorites.length}</span>
