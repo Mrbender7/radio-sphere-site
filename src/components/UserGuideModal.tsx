@@ -48,9 +48,8 @@ export function UserGuideModal({ onReopenWelcome }: UserGuideModalProps) {
         </DialogHeader>
 
         <div className="space-y-2 mt-2">
-          {SECTIONS.map(({ id, icon: Icon, titleKey, contentKey, ...rest }) => {
+        {SECTIONS.map(({ id, icon: Icon, titleKey, contentKey }) => {
             const isOpen = openSection === id;
-            const isPremium = 'premium' in rest && rest.premium;
             const isPermissions = id === "permissions";
             return (
               <div key={id} className="rounded-xl bg-accent overflow-hidden">
