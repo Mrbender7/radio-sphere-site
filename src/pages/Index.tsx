@@ -9,10 +9,12 @@ import { MiniPlayer } from "@/components/MiniPlayer";
 import { FullScreenPlayer } from "@/components/FullScreenPlayer";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { DesktopPlayerBar } from "@/components/DesktopPlayerBar";
+import { Footer } from "@/components/Footer";
 import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { LibraryPage } from "@/pages/LibraryPage";
-import { SettingsPage } from "@/pages/SettingsPage";
+import { AboutPage } from "@/pages/AboutPage";
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
 import { WelcomePage } from "@/pages/WelcomePage";
 import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
@@ -35,6 +37,7 @@ const Index = () => {
   const [selectedGenre, setSelectedGenre] = useState<string | undefined>();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showWelcome, setShowWelcome] = useState(!hasCompletedOnboarding());
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const { favorites, toggleFavorite, isFavorite, recent } = useFavoritesContext();
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
   const { setLanguage } = useTranslation();
@@ -46,6 +49,7 @@ const Index = () => {
 
   const handleTabChange = useCallback((tab: TabId) => {
     if (tab !== "search") setSelectedGenre(undefined);
+    setShowPrivacy(false);
     setActiveTab(tab);
   }, []);
 
@@ -71,11 +75,18 @@ const Index = () => {
     window.location.reload();
   }, []);
 
+  const handleNavigatePrivacy = useCallback(() => {
+    setShowPrivacy(true);
+    setActiveTab("about");
+  }, []);
+
   useBackButton({
     onBack: () => {
       if (showWelcome) return;
       if (isFullScreen) {
         closeFullScreen();
+      } else if (showPrivacy) {
+        setShowPrivacy(false);
       } else {
         setActiveTab("home");
       }
@@ -90,6 +101,9 @@ const Index = () => {
   }
 
   const renderContent = () => {
+    if (showPrivacy) {
+      return <PrivacyPolicyPage onBack={() => setShowPrivacy(false)} />;
+    }
     switch (activeTab) {
       case "home":
         return <HomePage recent={recent} favorites={favorites} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onGenreClick={handleTagClick} />;
@@ -97,8 +111,8 @@ const Index = () => {
         return <SearchPage isFavorite={isFavorite} onToggleFavorite={toggleFavorite} initialGenre={selectedGenre} />;
       case "library":
         return <LibraryPage favorites={favorites} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />;
-      case "settings":
-        return <SettingsPage onReopenWelcome={handleReopenWelcome} onResetApp={handleResetApp} />;
+      case "about":
+        return <AboutPage onReopenWelcome={handleReopenWelcome} onResetApp={handleResetApp} onNavigatePrivacy={handleNavigatePrivacy} />;
       default:
         return null;
     }
