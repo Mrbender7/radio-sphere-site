@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ShieldAlert } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
+import React from "react";
 
 interface SSLWarningDialogProps {
   open: boolean;
@@ -18,7 +19,7 @@ interface SSLWarningDialogProps {
   onCancel: () => void;
 }
 
-export function SSLWarningDialog({ open, stationName, onAcceptRisk, onCancel }: SSLWarningDialogProps) {
+export const SSLWarningDialog = React.forwardRef<HTMLDivElement, SSLWarningDialogProps>(function SSLWarningDialog({ open, stationName, onAcceptRisk, onCancel }, _ref) {
   const { t } = useTranslation();
 
   return (
@@ -57,4 +58,4 @@ export function SSLWarningDialog({ open, stationName, onAcceptRisk, onCancel }: 
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+});

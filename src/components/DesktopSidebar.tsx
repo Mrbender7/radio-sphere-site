@@ -1,4 +1,4 @@
-import { Home, Compass, Heart, Info, Mail } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
@@ -49,7 +49,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
               activeTab === id
-                ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.2)]"
+                ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)] shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]"
                 : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             )}
           >
@@ -113,6 +113,15 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         >
           <Mail className="w-4 h-4" />
           info@radiosphere.be
+        </a>
+        <a
+          href="https://radiosphere.be/privacy-policy.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] text-muted-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          {t("settings.privacyPolicy")}
         </a>
         <div className="flex items-center gap-1.5 px-4">
           {LANGUAGE_OPTIONS.map((opt) => (

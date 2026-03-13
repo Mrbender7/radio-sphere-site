@@ -309,7 +309,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t("search.placeholder")}
-          className="pl-10 pr-9 bg-accent border-0 text-foreground placeholder:text-muted-foreground"
+          className="pl-10 pr-9 bg-accent border-0 text-white placeholder:text-muted-foreground focus:ring-primary"
         />
         {query && (
           <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
