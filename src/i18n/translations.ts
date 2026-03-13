@@ -223,6 +223,7 @@ const translations: Record<Language, Record<string, string>> = {
     "genre.techno": "Techno",
     "genre.trance": "Trance",
     "genre.world": "World",
+    "genre.mousemusic": "Mouse & Music",
     "cast.castingTo": "Diffusion sur",
     "cast.controlFromPhone": "Contrôlez depuis votre téléphone",
     "cast.connected": "Connecté",
