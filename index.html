@@ -2,18 +2,42 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="msapplication-TileColor" content="#111111" />
-    <title>Radio Sphere — Streaming Radio</title>
-    <meta name="description" content="Radio Sphere — Premium radio streaming app with thousands of stations worldwide.">
+    <title>Radio Sphere — Écoutez des milliers de radios en streaming</title>
+    <meta name="description" content="Radio Sphere est le web player premium pour écouter des milliers de stations radio du monde entier. Streaming HD, favoris, Chromecast et Timeback Machine.">
     <meta name="theme-color" content="#111111" />
-    
-    
+    <link rel="canonical" href="https://radiosphere.be/" />
+
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://radiosphere.be/" />
+    <meta property="og:site_name" content="Radio Sphere" />
+    <meta property="og:title" content="Radio Sphere — Écoutez des milliers de radios en streaming">
+    <meta property="og:description" content="Le web player premium pour écouter des milliers de stations radio du monde entier. Streaming HD, favoris, Chromecast et Timeback Machine.">
+    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0695bda9-aaac-41f3-89d1-4acb415702e5/id-preview-702d6a4e--475f39da-d802-41de-8921-64f69d8ef0c5.lovable.app-1772290128630.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Radio Sphere — Streaming Radio Premium">
+    <meta name="twitter:description" content="Écoutez des milliers de stations radio du monde entier avec Radio Sphere. Streaming HD, favoris et Chromecast.">
+    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0695bda9-aaac-41f3-89d1-4acb415702e5/id-preview-702d6a4e--475f39da-d802-41de-8921-64f69d8ef0c5.lovable.app-1772290128630.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Radio Sphere",
+      "url": "https://radiosphere.be",
+      "description": "Web player premium pour écouter des milliers de stations radio du monde entier.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Web",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    }
+    </script>
+
     <script>
       // Cast SDK bridge — captures early availability before React mounts
       window.__castSdkReady = false;
@@ -26,13 +50,6 @@
       };
     </script>
     <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
-    <meta property="og:title" content="Radio Sphere — Streaming Radio">
-  <meta name="twitter:title" content="Radio Sphere — Streaming Radio">
-  <meta property="og:description" content="Radio Sphere — Premium radio streaming app with thousands of stations worldwide.">
-  <meta name="twitter:description" content="Radio Sphere — Premium radio streaming app with thousands of stations worldwide.">
-  <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0695bda9-aaac-41f3-89d1-4acb415702e5/id-preview-702d6a4e--475f39da-d802-41de-8921-64f69d8ef0c5.lovable.app-1772290128630.png">
-  <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0695bda9-aaac-41f3-89d1-4acb415702e5/id-preview-702d6a4e--475f39da-d802-41de-8921-64f69d8ef0c5.lovable.app-1772290128630.png">
-  <meta name="twitter:card" content="summary_large_image">
 </head>
   <body>
     <div id="root"></div>

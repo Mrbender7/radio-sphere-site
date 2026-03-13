@@ -124,10 +124,29 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
 
       <section className="mb-3">
         <h2 className="text-lg font-heading font-semibold mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.exploreByGenre")}</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {GENRES.map(genre => (
             <GenreCard key={genre} genre={genre} onClick={() => onGenreClick(genre)} t={t} />
           ))}
+        </div>
+      </section>
+
+      {/* Mobile App Download CTA — visible only on mobile/tablet */}
+      <section className="mb-6 lg:hidden">
+        <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-[hsl(280,80%,60%,0.1)] border border-primary/10 p-6 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-[hsl(280,80%,60%)] flex items-center justify-center mx-auto mb-3 shadow-lg shadow-primary/30">
+            <img src={radioSphereLogo} alt="Radio Sphere" className="w-10 h-10 rounded-xl" />
+          </div>
+          <h3 className="text-base font-heading font-bold text-foreground mb-1">Radio Sphere sur Android</h3>
+          <p className="text-xs text-muted-foreground mb-4 max-w-[260px] mx-auto leading-relaxed">
+            Écoutez vos stations préférées partout, avec Android Auto, Chromecast et le mode hors-ligne.
+          </p>
+          <button
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-primary/30"
+            onClick={() => window.open("#", "_blank")}
+          >
+            Bientôt disponible
+          </button>
         </div>
       </section>
       <button
