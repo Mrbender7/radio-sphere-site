@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { useTranslation } from "@/contexts/LanguageContext";
-import { usePremium } from "@/contexts/PremiumContext";
+
 import { useStreamBuffer } from "@/contexts/StreamBufferContext";
 import { Play, Pause, ChevronDown, Volume2, Heart, Loader2, Share2, Cast, Radio, Download } from "lucide-react";
 import { CastButton } from "@/components/CastButton";
