@@ -114,6 +114,15 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           <Mail className="w-4 h-4" />
           info@radiosphere.be
         </a>
+        <a
+          href="https://radiosphere.be/privacy-policy.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] text-muted-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          {t("settings.privacyPolicy")}
+        </a>
         <div className="flex items-center gap-1.5 px-4">
           {LANGUAGE_OPTIONS.map((opt) => (
             <button
