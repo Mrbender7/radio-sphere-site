@@ -408,11 +408,20 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const play = useCallback(async (station: RadioStation) => {
+  const playInternal = useCallback(async (station: RadioStation, bypassSSL = false) => {
     try {
       if (!station.streamUrl) {
         console.error('[RadioSphere] Cannot play station with no stream URL.');
         toast({ title: t("player.error"), description: t("player.streamUnavailable"), variant: "destructive" });
+        return;
+      }
+
+      // Detect mixed content (HTTP stream on HTTPS page)
+      const isPageSecure = window.location.protocol === 'https:';
+      const isStreamInsecure = station.streamUrl.startsWith('http://');
+      if (isPageSecure && isStreamInsecure && !bypassSSL && !sslAcceptedUrls.current.has(station.streamUrl)) {
+        console.warn("[RadioSphere] Insecure stream detected:", station.streamUrl);
+        setSslWarning({ station });
         return;
       }
 
