@@ -62,6 +62,8 @@ const translations: Record<Language, Record<string, string>> = {
     "premium.recorder": "Magnétophone",
     "premium.recorderDesc": "Enregistrez vos émissions en MP3 et rembobinez jusqu'à 5 minutes en arrière",
     "premium.monthly": "Achat unique — 9,99€",
+    "premium.buyLifetime": "Débloquer à vie",
+    "premium.priceNote": "Prix indicatif. Le montant final peut varier selon votre pays.",
     "premium.yearly": "",
     "premium.yearlySave": "",
     "premium.cancel": "Restaurer l'achat",
