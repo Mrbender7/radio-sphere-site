@@ -1,11 +1,11 @@
 export type Language = "fr" | "en" | "es" | "de" | "ja";
 
-export const LANGUAGE_OPTIONS: { value: Language; flag: string; label: string }[] = [
-  { value: "fr", flag: "🇫🇷", label: "Français" },
-  { value: "en", flag: "🇬🇧", label: "English" },
-  { value: "es", flag: "🇪🇸", label: "Español" },
-  { value: "de", flag: "🇩🇪", label: "Deutsch" },
-  { value: "ja", flag: "🇯🇵", label: "日本語" },
+export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string; label: string }[] = [
+  { value: "fr", flag: "🇫🇷", flagUrl: "https://flagcdn.com/w40/fr.png", label: "Français" },
+  { value: "en", flag: "🇬🇧", flagUrl: "https://flagcdn.com/w40/gb.png", label: "English" },
+  { value: "es", flag: "🇪🇸", flagUrl: "https://flagcdn.com/w40/es.png", label: "Español" },
+  { value: "de", flag: "🇩🇪", flagUrl: "https://flagcdn.com/w40/de.png", label: "Deutsch" },
+  { value: "ja", flag: "🇯🇵", flagUrl: "https://flagcdn.com/w40/jp.png", label: "日本語" },
 ];
 
 const translations: Record<Language, Record<string, string>> = {
