@@ -137,21 +137,12 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
 
       const reader = response.body.getReader();
 
-      let chunkCount = 0;
       const readLoop = async () => {
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) {
-              console.log("[StreamBuffer] Stream ended (done=true).");
-              break;
-            }
+            if (done) break;
             if (!value || value.byteLength === 0) continue;
-
-            chunkCount++;
-            if (chunkCount <= 3 || chunkCount % 50 === 0) {
-              console.log(`[StreamBuffer] Chunk #${chunkCount} received:`, value.byteLength, "bytes");
-            }
 
             const chunk: TimestampedChunk = {
               data: value,
@@ -165,27 +156,19 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
             if (!bufferAvailableRef.current) {
               bufferAvailableRef.current = true;
               setBufferAvailable(true);
-              console.log("[StreamBuffer] Buffer now available.");
             }
 
             trimBuffer();
             updateBufferSeconds();
           }
         } catch (err: any) {
-          if (err?.name !== 'AbortError') {
-            console.warn("[StreamBuffer] readLoop error:", err);
-          }
+          // On ignore les erreurs d'annulation normales
         }
       };
       readLoop();
     } catch (e: any) {
       if (e.name !== 'AbortError') {
-        const isCors = e instanceof TypeError && e.message?.includes('Failed to fetch');
-        if (isCors) {
-          console.warn("[StreamBuffer] CORS blocked fetch (expected on web). TBM unavailable for this station.");
-        } else {
-          console.error("[StreamBuffer] Fetch error:", e);
-        }
+        console.error("[StreamBuffer] Erreur lors du fetch direct :", e);
       }
       setBufferAvailable(false);
       setRecordingAvailable(false);
@@ -204,7 +187,7 @@ export function StreamBufferProvider({ children }: { children: React.ReactNode }
     }
 
     if (stationId !== stationIdRef.current) {
-      console.log("[StreamBuffer] New station detected, starting fetch:", stationId);
+      console.log("[StreamBuffer] Nouvelle station détectée, démarrage du fetch direct.");
       stationIdRef.current = stationId;
       clearBuffer();
       startFetch(currentStation.streamUrl);
