@@ -401,14 +401,8 @@
       request => {
         const media = request.media;
         if (media) {
-          // Force HTTPS on stream URL to avoid mixed content blocking
-          if (media.contentId && media.contentId.startsWith('http://')) {
-            console.log('[RS Receiver] Forcing HTTPS on contentId:', media.contentId);
-            media.contentId = media.contentId.replace('http://', 'https://');
-          }
-          if (media.contentUrl && media.contentUrl.startsWith('http://')) {
-            media.contentUrl = media.contentUrl.replace('http://', 'https://');
-          }
+          // v2.5.4: Stream URL is sent as-is (resolved by sender, no HTTPS forcing)
+          console.log('[RS Receiver] Loading stream:', media.contentId);
 
           const title = media.metadata?.title || 'Station';
           const imageUrl = media.metadata?.images?.[0]?.url || '';

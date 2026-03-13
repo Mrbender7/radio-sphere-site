@@ -300,9 +300,8 @@ export function useCast() {
           if (!session) return;
 
           const chr = window.chrome;
-          // v2.5.3: Force HTTPS + LIVE stream type + generic audio content type
-          const streamUrlSafe = station.streamUrl.replace('http://', 'https://');
-          const mediaInfo = new chr.cast.media.MediaInfo(streamUrlSafe, "audio/*");
+                          // v2.5.4: Send stream URL as-is (no HTTPS forcing — was breaking HTTP-only streams)
+                          const mediaInfo = new chr.cast.media.MediaInfo(station.streamUrl, "audio/*");
           mediaInfo.streamType = chr.cast.media.StreamType.LIVE;
           mediaInfo.metadata = new chr.cast.media.MusicTrackMediaMetadata();
           mediaInfo.metadata.title = station.name;
