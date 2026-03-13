@@ -22,6 +22,7 @@ import imgSoul from "@/assets/genres/soul.png";
 import imgTechno from "@/assets/genres/techno.png";
 import imgTrance from "@/assets/genres/trance.png";
 import imgWorld from "@/assets/genres/world.png";
+import imgMousemusic from "@/assets/genres/mousemusic.png";
 
 interface GenreAnimationProps {
   genre: string;
