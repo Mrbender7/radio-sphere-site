@@ -58,4 +58,4 @@ export const SSLWarningDialog = React.forwardRef<HTMLDivElement, SSLWarningDialo
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+});

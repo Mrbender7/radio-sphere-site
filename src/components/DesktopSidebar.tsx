@@ -49,7 +49,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             className={cn(
               "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
               activeTab === id
-                ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.2)]"
+                ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)] shadow-[0_0_12px_-3px_hsl(var(--primary)/0.25)]"
                 : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             )}
           >
