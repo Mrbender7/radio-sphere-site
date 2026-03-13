@@ -548,6 +548,22 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     }
   }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, isCasting, castLoadMedia]);
 
+  const play = useCallback((station: RadioStation) => {
+    playInternal(station, false);
+  }, [playInternal]);
+
+  const handleSSLAccept = useCallback(() => {
+    if (sslWarning) {
+      sslAcceptedUrls.current.add(sslWarning.station.streamUrl);
+      setSslWarning(null);
+      playInternal(sslWarning.station, true);
+    }
+  }, [sslWarning, playInternal]);
+
+  const handleSSLCancel = useCallback(() => {
+    setSslWarning(null);
+  }, []);
+
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!state.currentStation) return;
