@@ -458,15 +458,9 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
           )}
         </div>
 
-        {/* Unlock/Lock zone inside premium */}
-        <div className="mt-4 pt-3 border-t border-border overflow-hidden">
-          <div className="flex items-center gap-2 mb-2">
-            <KeyRound className="w-4 h-4 text-amber-400" />
-            <h3 className="text-xs font-semibold text-foreground">
-              {isPremium ? t("premium.lock") : t("premium.unlock")}
-            </h3>
-          </div>
-          {isPremium ? (
+        {/* Lock button — only visible when premium is active */}
+        {isPremium && (
+          <div className="mt-4 pt-3 border-t border-border">
             <Button
               onClick={() => lockPremium()}
               variant="outline"
@@ -476,51 +470,8 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
               <Lock className="w-3.5 h-3.5" />
               {t("premium.lock")}
             </Button>
-          ) : (
-            <div className="flex gap-2 min-w-0 w-full">
-              <Input
-                type="password"
-                placeholder={t("premium.passwordPlaceholder")}
-                value={premiumCode}
-                onChange={(e) => { setPremiumCode(e.target.value); setCodeError(false); }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const ok = unlockWithPassword(premiumCode);
-                    if (ok) {
-                      setPremiumCode("");
-                      toast({ title: "🎉 " + t("premium.unlocked") });
-                    } else {
-                      setCodeError(true);
-                    }
-                  }
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className={cn(
-                  "flex-1 min-w-0 h-9 text-xs bg-secondary border-border",
-                  codeError && "border-destructive"
-                )}
-              />
-              <Button
-                onClick={() => {
-                  const ok = unlockWithPassword(premiumCode);
-                  if (ok) {
-                    setPremiumCode("");
-                    toast({ title: "🎉 " + t("premium.unlocked") });
-                  } else {
-                    setCodeError(true);
-                  }
-                }}
-                size="sm"
-                className="h-9 px-3 text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-500 hover:to-orange-600 flex-shrink-0"
-              >
-                <Unlock className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          )}
-          {codeError && (
-            <p className="text-[10px] text-destructive mt-1.5">{t("premium.wrongPassword")}</p>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Restore purchases */}
         <div className="mt-3 pt-3 border-t border-border">
