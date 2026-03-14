@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Sphere App - Privacy Policy | Google Play Store</title>
-    <meta name="description" content="Radio Sphere mobile app privacy policy for Google Play Store. TimeBack Machine, Premium features, local storage.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Radio Sphere – Privacy Policy / Politique de Confidentialité</title>
+    <meta name="description" content="Privacy Policy for the Radio Sphere mobile application – all languages.">
     <style>
         :root {
             --bg-color: #0b0b14;
@@ -50,7 +49,7 @@
         }
 
         .header h1 {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 800;
             background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
             -webkit-background-clip: text;
@@ -59,24 +58,11 @@
             letter-spacing: -0.5px;
         }
 
-        .header .subtitle {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+        .header p { 
+            font-size: 0.9rem; 
+            color: var(--text-muted); 
             text-transform: uppercase;
             letter-spacing: 1px;
-        }
-
-        .play-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(74, 144, 255, 0.1);
-            border: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            color: var(--accent-start);
-            margin-top: 1rem;
         }
 
         .lang-switcher {
@@ -125,7 +111,7 @@
         }
 
         .policy h2 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: #fff;
             margin-bottom: 0.2rem;
             border-bottom: 1px solid var(--border-color);
@@ -147,7 +133,7 @@
         }
 
         .policy h3 {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             color: #fff;
             margin: 2rem 0 1rem;
             display: flex;
@@ -189,23 +175,6 @@
             font-weight: 600;
         }
 
-        .highlight-box {
-            background: rgba(74, 144, 255, 0.08);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin: 1.5rem 0;
-        }
-
-        .highlight-box p {
-            margin: 0;
-            font-size: 0.95rem;
-        }
-
-        .highlight-box strong {
-            color: var(--accent-start);
-        }
-
         .policy footer {
             margin-top: 3rem;
             padding-top: 1.5rem;
@@ -223,319 +192,262 @@
         .policy footer a:hover {
             text-decoration: underline;
         }
-
-        .app-store-section {
-            text-align: center;
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-        }
-
-        .app-store-section p {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin: 0;
-        }
-
-        @media (max-width: 600px) {
-            .card { padding: 1.5rem; }
-            .header h1 { font-size: 1.5rem; }
-            .lang-btn { padding: 0.5rem 0.9rem; font-size: 0.8rem; }
-        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="header">
+            <h1>Radio Sphere</h1>
+            <p>Privacy Policy / Politique de Confidentialité</p>
+        </div>
+
+        <div class="lang-switcher">
+            <button class="lang-btn" id="btn-fr" onclick="showLang('fr')">🇫🇷 Français</button>
+            <button class="lang-btn active" id="btn-en" onclick="showLang('en')">🇬🇧 English</button>
+            <button class="lang-btn" id="btn-es" onclick="showLang('es')">🇪🇸 Español</button>
+            <button class="lang-btn" id="btn-de" onclick="showLang('de')">🇩🇪 Deutsch</button>
+            <button class="lang-btn" id="btn-ja" onclick="showLang('ja')">🇯🇵 日本語</button>
+        </div>
+
         <div class="card">
-            <div class="header">
-                <h1>Radio Sphere</h1>
-                <p class="subtitle">Mobile Application Privacy Policy</p>
-                <div class="play-badge">📱 Google Play Store Version</div>
-            </div>
-
-            <div class="lang-switcher">
-                <button class="lang-btn active" id="btn-en" onclick="showLang('en')">🇬🇧 English</button>
-                <button class="lang-btn" id="btn-fr" onclick="showLang('fr')">🇫🇷 Français</button>
-                <button class="lang-btn" id="btn-es" onclick="showLang('es')">🇪🇸 Español</button>
-                <button class="lang-btn" id="btn-de" onclick="showLang('de')">🇩🇪 Deutsch</button>
-                <button class="lang-btn" id="btn-ja" onclick="showLang('ja')">🇯🇵 日本語</button>
-            </div>
-
-            <!-- ENGLISH - Google Play optimized -->
-            <div id="en" class="lang-section active">
-                <div class="policy">
-                    <h2>Privacy Policy</h2>
-                    <span class="date">Last updated: March 7, 2026 | Effective Date: March 7, 2026</span>
-
-                    <div class="highlight-box">
-                        <p><strong>No data collection.</strong> Radio Sphere does not collect, store, or transmit any personal data to our servers. All your data remains on your device.</p>
-                    </div>
-
-                    <h3>Information We Do Not Collect</h3>
-                    <p>Radio Sphere is designed with privacy-first principles:</p>
-                    <ul>
-                        <li>No account registration required</li>
-                        <li>No email addresses collected</li>
-                        <li>No usage analytics or tracking</li>
-                        <li>No advertising IDs</li>
-                        <li>No cookies</li>
-                    </ul>
-
-                    <h3>Data Stored Locally on Your Device</h3>
-                    <p>The following data is stored <strong>only on your device</strong> and never transmitted:</p>
-                    <ul>
-                        <li><strong>Favorite radio stations</strong> - Your saved stations list</li>
-                        <li><strong>TimeBack recordings</strong> - Audio recordings stored locally and encrypted</li>
-                        <li><strong>App preferences</strong> - Language, sleep timer settings</li>
-                        <li><strong>Purchase status</strong> - Premium subscription verification via Google Play</li>
-                    </ul>
-
-                    <h3>Third-Party Services</h3>
-                    <p>Radio Sphere uses the following third-party services:</p>
-                    <ul>
-                        <li><strong>Radio Browser API (radio-browser.info):</strong> Provides radio station listings. Your IP address is transmitted solely for technical audio streaming purposes.</li>
-                        <li><strong>Google Play Billing:</strong> Processes in-app purchases. Google handles all payment data; we never see your financial information.</li>
-                        <li><strong>Google Cast / Android Auto:</strong> Optional features that may share diagnostic data with Google according to their privacy policy.</li>
-                    </ul>
-
-                    <h3>Your Rights (GDPR / CCPA)</h3>
-                    <p>Since we store no data on our servers, you have complete control:</p>
-                    <ul>
-                        <li><strong>Right to deletion:</strong> Uninstall the app to permanently delete all data</li>
-                        <li><strong>Right to portability:</strong> Export favorites as CSV from the app settings</li>
-                        <li><strong>Right to access:</strong> All your data is visible within the app</li>
-                    </ul>
-
-                    <h3>Children's Privacy</h3>
-                    <p>Radio Sphere is not intended for children under 13. We do not knowingly collect data from children.</p>
-
-                    <h3>Changes to This Policy</h3>
-                    <p>We may update this privacy policy. Changes will be posted here with an updated effective date.</p>
-
-                    <h3>Contact Us</h3>
-                    <p>For privacy-related questions:</p>
-                    <footer>
-                        Developer: Franck H. Malherbe<br>
-                        Email: <a href="mailto:info@radiosphere.be">info@radiosphere.be</a><br>
-                        Address: Liège, Belgium
-                    </footer>
-                </div>
-            </div>
-
-            <!-- FRANÇAIS -->
             <div id="fr" class="lang-section">
                 <div class="policy">
-                    <h2>Politique de Confidentialité</h2>
-                    <span class="date">Dernière mise à jour : 7 mars 2026 | Date d'effet : 7 mars 2026</span>
+                    <h2>Politique de Confidentialité et d'Utilisation</h2>
+                    <span class="date">Dernière mise à jour : 7 mars 2026</span>
 
-                    <div class="highlight-box">
-                        <p><strong>Aucune collecte de données.</strong> Radio Sphere ne collecte, ne stocke ni ne transmet aucune donnée personnelle à nos serveurs. Toutes vos données restent sur votre appareil.</p>
-                    </div>
+                    <p>L'application <strong>Radio Sphere</strong> respecte votre vie privée. Cette politique détaille la gestion de vos données conformément au Règlement Général sur la Protection des Données (RGPD) européen et aux exigences de Google Play.</p>
 
-                    <h3>Informations que nous ne collectons pas</h3>
-                    <p>Radio Sphere est conçu avec des principes de confidentialité prioritaires :</p>
+                    <h3>1. Collecte et utilisation des données</h3>
+                    <p>Radio Sphere <strong>ne collecte aucune donnée personnelle identifiable</strong>. Aucun compte utilisateur n'est requis pour utiliser l'application.</p>
                     <ul>
-                        <li>Aucune inscription de compte requise</li>
-                        <li>Aucune adresse email collectée</li>
-                        <li>Aucune analyse d'utilisation ou suivi</li>
-                        <li>Aucun identifiant publicitaire</li>
-                        <li>Aucun cookie</li>
+                        <li><strong>Fonctions Premium (TimeBack Machine, Minuteur) :</strong> Les enregistrements audio générés par la TimeBack Machine sont sauvegardés de manière strictement locale et chiffrée sur votre appareil. Ils ne sont jamais envoyés sur nos serveurs.</li>
+                        <li><strong>Favoris et préférences :</strong> Stockés exclusivement sur votre appareil (stockage local). Nous n'y avons pas accès.</li>
+                        <li><strong>Flux audio :</strong> Les serveurs tiers de Radio Browser reçoivent votre adresse IP uniquement pour la diffusion technique du flux audio.</li>
+                        <li><strong>Google Cast & Android Auto :</strong> Ces fonctionnalités utilisent les flux locaux de l'application. Google peut collecter des données de diagnostic conformément à sa propre politique.</li>
                     </ul>
 
-                    <h3>Données stockées localement</h3>
-                    <p>Les données suivantes sont stockées <strong>uniquement sur votre appareil</strong> :</p>
+                    <h3>2. Propriété intellectuelle et usage des enregistrements</h3>
+                    <p>La fonctionnalité <strong>TimeBack Machine</strong> permet à l'utilisateur d'enregistrer des flux audio diffusés par des stations de radio tierces. Ces enregistrements sont destinés à un <strong>usage strictement personnel et privé</strong>.</p>
+                    <p>En utilisant cette fonctionnalité, l'utilisateur s'engage à respecter les lois sur les droits d'auteur applicables dans sa juridiction. <strong>Radio Sphere décline toute responsabilité</strong> quant à l'utilisation faite de ces enregistrements. Toute rediffusion, partage public, modification ou utilisation commerciale des contenus enregistrés est strictement interdite et relève de la seule responsabilité de l'utilisateur.</p>
+
+                    <h3>3. Achats In-App et Abonnement</h3>
+                    <p>Les transactions pour la version Premium sont entièrement gérées et sécurisées par <strong>Google Play Billing</strong>. Radio Sphere n'a jamais accès à vos informations financières, numéros de carte bancaire ou données de facturation.</p>
+
+                    <h3>4. Droits des utilisateurs (RGPD)</h3>
+                    <p>Conformément au RGPD, vous disposez d'un contrôle total sur vos données. Étant donné que Radio Sphere fonctionne sur un modèle de stockage 100% local, vous pouvez exercer votre droit à l'effacement et à la portabilité simplement en :</p>
                     <ul>
-                        <li><strong>Stations favorites</strong> - Votre liste de stations enregistrées</li>
-                        <li><strong>Enregistrements TimeBack</strong> - Stockés localement et chiffrés</li>
-                        <li><strong>Préférences</strong> - Langue, paramètres minuteur</li>
-                        <li><strong>Statut d'achat</strong> - Vérification via Google Play</li>
+                        <li>Effaçant les données et le cache de l'application dans les paramètres de votre téléphone.</li>
+                        <li>Désinstallant l'application, ce qui détruira définitivement vos enregistrements et favoris.</li>
                     </ul>
 
-                    <h3>Services tiers</h3>
+                    <h3>5. Permissions de l'application</h3>
                     <ul>
-                        <li><strong>Radio Browser API :</strong> Fournit les listes de stations. Votre IP est transmise uniquement pour le streaming technique.</li>
-                        <li><strong>Google Play Billing :</strong> Gère les achats in-app. Google traite les paiements, nous n'avons jamais accès à vos données financières.</li>
+                        <li><strong>Service de premier plan :</strong> Utilisé pour maintenir la lecture audio ou l'enregistrement (TimeBack Machine) en arrière-plan.</li>
+                        <li><strong>Accès réseau :</strong> Requis pour diffuser les flux radio.</li>
+                        <li><strong>Stockage :</strong> Utilisé pour sauvegarder vos enregistrements audio locaux et exporter vos favoris.</li>
                     </ul>
 
-                    <h3>Vos droits (RGPD)</h3>
-                    <ul>
-                        <li><strong>Droit à l'effacement :</strong> Désinstallez l'application pour supprimer toutes les données</li>
-                        <li><strong>Droit à la portabilité :</strong> Exportez vos favoris en CSV depuis les paramètres</li>
-                        <li><strong>Droit d'accès :</strong> Toutes vos données sont visibles dans l'app</li>
-                    </ul>
+                    <h3>6. Contact</h3>
+                    <p>Pour toute question relative à cette politique, vous pouvez nous contacter :</p>
 
-                    <h3>Contact</h3>
                     <footer>
-                        Développeur : Franck H. Malherbe<br>
-                        Email : <a href="mailto:info@radiosphere.be">info@radiosphere.be</a><br>
+                        Développé par Franck H. Malherbe<br>
+                        <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
                         Liège, Belgique
                     </footer>
                 </div>
             </div>
 
-            <!-- DEUTSCH -->
-            <div id="de" class="lang-section">
+            <div id="en" class="lang-section active">
                 <div class="policy">
-                    <h2>Datenschutzrichtlinie</h2>
-                    <span class="date">Letzte Aktualisierung: 7. März 2026 | Gültig ab: 7. März 2026</span>
+                    <h2>Privacy and Usage Policy</h2>
+                    <span class="date">Last updated: March 7, 2026</span>
 
-                    <div class="highlight-box">
-                        <p><strong>Keine Datenerfassung.</strong> Radio Sphere sammelt, speichert oder überträgt keine persönlichen Daten an unsere Server. Alle Ihre Daten verbleiben auf Ihrem Gerät.</p>
-                    </div>
+                    <p>The <strong>Radio Sphere</strong> application values your privacy. This policy outlines our data practices in accordance with the European General Data Protection Regulation (GDPR) and Google Play requirements.</p>
 
-                    <h3>Informationen, die wir nicht sammeln</h3>
+                    <h3>1. Data Collection and Use</h3>
+                    <p>Radio Sphere <strong>does not collect any personally identifiable information</strong>. No user account is required to use the app.</p>
                     <ul>
-                        <li>Keine Kontoanmeldung erforderlich</li>
-                        <li>Keine E-Mail-Adressen gesammelt</li>
-                        <li>Keine Nutzungsanalyse oder Tracking</li>
-                        <li>Keine Werbe-IDs</li>
-                        <li>Keine Cookies</li>
+                        <li><strong>Premium Features (TimeBack Machine, Sleep Timer):</strong> Audio recordings generated by the TimeBack Machine are saved strictly locally on your device. They are never transmitted to our servers.</li>
+                        <li><strong>Favorites and preferences:</strong> Stored exclusively on your device (local storage). We have no access to them.</li>
+                        <li><strong>Audio streaming:</strong> Third-party Radio Browser servers receive your IP address solely for the technical delivery of the audio stream.</li>
+                        <li><strong>Google Cast & Android Auto:</strong> These features use the app's local streams. Google may collect diagnostic data in accordance with its own policy.</li>
                     </ul>
 
-                    <h3>Lokal gespeicherte Daten</h3>
+                    <h3>2. Intellectual Property and Use of Recordings</h3>
+                    <p>The <strong>TimeBack Machine</strong> feature allows users to record audio streams broadcast by third-party radio stations. These recordings are intended for <strong>strictly personal and private use</strong>.</p>
+                    <p>By using this feature, the user agrees to comply with the copyright laws applicable in their jurisdiction. <strong>Radio Sphere disclaims any liability</strong> regarding the use of these recordings. Any redistribution, public sharing, modification, or commercial use of the recorded content is strictly prohibited and is the sole responsibility of the user.</p>
+
+                    <h3>3. In-App Purchases and Subscriptions</h3>
+                    <p>Transactions for the Premium version are entirely processed and secured by <strong>Google Play Billing</strong>. Radio Sphere never has access to your financial information, credit card numbers, or billing data.</p>
+
+                    <h3>4. User Rights (GDPR)</h3>
+                    <p>In accordance with the GDPR, you have total control over your data. Since Radio Sphere operates on a 100% local storage model, you can exercise your right to erasure and portability simply by:</p>
                     <ul>
-                        <li><strong>Favoriten:</strong> Ihre gespeicherten Sender</li>
-                        <li><strong>TimeBack-Aufnahmen:</strong> Lokal verschlüsselt gespeichert</li>
-                        <li><strong>Einstellungen:</strong> Sprache, Timer-Einstellungen</li>
-                        <li><strong>Kaufstatus:</strong> Premium-Aboverifizierung via Google Play</li>
+                        <li>Clearing the app's data and cache in your phone's settings.</li>
+                        <li>Uninstalling the app, which will permanently destroy your local recordings and favorites.</li>
                     </ul>
 
-                    <h3>Drittanbieter-Dienste</h3>
+                    <h3>5. App Permissions</h3>
                     <ul>
-                        <li><strong>Radio Browser API:</strong> Bietet Radiosender-Listen. Ihre IP wird nur für technisches Streaming übertragen.</li>
-                        <li><strong>Google Play Billing:</strong> Verarbeitet In-App-Käufe. Google verarbeitet alle Zahlungsdaten.</li>
+                        <li><strong>Foreground Service:</strong> Used to maintain audio playback or recording (TimeBack Machine) in the background.</li>
+                        <li><strong>Network Access:</strong> Required to stream radio content.</li>
+                        <li><strong>Storage:</strong> Used to save your local audio recordings and export your favorites.</li>
                     </ul>
 
-                    <h3>Ihre Rechte (DSGVO)</h3>
-                    <ul>
-                        <li><strong>Recht auf Löschung:</strong> Deinstallieren Sie die App, um alle Daten zu löschen</li>
-                        <li><strong>Recht auf Datenübertragbarkeit:</strong> Exportieren Sie Favoriten als CSV</li>
-                        <li><strong>Recht auf Zugang:</strong> Alle Ihre Daten sind in der App sichtbar</li>
-                    </ul>
+                    <h3>6. Contact</h3>
+                    <p>For any questions regarding this privacy policy, please contact us:</p>
 
-                    <h3>Kontakt</h3>
                     <footer>
-                        Entwickler: Franck H. Malherbe<br>
-                        Email: <a href="mailto:info@radiosphere.be">info@radiosphere.be</a><br>
-                        Lüttich, Belgien
+                        Developed by Franck H. Malherbe<br>
+                        <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
+                        Liège, Belgium
                     </footer>
                 </div>
             </div>
 
-            <!-- ESPAÑOL -->
             <div id="es" class="lang-section">
                 <div class="policy">
-                    <h2>Política de Privacidad</h2>
-                    <span class="date">Última actualización: 7 de marzo de 2026 | Fecha de vigencia: 7 de marzo de 2026</span>
+                    <h2>Política de Privacidad y Uso</h2>
+                    <span class="date">Última actualización: 7 de marzo de 2026</span>
 
-                    <div class="highlight-box">
-                        <p><strong>Sin recopilación de datos.</strong> Radio Sphere no recopila, almacena ni transmite datos personales a nuestros servidores. Todos sus datos permanecen en su dispositivo.</p>
-                    </div>
+                    <p>La aplicación <strong>Radio Sphere</strong> respeta su privacidad. Esta política detalla la gestión de sus datos de conformidad con el Reglamento General de Protección de Datos (RGPD) europeo y los requisitos de Google Play.</p>
 
-                    <h3>Información que no recopilamos</h3>
-                    <p>Radio Sphere está diseñado con principios de privacidad primero:</p>
+                    <h3>1. Recopilación y uso de datos</h3>
+                    <p>Radio Sphere <strong>no recopila ningún dato personal identificable</strong>. No se requiere cuenta de usuario para utilizar la aplicación.</p>
                     <ul>
-                        <li>No se requiere registro de cuenta</li>
-                        <li>No se recopilan direcciones de correo electrónico</li>
-                        <li>Sin análisis de uso ni seguimiento</li>
-                        <li>Sin identificadores publicitarios</li>
-                        <li>Sin cookies</li>
+                        <li><strong>Funciones Premium (TimeBack Machine, Temporizador):</strong> Las grabaciones de audio generadas por la TimeBack Machine se guardan de forma estrictamente local en su dispositivo. Nunca se envían a nuestros servidores.</li>
+                        <li><strong>Favoritos y preferencias:</strong> Almacenados exclusivamente en su dispositivo. No tenemos acceso a ellos.</li>
+                        <li><strong>Transmisión de audio:</strong> Los servidores de terceros de Radio Browser reciben su dirección IP únicamente para la entrega técnica del flujo de audio.</li>
+                        <li><strong>Google Cast y Android Auto:</strong> Estas funciones utilizan los flujos locales de la aplicación.</li>
                     </ul>
 
-                    <h3>Datos almacenados localmente</h3>
-                    <p>Los siguientes datos se almacenan <strong>solo en su dispositivo</strong> y nunca se transmiten:</p>
+                    <h3>2. Propiedad Intelectual y Uso de Grabaciones</h3>
+                    <p>La función <strong>TimeBack Machine</strong> permite al usuario grabar flujos de audio emitidos por estaciones de radio de terceros. Estas grabaciones están destinadas a un <strong>uso estrictamente personal y privado</strong>.</p>
+                    <p>Al utilizar esta función, el usuario se compromete a cumplir con las leyes de derechos de autor aplicables en su jurisdicción. <strong>Radio Sphere declina toda responsabilidad</strong> en cuanto al uso que se haga de estas grabaciones. Queda estrictamente prohibida cualquier redistribución, intercambio público, modificación o uso comercial de los contenidos grabados, siendo responsabilidad exclusiva del usuario.</p>
+
+                    <h3>3. Compras en la aplicación y Suscripciones</h3>
+                    <p>Las transacciones para la versión Premium son procesadas y aseguradas íntegramente por <strong>Google Play Billing</strong>. Radio Sphere nunca tiene acceso a su información financiera ni a sus datos de facturación.</p>
+
+                    <h3>4. Derechos de los usuarios (RGPD)</h3>
+                    <p>Dado que Radio Sphere funciona con un modelo de almacenamiento 100% local, puede ejercer su derecho de supresión simplemente:</p>
                     <ul>
-                        <li><strong>Estaciones favoritas</strong> - Su lista de estaciones guardadas</li>
-                        <li><strong>Grabaciones TimeBack</strong> - Almacenadas localmente y cifradas</li>
-                        <li><strong>Preferencias</strong> - Idioma, configuración del temporizador</li>
-                        <li><strong>Estado de compra</strong> - Verificación de suscripción Premium vía Google Play</li>
+                        <li>Borrando los datos y la caché de la aplicación en los ajustes de su teléfono.</li>
+                        <li>Desinstalando la aplicación, lo que destruirá permanentemente sus grabaciones y favoritos.</li>
                     </ul>
 
-                    <h3>Servicios de terceros</h3>
+                    <h3>5. Permisos de la aplicación</h3>
                     <ul>
-                        <li><strong>Radio Browser API (radio-browser.info):</strong> Proporciona listados de estaciones. Su IP se transmite únicamente para fines técnicos de streaming.</li>
-                        <li><strong>Google Play Billing:</strong> Procesa compras in-app. Google gestiona todos los datos de pago; nunca vemos su información financiera.</li>
-                        <li><strong>Google Cast / Android Auto:</strong> Funciones opcionales que pueden compartir datos de diagnóstico con Google.</li>
+                        <li><strong>Servicio en primer plano:</strong> Utilizado para mantener la reproducción o grabación de audio en segundo plano.</li>
+                        <li><strong>Acceso a la red:</strong> Necesario para transmitir contenido de radio.</li>
+                        <li><strong>Almacenamiento:</strong> Utilizado para guardar sus grabaciones de audio locales y exportar favoritos.</li>
                     </ul>
 
-                    <h3>Sus derechos (RGPD / CCPA)</h3>
-                    <ul>
-                        <li><strong>Derecho a la supresión:</strong> Desinstale la app para eliminar permanentemente todos los datos</li>
-                        <li><strong>Derecho a la portabilidad:</strong> Exporte favoritos como CSV desde los ajustes</li>
-                        <li><strong>Derecho de acceso:</strong> Todos sus datos son visibles dentro de la app</li>
-                    </ul>
+                    <h3>6. Contacto</h3>
+                    <p>Para cualquier pregunta sobre esta política, contáctenos:</p>
 
-                    <h3>Privacidad infantil</h3>
-                    <p>Radio Sphere no está destinado a menores de 13 años.</p>
-
-                    <h3>Contacto</h3>
                     <footer>
                         Desarrollado por Franck H. Malherbe<br>
-                        Email: <a href="mailto:info@radiosphere.be">info@radiosphere.be</a><br>
+                        <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
                         Lieja, Bélgica
                     </footer>
                 </div>
             </div>
 
-            <!-- 日本語 -->
-            <div id="ja" class="lang-section">
+            <div id="de" class="lang-section">
                 <div class="policy">
-                    <h2>プライバシーポリシー</h2>
-                    <span class="date">最終更新日：2026年3月7日 | 発効日：2026年3月7日</span>
+                    <h2>Datenschutz- und Nutzungsbedingungen</h2>
+                    <span class="date">Letzte Aktualisierung: 7. März 2026</span>
 
-                    <div class="highlight-box">
-                        <p><strong>データ収集なし。</strong>Radio Sphereは個人データを収集、保存、または当社サーバーに送信しません。すべてのデータはお客様のデバイスに保存されます。</p>
-                    </div>
+                    <p>Die Anwendung <strong>Radio Sphere</strong> respektiert Ihre Privatsphäre. Diese Richtlinie beschreibt unseren Umgang mit Ihren Daten in Übereinstimmung mit der europäischen Datenschutz-Grundverordnung (DSGVO) und den Anforderungen von Google Play.</p>
 
-                    <h3>収集しない情報</h3>
-                    <p>Radio Sphereはプライバシーファーストの原則で設計されています：</p>
+                    <h3>1. Datenerhebung und -nutzung</h3>
+                    <p>Radio Sphere <strong>erhebt keine personenbezogenen Daten</strong>. Für die Nutzung der App ist kein Benutzerkonto erforderlich.</p>
                     <ul>
-                        <li>アカウント登録不要</li>
-                        <li>メールアドレスの収集なし</li>
-                        <li>使用状況の分析やトラッキングなし</li>
-                        <li>広告IDなし</li>
-                        <li>Cookieなし</li>
+                        <li><strong>Premium-Funktionen (TimeBack Machine, Sleep-Timer):</strong> Audioaufnahmen, die mit der TimeBack Machine erstellt wurden, werden streng lokal auf Ihrem Gerät gespeichert. Sie werden niemals an unsere Server gesendet.</li>
+                        <li><strong>Favoriten und Einstellungen:</strong> Werden ausschließlich lokal auf Ihrem Gerät gespeichert.</li>
+                        <li><strong>Audio-Streaming:</strong> Die Drittanbieter-Server von Radio Browser empfangen Ihre IP-Adresse ausschließlich für die technische Bereitstellung des Audiostreams.</li>
+                        <li><strong>Google Cast & Android Auto:</strong> Diese Funktionen nutzen die lokalen Streams der App.</li>
                     </ul>
 
-                    <h3>デバイスにローカル保存されるデータ</h3>
-                    <p>以下のデータは<strong>お客様のデバイスのみ</strong>に保存され、送信されることはありません：</p>
+                    <h3>2. Geistiges Eigentum und Nutzung von Aufnahmen</h3>
+                    <p>Die <strong>TimeBack Machine</strong>-Funktion ermöglicht es dem Nutzer, Audiostreams von Drittanbieter-Radiosendern aufzuzeichnen. Diese Aufnahmen sind <strong>ausschließlich für den persönlichen und privaten Gebrauch</strong> bestimmt.</p>
+                    <p>Durch die Nutzung dieser Funktion verpflichtet sich der Nutzer, die in seiner Gerichtsbarkeit geltenden Urheberrechtsgesetze einzuhalten. <strong>Radio Sphere lehnt jede Haftung</strong> hinsichtlich der Nutzung dieser Aufnahmen ab. Jegliche Weiterverbreitung, öffentliche Weitergabe, Änderung oder kommerzielle Nutzung der aufgezeichneten Inhalte ist strengstens untersagt und liegt in der alleinigen Verantwortung des Nutzers.</p>
+
+                    <h3>3. In-App-Käufe und Abonnements</h3>
+                    <p>Transaktionen für die Premium-Version werden vollständig von <strong>Google Play Billing</strong> verarbeitet und gesichert. Radio Sphere hat niemals Zugriff auf Ihre Finanzinformationen oder Abrechnungsdaten.</p>
+
+                    <h3>4. Nutzerrechte (DSGVO)</h3>
+                    <p>Da Radio Sphere auf einem 100% lokalen Speichermodell basiert, können Sie Ihr Recht auf Löschung einfach ausüben, indem Sie:</p>
                     <ul>
-                        <li><strong>お気に入りラジオ局</strong> - 保存した局のリスト</li>
-                        <li><strong>TimeBack録音</strong> - ローカルに暗号化して保存</li>
-                        <li><strong>アプリ設定</strong> - 言語、スリープタイマー設定</li>
-                        <li><strong>購入ステータス</strong> - Google Play経由のプレミアム確認</li>
+                        <li>Die App-Daten und den Cache in den Einstellungen Ihres Telefons löschen.</li>
+                        <li>Die Anwendung deinstallieren, wodurch Ihre lokalen Aufnahmen und Favoriten dauerhaft vernichtet werden.</li>
                     </ul>
 
-                    <h3>サードパーティサービス</h3>
+                    <h3>5. App-Berechtigungen</h3>
                     <ul>
-                        <li><strong>Radio Browser API (radio-browser.info)：</strong>ラジオ局リストを提供。IPアドレスは技術的なストリーミング目的でのみ送信されます。</li>
-                        <li><strong>Google Play Billing：</strong>アプリ内購入を処理。Googleがすべての支払いデータを処理し、当社はお客様の財務情報にアクセスしません。</li>
-                        <li><strong>Google Cast / Android Auto：</strong>Googleの方針に基づき診断データを共有する場合がある任意の機能です。</li>
+                        <li><strong>Vordergrunddienst:</strong> Wird verwendet, um die Audiowiedergabe oder -aufnahme im Hintergrund aufrechtzuerhalten.</li>
+                        <li><strong>Netzwerkzugriff:</strong> Erforderlich zum Streamen von Radioinhalten.</li>
+                        <li><strong>Speicher:</strong> Wird zum Speichern Ihrer lokalen Audioaufnahmen verwendet.</li>
                     </ul>
 
-                    <h3>お客様の権利（GDPR / CCPA）</h3>
-                    <ul>
-                        <li><strong>削除の権利：</strong>アプリをアンインストールしてすべてのデータを永久に削除</li>
-                        <li><strong>データポータビリティの権利：</strong>設定からお気に入りをCSVでエクスポート</li>
-                        <li><strong>アクセスの権利：</strong>すべてのデータはアプリ内で確認可能</li>
-                    </ul>
+                    <h3>6. Kontakt</h3>
+                    <p>Bei Fragen zu dieser Richtlinie kontaktieren Sie uns bitte:</p>
 
-                    <h3>児童のプライバシー</h3>
-                    <p>Radio Sphereは13歳未満のお子様を対象としていません。</p>
-
-                    <h3>お問い合わせ</h3>
                     <footer>
-                        開発者：Franck H. Malherbe<br>
-                        Email: <a href="mailto:info@radiosphere.be">info@radiosphere.be</a><br>
-                        リエージュ、ベルギー
+                        Entwickelt von Franck H. Malherbe<br>
+                        <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
+                        Lüttich, Belgien
                     </footer>
                 </div>
             </div>
 
-            <div class="app-store-section">
-                <p>📋 This privacy policy is specifically formatted for Google Play Store requirements.<br>App Package: <code>be.radiosphere.app</code></p>
+            <div id="ja" class="lang-section">
+                <div class="policy">
+                    <h2>プライバシーおよび利用ポリシー</h2>
+                    <span class="date">最終更新日：2026年3月7日</span>
+
+                    <p><strong>Radio Sphere</strong>アプリは、お客様のプライバシーを尊重します。本ポリシーは、欧州の一般データ保護規則（GDPR）およびGoogle Playの要件に従ったデータの取り扱いについて説明します。</p>
+
+                    <h3>1. データの収集と使用</h3>
+                    <p>Radio Sphereは<strong>個人を特定できる情報を一切収集しません</strong>。アプリの使用にユーザーアカウントは必要ありません。</p>
+                    <ul>
+                        <li><strong>プレミアム機能（TimeBack Machine、スリープタイマー）：</strong>TimeBack Machineによって生成された音声録音は、デバイスに厳密にローカル保存されます。当方のサーバーに送信されることはありません。</li>
+                        <li><strong>お気に入りと設定：</strong>お客様のデバイスにのみローカル保存されます。</li>
+                        <li><strong>オーディオストリーミング：</strong>Radio Browserのサードパーティサーバーは、オーディオストリームの技術的な配信のためにのみIPアドレスを受信します。</li>
+                        <li><strong>Google Cast と Android Auto：</strong>これらの機能はアプリのローカルストリームを使用します。</li>
+                    </ul>
+
+                    <h3>2. 知的財産と録音の使用</h3>
+                    <p><strong>TimeBack Machine</strong>機能により、ユーザーはサードパーティのラジオ局が放送するオーディオストリームを録音できます。これらの録音は、<strong>厳密に個人的および私的な使用</strong>を目的としています。</p>
+                    <p>この機能を使用することにより、ユーザーは管轄区域で適用される著作権法を遵守することに同意するものとします。<strong>Radio Sphereは、これらの録音の使用に関していかなる責任も負いません。</strong>録音されたコンテンツの再配布、公開共有、変更、または商業的使用は固く禁じられており、ユーザーの単独の責任となります。</p>
+
+                    <h3>3. アプリ内購入とサブスクリプション</h3>
+                    <p>プレミアムバージョンの取引は、<strong>Google Play Billing</strong>によって完全に処理され保護されます。Radio Sphereがお客様の財務情報や請求データにアクセスすることは決してありません。</p>
+
+                    <h3>4. ユーザーの権利（GDPR）</h3>
+                    <p>Radio Sphereは100％ローカルストレージモデルで動作するため、以下の方法で簡単に消去の権利を行使できます：</p>
+                    <ul>
+                        <li>スマートフォンの設定でアプリのデータとキャッシュを消去する。</li>
+                        <li>アプリをアンインストールする（これによりローカルの録音とお気に入りが完全に破棄されます）。</li>
+                    </ul>
+
+                    <h3>5. アプリの権限</h3>
+                    <ul>
+                        <li><strong>フォアグラウンドサービス：</strong>バックグラウンドでの音声再生や録音を維持するために使用されます。</li>
+                        <li><strong>ネットワークアクセス：</strong>ラジオコンテンツをストリーミングするために必要です。</li>
+                        <li><strong>ストレージ：</strong>ローカルの音声録音を保存するために使用されます。</li>
+                    </ul>
+
+                    <h3>6. お問い合わせ</h3>
+                    <p>本ポリシーに関するご質問は、以下までお問い合わせください：</p>
+
+                    <footer>
+                        開発者：Franck H. Malherbe<br>
+                        <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a><br>
+                        リエージュ、ベルギー
+                    </footer>
+                </div>
             </div>
         </div>
     </div>
@@ -550,9 +462,8 @@
             });
             
             const selectedSection = document.getElementById(lang);
-            if (selectedSection) selectedSection.classList.add('active');
-            const btn = document.getElementById('btn-' + lang);
-            if (btn) btn.classList.add('active');
+            selectedSection.classList.add('active');
+            document.getElementById('btn-' + lang).classList.add('active');
         }
     </script>
 </body>
