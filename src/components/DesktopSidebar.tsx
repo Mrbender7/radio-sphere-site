@@ -54,6 +54,29 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         </h1>
       </div>
 
+      {/* Description + TBM teaser */}
+      <div className="px-5 pb-4 space-y-2">
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          {t("sidebar.stationCount")}
+        </p>
+        <div className="rounded-lg bg-accent/60 p-2.5 space-y-1.5">
+          <div className="flex items-center gap-2">
+            <img src={tbmLogo} alt="TimeBack Machine" className="w-5 h-5 rounded" />
+            <span className="text-[11px] font-semibold text-foreground">TimeBack Machine</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            {t("sidebar.tbmTeaser")}
+          </p>
+          <button
+            onClick={() => setTbmModalOpen(true)}
+            className="inline-flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
+          >
+            <HelpCircle className="w-3 h-3" />
+            {t("sidebar.tbmHowItWorks")}
+          </button>
+        </div>
+      </div>
+
       {/* Navigation */}
       <nav className="px-3 space-y-1">
         {navItems.map(({ id, labelKey, icon: Icon }) => (
