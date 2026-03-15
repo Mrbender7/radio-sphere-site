@@ -1179,7 +1179,7 @@ const translations: Record<Language, Record<string, string>> = {
     "guide.sleepTimer": "スリープタイマー",
     "guide.sleepTimerContent": "お好みの時間（15分〜2時間またはカスタム）で自動的に再生を停止できます。ラジオを聴きながら眠りたいときに最適です。設定画面から有効にできます。",
     "guide.recorder": "TimeBack Machine",
-    "guide.recorderContent": "フルスクリーンプレーヤーからお気に入りの番組をMP3で直接録音できます。5分間のバッファにより、聞き逃した部分を巻き戻して再生することも可能です。RECをタップして録音を開始（最大10分）。",
+    "guide.recorderContent": "フルスクリーンプレーヤーからお気に入りの番組をMP3で直接録音できます。5分間のバッファにより、聞き逃した部分を巻き戻して再生することも可能です。RECをタップして録音を開始（最大10分）。TBMアイコンが点滅している場合、バッファがアクティブでバックグラウンドで録音中であることを意味します。点滅するアイコンをタップしてTimeBackプレーヤーを開き、直近の数分間を再生できます。",
     "guide.chromecast": "Chromecast",
     "guide.chromecastContent": "Chromecastを使ってラジオ局をテレビやスマートスピーカーにストリーミングできます。プレーヤーのCastアイコンをタップして配信を開始してください。",
     "welcome.subtitle": "世界のラジオを手のひらに",
