@@ -24,8 +24,7 @@ interface DesktopSidebarProps {
 
 export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) {
   const { t, language, setLanguage } = useTranslation();
-  const { favorites } = useFavoritesContext();
-  const { play, currentStation, isPlaying } = usePlayer();
+  const [tbmModalOpen, setTbmModalOpen] = useState(false);
   const [tbmModalOpen, setTbmModalOpen] = useState(false);
 
   const tbmSections = [
