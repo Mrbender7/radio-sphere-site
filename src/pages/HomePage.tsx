@@ -44,8 +44,11 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
       <div className="bg-background px-4 lg:px-8 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 lg:hidden">
-            <img src={radioSphereLogo} alt="Radio Sphere" className="w-12 h-12 rounded-xl mix-blend-screen animate-logo-glow" />
-            <h1 className="text-2xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap">Radio Sphere</h1>
+            <img src={radioSphereLogo} alt="Radio Sphere — Radio gratuite sans pub" className="w-12 h-12 rounded-xl mix-blend-screen animate-logo-glow" />
+            <h1 className="text-2xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap">
+              Radio Sphere
+              <span className="sr-only"> — Le lecteur radio gratuit sans publicité</span>
+            </h1>
           </div>
           <h1 className="hidden lg:block text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("nav.home")}</h1>
           <CastButton />
