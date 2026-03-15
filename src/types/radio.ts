@@ -10,6 +10,7 @@ export interface RadioStation {
   codec: string;
   bitrate: number;
   votes: number;
+  clickcount: number;
   homepage: string;
 }
 
