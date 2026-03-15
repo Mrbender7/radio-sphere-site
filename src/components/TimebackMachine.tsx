@@ -33,8 +33,29 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     returnToLive,
   } = useStreamBuffer();
 
+  const { canUseTBM, isWarning, trackUsage, isMobile: isMobileQuota } = useTBMQuota();
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const warningShownRef = useRef(false);
+
   const timelineRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Track usage every second when not live (seeking)
+  useEffect(() => {
+    if (isLive || !isMobileQuota) return;
+    const interval = setInterval(() => {
+      trackUsage();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isLive, isMobileQuota, trackUsage]);
+
+  // Show warning toast once at 8 min
+  useEffect(() => {
+    if (isWarning && !warningShownRef.current) {
+      warningShownRef.current = true;
+      toast.info(t("tbmQuota.warning"), { duration: 5000 });
+    }
+  }, [isWarning, t]);
 
   const handleRewind = () => {
     const totalBuffer = Math.floor(bufferSeconds);
