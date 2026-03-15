@@ -29,7 +29,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         className="relative flex flex-col items-center w-full p-1 rounded-lg transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-lg bg-accent overflow-hidden shadow-md", isActive && isPlaying && "animate-card-glow")}>
-          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur Radio Sphere`} />
           {isActive && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
               {isPlaying ? <AudioVisualizer size="small" /> : <Play className="w-5 h-5 text-white" />}
@@ -59,7 +59,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         )}
       >
         <div className="w-12 h-12 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
-          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur Radio Sphere`} />
         </div>
         <div className="flex-1 min-w-0 text-left">
           <p className={cn("text-sm font-medium truncate", isActive && "text-primary")}>{station.name}</p>
@@ -85,7 +85,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
-          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur Radio Sphere`} />
           {isActive && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
               {isPlaying ? <AudioVisualizer size="small" /> : <Play className="w-8 h-8 text-white" />}
@@ -112,7 +112,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
-          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur Radio Sphere`} />
           {isActive && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
               {isPlaying ? <AudioVisualizer size="small" /> : <Play className="w-10 h-10 text-white" />}
@@ -140,7 +140,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       className="relative flex flex-col items-center w-[7.5rem] flex-shrink-0 p-2 rounded-xl transition-colors"
     >
       <div className={cn("relative w-[5.5rem] h-[5.5rem] rounded-xl bg-accent mb-1.5 overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
-        <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+        <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur Radio Sphere`} />
         {isActive && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
             {isPlaying ? (

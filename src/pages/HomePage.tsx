@@ -8,6 +8,7 @@ import { useWeeklyDiscoveries } from "@/hooks/useWeeklyDiscoveries";
 import { Heart, Sparkles, RefreshCw, ChevronRight, ArrowUp } from "lucide-react";
 import { GenreAnimation } from "@/components/GenreAnimations";
 import { CastButton } from "@/components/CastButton";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "mousemusic", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
@@ -43,8 +44,11 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
       <div className="bg-background px-4 lg:px-8 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 lg:hidden">
-            <img src={radioSphereLogo} alt="Radio Sphere" className="w-12 h-12 rounded-xl mix-blend-screen animate-logo-glow" />
-            <h1 className="text-2xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap">Radio Sphere</h1>
+            <img src={radioSphereLogo} alt="Radio Sphere — Radio gratuite sans pub" className="w-12 h-12 rounded-xl mix-blend-screen animate-logo-glow" />
+            <h1 className="text-2xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap">
+              Radio Sphere
+              <span className="sr-only"> — Le lecteur radio gratuit sans publicité</span>
+            </h1>
           </div>
           <h1 className="hidden lg:block text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("nav.home")}</h1>
           <CastButton />
@@ -53,6 +57,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
 
       <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 lg:px-8 pb-4">
 
+      <OnboardingBanner />
       {recent.length > 0 && (
         <section className="mb-3">
           <h2 className="text-lg font-heading font-semibold mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.recentlyPlayed")}</h2>
