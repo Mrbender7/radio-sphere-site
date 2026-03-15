@@ -3,7 +3,7 @@ import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle } from "lucid
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
-import { useFavoritesContext } from "@/contexts/FavoritesContext";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { TabId } from "@/components/BottomNav";
