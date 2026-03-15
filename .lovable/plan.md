@@ -1,21 +1,50 @@
 
 
-## Plan : Correction moteur de recherche — TERMINÉ ✅
+## Ajout de modes d'affichage dans les Favoris
 
-### Problèmes corrigés
+### Actuellement
+La page Favoris affiche uniquement en mode **liste compacte** (une ligne par station). Le `StationCard` supporte deux modes : `compact` (liste) et le mode par défaut (petite vignette 5.5rem utilisée dans les scrollables de la HomePage).
 
-| # | Problème | Correction |
-|---|----------|------------|
-| 1 | Tri alphabétique ne fonctionnait pas après fusion multi-requêtes | Ajout `sortStations()` côté client après chaque fusion/dedup |
-| 2 | Recherche genre+mot-clé trop restrictive (`tag: "genre,query"`) | Remplacé par `tag: genre, name: query` + recherche `name` seule |
-| 3 | Fusion multi-genre fragile (double `Array.isArray` check) | Simplifié : chaque requête retourne `RadioStation[]`, fusion plate via `mergeSettled` |
-| 4 | `clickcount` manquant dans le modèle | Ajouté dans `RadioStation`, `normalizeStation`, et `AboutPage` |
+### Ce qu'on va faire
+
+Ajouter un sélecteur de vue (icônes) à côté des boutons de tri, avec 3 modes :
+- **Liste** (actuel `compact`) — une ligne par station
+- **Vignettes moyennes** — grille de cartes ~8rem avec artwork + nom en dessous
+- **Vignettes larges** — grille de cartes ~12rem avec artwork large + nom en dessous
+
+Le nom sous la vignette utilisera le dégradé du thème (primary → violet). Le coeur favori reste sur l'artwork. Les tris (alpha, pays, genre) restent fonctionnels dans tous les modes.
 
 ### Fichiers modifiés
 
-| Fichier | Changement |
-|---------|------------|
-| `src/types/radio.ts` | Ajout champ `clickcount: number` |
-| `src/services/RadioService.ts` | `normalizeStation` inclut `clickcount` |
-| `src/pages/SearchPage.tsx` | Tri client `dedupeAndSort`/`sortStations`, logique recherche corrigée, fusion simplifiée |
-| `src/pages/AboutPage.tsx` | Ajout `clickcount: 0` dans import CSV |
+**`src/components/StationCard.tsx`**
+- Remplacer le prop `compact?: boolean` par `viewMode?: "list" | "medium" | "large"`
+- `"list"` = rendu compact actuel
+- `"medium"` = vignette ~8rem artwork, nom gradient en dessous
+- `"large"` = vignette ~12rem artwork, nom gradient + pays en dessous
+- Mode par défaut (sans prop) = ancien rendu pour les scrollables
+
+**`src/pages/LibraryPage.tsx`**
+- Ajouter un state `viewMode` (`"list" | "medium" | "large"`)
+- Ajouter 3 icônes (List, Grid3x3, LayoutGrid) à côté des boutons de tri
+- Selon le `viewMode`, wrapper les stations dans une grille CSS adaptée ou en liste
+- Passer `viewMode` à chaque `StationCard`
+
+**`src/i18n/translations.ts`**
+- Ajouter les clés `favorites.viewList`, `favorites.viewMedium`, `favorites.viewLarge` (5 langues)
+
+### Détail visuel des vignettes
+
+```text
+┌─────────────┐   ┌───────────────────┐
+│  ♥     8rem │   │  ♥          12rem │
+│   artwork   │   │                   │
+│             │   │     artwork       │
+└─────────────┘   │                   │
+  Station Name    └───────────────────┘
+   (gradient)       Station Name
+                     (gradient)
+                     Country
+```
+
+La grille s'adapte : `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5` pour medium, `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` pour large.
+
