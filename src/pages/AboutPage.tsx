@@ -271,6 +271,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
                         codec: "",
                         bitrate: 0,
                         votes: 0,
+                        clickcount: 0,
                         logo: "",
                         homepage: cols[4] || "",
                       };
