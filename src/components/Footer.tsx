@@ -76,9 +76,9 @@ export function Footer(_props: FooterProps) {
           </div>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="mt-8 pt-4 border-t border-border/50 flex flex-col items-center gap-1">
           <p className="text-[10px] text-muted-foreground">
-            © {new Date().getFullYear()} Radio Sphere. {t("footer.rights")}
+            © {new Date().getFullYear()} Radio Sphere — Créé par Franck Malherbe. {t("footer.rights")}
           </p>
           <p className="text-[10px] text-muted-foreground">
             radiosphere.be
