@@ -2,10 +2,12 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import { useStreamBuffer } from "@/contexts/StreamBufferContext";
 
 import { useTranslation } from "@/contexts/LanguageContext";
+import { useTBMQuota } from "@/hooks/useTBMQuota";
+import { TBMQuotaModal } from "@/components/TBMQuotaModal";
 import { CassetteAnimation } from "@/components/CassetteAnimation";
 import { ChevronDown, Play, Pause, Square, Circle, Rewind, FastForward, Radio } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 const MAX_BUFFER_DISPLAY = 5 * 60; // 300s = 5 min max display
 
