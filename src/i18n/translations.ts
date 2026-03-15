@@ -504,7 +504,7 @@ const translations: Record<Language, Record<string, string>> = {
   es: {
     "nav.home": "Inicio",
     "nav.search": "Buscar",
-    "nav.explore": "Explorar",
+    "nav.explore": "Buscar y explorar",
     "nav.favorites": "Favoritos",
     "nav.premium": "Premium",
     "nav.settings": "Ajustes",
