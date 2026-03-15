@@ -67,7 +67,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
           : "space-y-1";
 
   const renderStations = (stations: RadioStation[]) => (
-    <div className={gridClass}>
+    <div key={viewMode} className={cn(gridClass, "animate-fade-in")}>
       {stations.map(s => (
         <StationCard key={s.id} station={s} viewMode={viewMode} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
       ))}
