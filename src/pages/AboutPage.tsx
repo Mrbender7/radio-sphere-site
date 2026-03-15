@@ -370,9 +370,22 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
           <div
             className={cn(
               "overflow-hidden transition-all duration-300 ease-in-out",
-              radioBrowserOpen ? "max-h-60 opacity-100 mt-2" : "max-h-0 opacity-0"
+              radioBrowserOpen ? "max-h-80 opacity-100 mt-2" : "max-h-0 opacity-0"
             )}
           >
+            <p className="text-xs text-muted-foreground leading-relaxed pl-7 mb-3">
+              Powered by the amazing{" "}
+              <a
+                href="https://www.radio-browser.info/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="text-primary hover:underline"
+              >
+                Radio Browser
+              </a>
+              . Special thanks to Alex Segler for this community-driven project.
+            </p>
             <p className="text-xs text-muted-foreground leading-relaxed pl-7 mb-3">{t("settings.radioSourceDesc")}</p>
             <div className="flex flex-col gap-2 pl-7">
               <a href="https://www.radio-browser.info/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline">
