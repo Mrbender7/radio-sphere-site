@@ -5,7 +5,7 @@ import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
 
-export type StationViewMode = "list" | "medium" | "large";
+export type StationViewMode = "small" | "list" | "medium" | "large";
 
 interface StationCardProps {
   station: RadioStation;
