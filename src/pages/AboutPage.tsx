@@ -443,8 +443,8 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
         )}
 
         {/* Copyright */}
-        <p className="text-center text-[10px] text-muted-foreground mb-6 select-none">
-          © {new Date().getFullYear()} Radio Sphere
+        <p className="text-center text-[10px] text-muted-foreground mb-1 select-none">
+          © {new Date().getFullYear()} Radio Sphere — Créé par Franck Malherbe
         </p>
 
         {/* Unavailable stations dialog */}
