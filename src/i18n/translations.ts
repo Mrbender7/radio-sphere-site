@@ -258,7 +258,7 @@ const translations: Record<Language, Record<string, string>> = {
   en: {
     "nav.home": "Home",
     "nav.search": "Search",
-    "nav.explore": "Explore",
+    "nav.explore": "Search & Explore",
     "nav.favorites": "Favorites",
     "nav.premium": "Premium",
     "nav.settings": "Settings",
