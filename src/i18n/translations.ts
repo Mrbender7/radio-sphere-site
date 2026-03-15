@@ -1383,6 +1383,11 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.tbmDesc": "ライブラジオを巻き戻し",
     "onboarding.cta": "Google Playで近日公開",
     "onboarding.dismiss": "再表示しない",
+    "tbmQuota.title": "無制限でタイムトラベルしませんか？",
+    "tbmQuota.description": "モバイルWebでは、TimeBack Machineは安定性のため1日10分に制限されています。Radio Sphereアプリをダウンロードして、無制限のHD品質リスニングをお楽しみください。",
+    "tbmQuota.cta": "Google Playでダウンロード",
+    "tbmQuota.continueLive": "ライブを続ける",
+    "tbmQuota.warning": "アプリで無制限のTimeBack Machineをお楽しみください！",
   },
 };
 
