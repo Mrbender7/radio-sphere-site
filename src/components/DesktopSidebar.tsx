@@ -29,8 +29,18 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
   const { t, language, setLanguage } = useTranslation();
   const { favorites } = useFavoritesContext();
   const { play, currentStation, isPlaying } = usePlayer();
+  const [tbmModalOpen, setTbmModalOpen] = useState(false);
+
+  const tbmSections = [
+    { titleKey: "tbmModal.bufferTitle", descKey: "tbmModal.bufferDesc" },
+    { titleKey: "tbmModal.rewindTitle", descKey: "tbmModal.rewindDesc" },
+    { titleKey: "tbmModal.recordTitle", descKey: "tbmModal.recordDesc" },
+    { titleKey: "tbmModal.iconTitle", descKey: "tbmModal.iconDesc" },
+    { titleKey: "tbmModal.liveTitle", descKey: "tbmModal.liveDesc" },
+  ];
 
   return (
+    <>
     <aside className="hidden lg:flex flex-col w-72 h-full bg-sidebar border-r border-sidebar-border flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 pt-8 pb-6">
