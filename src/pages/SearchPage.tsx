@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioBrowserProvider, getCountries, CountryInfo } from "@/services/RadioService";
-import { StationCard } from "@/components/StationCard";
+import { StationCard, StationViewMode } from "@/components/StationCard";
 import { RadioStation } from "@/types/radio";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
