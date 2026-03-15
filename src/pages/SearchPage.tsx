@@ -64,6 +64,25 @@ function mergeSettled<T>(results: PromiseSettledResult<T[]>[]): T[] {
   return merged;
 }
 
+/** Dedupe stations by id into a Map, then return sorted array */
+function dedupeAndSort(stations: RadioStation[], sortBy: "votes" | "name" | "clickcount"): RadioStation[] {
+  const map = new Map<string, RadioStation>();
+  for (const s of stations) {
+    if (!map.has(s.id)) map.set(s.id, s);
+  }
+  const arr = Array.from(map.values());
+  return sortStations(arr, sortBy);
+}
+
+/** Sort stations client-side */
+function sortStations(stations: RadioStation[], sortBy: "votes" | "name" | "clickcount"): RadioStation[] {
+  return [...stations].sort((a, b) => {
+    if (sortBy === "name") return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+    if (sortBy === "clickcount") return (b.clickcount || 0) - (a.clickcount || 0);
+    return (b.votes || 0) - (a.votes || 0);
+  });
+}
+
 interface SearchPageProps {
   isFavorite: (id: string) => boolean;
   onToggleFavorite: (station: RadioStation) => void;
