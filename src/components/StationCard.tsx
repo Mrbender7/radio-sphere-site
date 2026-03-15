@@ -140,7 +140,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       className="relative flex flex-col items-center w-[7.5rem] flex-shrink-0 p-2 rounded-xl transition-colors"
     >
       <div className={cn("relative w-[5.5rem] h-[5.5rem] rounded-xl bg-accent mb-1.5 overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
-        <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+        <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur Radio Sphere`} />
         {isActive && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
             {isPlaying ? (

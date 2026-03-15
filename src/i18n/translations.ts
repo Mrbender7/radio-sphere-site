@@ -1354,6 +1354,15 @@ const translations: Record<Language, Record<string, string>> = {
     "player.bitrate": "ビットレート",
     "player.language": "言語",
     "player.noStreamInfo": "ストリームまたはRadio Browserからの情報なし",
+    "onboarding.title": "Radio Sphereへようこそ",
+    "onboarding.free": "完全無料",
+    "onboarding.freeDesc": "サブスクなしで無制限アクセス",
+    "onboarding.noAds": "広告ゼロ",
+    "onboarding.noAdsDesc": "純粋なラジオストリーミング体験",
+    "onboarding.tbm": "TimeBack Machine",
+    "onboarding.tbmDesc": "ライブラジオを巻き戻し",
+    "onboarding.cta": "Google Playで入手",
+    "onboarding.dismiss": "再表示しない",
   },
 };
 
