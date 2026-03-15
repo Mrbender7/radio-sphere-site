@@ -363,6 +363,17 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
           {t("player.returnToLive")}
         </button>
       </div>
+
+      {/* Quota modal */}
+      <TBMQuotaModal
+        open={showQuotaModal}
+        onClose={() => setShowQuotaModal(false)}
+        onReturnToLive={() => {
+          setShowQuotaModal(false);
+          returnToLive();
+          onClose();
+        }}
+      />
     </div>
   );
 }
