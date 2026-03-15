@@ -47,6 +47,22 @@ export function Footer(_props: FooterProps) {
             </a>
           </div>
 
+          {/* Attribution */}
+          <div className="flex flex-col gap-2">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
+              Powered by the amazing{" "}
+              <a
+                href="https://www.radio-browser.info/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Radio Browser
+              </a>
+              . Special thanks to Alex Segler for this community-driven project.
+            </p>
+          </div>
+
           {/* Contact */}
           <div className="flex flex-col gap-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">{t("footer.contact")}</h4>
