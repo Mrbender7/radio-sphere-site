@@ -25,7 +25,6 @@ interface DesktopSidebarProps {
 export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) {
   const { t, language, setLanguage } = useTranslation();
   const [tbmModalOpen, setTbmModalOpen] = useState(false);
-  const [tbmModalOpen, setTbmModalOpen] = useState(false);
 
   const tbmSections = [
     { titleKey: "tbmModal.bufferTitle", descKey: "tbmModal.bufferDesc" },
