@@ -2,10 +2,12 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import { useStreamBuffer } from "@/contexts/StreamBufferContext";
 
 import { useTranslation } from "@/contexts/LanguageContext";
+import { useTBMQuota } from "@/hooks/useTBMQuota";
+import { TBMQuotaModal } from "@/components/TBMQuotaModal";
 import { CassetteAnimation } from "@/components/CassetteAnimation";
 import { ChevronDown, Play, Pause, Square, Circle, Rewind, FastForward, Radio } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 const MAX_BUFFER_DISPLAY = 5 * 60; // 300s = 5 min max display
 
@@ -31,10 +33,32 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
     returnToLive,
   } = useStreamBuffer();
 
+  const { canUseTBM, isWarning, trackUsage, isMobile: isMobileQuota } = useTBMQuota();
+  const [showQuotaModal, setShowQuotaModal] = useState(false);
+  const warningShownRef = useRef(false);
+
   const timelineRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Track usage every second when not live (seeking)
+  useEffect(() => {
+    if (isLive || !isMobileQuota) return;
+    const interval = setInterval(() => {
+      trackUsage();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isLive, isMobileQuota, trackUsage]);
+
+  // Show warning toast once at 8 min
+  useEffect(() => {
+    if (isWarning && !warningShownRef.current) {
+      warningShownRef.current = true;
+      toast.info(t("tbmQuota.warning"), { duration: 5000 });
+    }
+  }, [isWarning, t]);
+
   const handleRewind = () => {
+    if (!canUseTBM) { setShowQuotaModal(true); return; }
     const totalBuffer = Math.floor(bufferSeconds);
     if (totalBuffer < 2) return;
     const newOffset = Math.min(currentSeekOffsetSeconds + 15, totalBuffer);
@@ -105,16 +129,14 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
 
   // --- Timeline interaction (click + touch drag) ---
   const seekFromPosition = useCallback((clientX: number) => {
+    if (!canUseTBM) { setShowQuotaModal(true); return; }
     const el = timelineRef.current;
     if (!el || totalBuffer < 2) return;
     const rect = el.getBoundingClientRect();
     const x = clientX - rect.left;
     const pct = Math.max(0, Math.min(1, x / rect.width));
-    // Map click position to buffer time
-    // pct=0 → oldest buffered point, pct=bufferFillPct/100 → live
     const maxPct = bufferFillPct / 100;
     if (pct >= maxPct - 0.02) {
-      // Close enough to live edge
       returnToLive();
     } else if (pct <= maxPct) {
       const targetSeconds = pct * MAX_BUFFER_DISPLAY;
@@ -125,7 +147,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
         seekBack(Math.round(offset));
       }
     }
-  }, [totalBuffer, bufferFillPct, seekBack, returnToLive]);
+  }, [totalBuffer, bufferFillPct, seekBack, returnToLive, canUseTBM]);
 
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     seekFromPosition(e.clientX);
@@ -341,6 +363,17 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
           {t("player.returnToLive")}
         </button>
       </div>
+
+      {/* Quota modal */}
+      <TBMQuotaModal
+        open={showQuotaModal}
+        onClose={() => setShowQuotaModal(false)}
+        onReturnToLive={() => {
+          setShowQuotaModal(false);
+          returnToLive();
+          onClose();
+        }}
+      />
     </div>
   );
 }
