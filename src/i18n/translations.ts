@@ -548,7 +548,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "Pure radio streaming experience",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "Rewind live radio anytime",
-    "onboarding.cta": "Get it on Google Play",
+    "onboarding.cta": "Coming soon on Google Play",
     "onboarding.dismiss": "Don't show again",
   },
   es: {
