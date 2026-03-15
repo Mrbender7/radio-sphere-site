@@ -5,18 +5,24 @@ import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
 
+export type StationViewMode = "list" | "medium" | "large";
+
 interface StationCardProps {
   station: RadioStation;
   isFavorite: boolean;
   onToggleFavorite: (station: RadioStation) => void;
   compact?: boolean;
+  viewMode?: StationViewMode;
 }
 
-export function StationCard({ station, isFavorite, onToggleFavorite, compact }: StationCardProps) {
+export function StationCard({ station, isFavorite, onToggleFavorite, compact, viewMode }: StationCardProps) {
   const { play, currentStation, isPlaying } = usePlayer();
   const isActive = currentStation?.id === station.id;
 
-  if (compact) {
+  // viewMode takes priority over compact
+  const mode = viewMode ?? (compact ? "list" : undefined);
+
+  if (mode === "list") {
     return (
       <button
         onClick={() => play(station)}
@@ -45,6 +51,62 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact }: 
     );
   }
 
+  if (mode === "medium") {
+    return (
+      <button
+        onClick={() => play(station)}
+        className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
+      >
+        <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          {isActive && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+              {isPlaying ? <AudioVisualizer size="small" /> : <Play className="w-8 h-8 text-white" />}
+            </div>
+          )}
+          <button
+            onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/30 backdrop-blur-sm z-10"
+          >
+            <Heart className={cn("w-3.5 h-3.5", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-white/80")} />
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs font-semibold truncate w-full text-center bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
+          {station.name}
+        </p>
+      </button>
+    );
+  }
+
+  if (mode === "large") {
+    return (
+      <button
+        onClick={() => play(station)}
+        className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
+      >
+        <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          {isActive && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+              {isPlaying ? <AudioVisualizer size="small" /> : <Play className="w-10 h-10 text-white" />}
+            </div>
+          )}
+          <button
+            onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 backdrop-blur-sm z-10"
+          >
+            <Heart className={cn("w-4 h-4", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-white/80")} />
+          </button>
+        </div>
+        <p className="mt-2 text-sm font-bold truncate w-full text-center bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
+          {station.name}
+        </p>
+        <p className="text-[11px] text-muted-foreground truncate w-full text-center">{station.country}</p>
+      </button>
+    );
+  }
+
+  // Default: small thumbnail (used in HomePage scrollables)
   return (
     <button
       onClick={() => play(station)}

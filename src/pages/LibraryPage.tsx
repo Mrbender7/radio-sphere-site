@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { RadioStation } from "@/types/radio";
-import { StationCard } from "@/components/StationCard";
-import { Heart, ArrowUp } from "lucide-react";
+import { StationCard, StationViewMode } from "@/components/StationCard";
+import { Heart, ArrowUp, List, Grid3x3, LayoutGrid } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [sortMode, setSortMode] = useState<"name" | "country" | "genre">("name");
+  const [viewMode, setViewMode] = useState<StationViewMode>("list");
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -56,6 +57,27 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
       }));
   }, [favorites, t]);
 
+  const gridClass =
+    viewMode === "medium"
+      ? "grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2"
+      : viewMode === "large"
+        ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+        : "space-y-1";
+
+  const renderStations = (stations: RadioStation[]) => (
+    <div className={gridClass}>
+      {stations.map(s => (
+        <StationCard key={s.id} station={s} viewMode={viewMode} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
+      ))}
+    </div>
+  );
+
+  const viewModes: { mode: StationViewMode; icon: typeof List; labelKey: string }[] = [
+    { mode: "list", icon: List, labelKey: "favorites.viewList" },
+    { mode: "medium", icon: Grid3x3, labelKey: "favorites.viewMedium" },
+    { mode: "large", icon: LayoutGrid, labelKey: "favorites.viewLarge" },
+  ];
+
   return (
     <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 lg:px-8 pb-32">
       <h1 className="text-2xl lg:text-3xl font-heading font-bold mt-6 mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
@@ -66,14 +88,13 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
       </h1>
 
       {favorites.length > 0 && (
-        <div className="flex gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {/* Sort buttons */}
           <button
             onClick={() => setSortMode("name")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
-              sortMode === "name"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
+              sortMode === "name" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
             )}
           >
             {t("favorites.sortName")}
@@ -82,9 +103,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
             onClick={() => setSortMode("country")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
-              sortMode === "country"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
+              sortMode === "country" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
             )}
           >
             {t("favorites.sortCountry")}
@@ -93,13 +112,28 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
             onClick={() => setSortMode("genre")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
-              sortMode === "genre"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
+              sortMode === "genre" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
             )}
           >
             {t("favorites.sortGenre")}
           </button>
+
+          <div className="w-px h-5 bg-border mx-1" />
+
+          {/* View mode toggles */}
+          {viewModes.map(({ mode, icon: Icon, labelKey }) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              title={t(labelKey)}
+              className={cn(
+                "p-1.5 rounded-md transition-all",
+                viewMode === mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+              )}
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          ))}
         </div>
       )}
 
@@ -110,21 +144,13 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
           <p className="text-sm text-muted-foreground max-w-[250px]">{t("favorites.emptyDesc")}</p>
         </div>
       ) : sortMode === "name" ? (
-        <div className="space-y-1">
-          {favorites.map(s => (
-            <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
-          ))}
-        </div>
+        renderStations(favorites)
       ) : sortMode === "country" ? (
         <div className="space-y-4">
           {groupedByCountry.map(({ country, stations }) => (
             <div key={country}>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{country}</h3>
-              <div className="space-y-1">
-                {stations.map(s => (
-                  <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
-                ))}
-              </div>
+              {renderStations(stations)}
             </div>
           ))}
         </div>
@@ -133,11 +159,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
           {groupedByGenre.map(({ genre, stations }) => (
             <div key={genre}>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{genre}</h3>
-              <div className="space-y-1">
-                {stations.map(s => (
-                  <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
-                ))}
-              </div>
+              {renderStations(stations)}
             </div>
           ))}
         </div>
