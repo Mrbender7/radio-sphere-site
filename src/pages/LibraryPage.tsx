@@ -58,11 +58,13 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   }, [favorites, t]);
 
   const gridClass =
-    viewMode === "medium"
-      ? "grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2"
-      : viewMode === "large"
-        ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
-        : "space-y-1";
+    viewMode === "small"
+      ? "grid grid-cols-5 sm:grid-cols-7 lg:grid-cols-9 gap-1.5"
+      : viewMode === "medium"
+        ? "grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2"
+        : viewMode === "large"
+          ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+          : "space-y-1";
 
   const renderStations = (stations: RadioStation[]) => (
     <div className={gridClass}>
