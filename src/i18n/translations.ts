@@ -1361,7 +1361,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "純粋なラジオストリーミング体験",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "ライブラジオを巻き戻し",
-    "onboarding.cta": "Google Playで入手",
+    "onboarding.cta": "Google Playで近日公開",
     "onboarding.dismiss": "再表示しない",
   },
 };
