@@ -81,6 +81,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.viewList": "Liste",
     "favorites.viewMedium": "Vignettes",
     "favorites.viewLarge": "Grandes vignettes",
+    "favorites.viewSmall": "Mini vignettes",
     "premium.title": "Radio Sphere Premium",
     "premium.subtitle": "L'expérience radio ultime",
     "premium.active": "Premium actif",
