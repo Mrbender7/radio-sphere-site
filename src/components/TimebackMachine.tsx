@@ -58,6 +58,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
   }, [isWarning, t]);
 
   const handleRewind = () => {
+    if (!canUseTBM) { setShowQuotaModal(true); return; }
     const totalBuffer = Math.floor(bufferSeconds);
     if (totalBuffer < 2) return;
     const newOffset = Math.min(currentSeekOffsetSeconds + 15, totalBuffer);
