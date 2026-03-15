@@ -186,5 +186,32 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         </p>
       </div>
     </aside>
+
+    {/* TBM Modal */}
+    <Dialog open={tbmModalOpen} onOpenChange={setTbmModalOpen}>
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto rounded-2xl bg-background border-border">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent flex items-center gap-2">
+            <img src={tbmLogo} alt="TBM" className="w-6 h-6 rounded" />
+            {t("tbmModal.title")}
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {t("tbmModal.intro")}
+        </p>
+        <div className="space-y-4 mt-2">
+          {tbmSections.map(({ titleKey, descKey }) => (
+            <div key={titleKey} className="rounded-xl bg-accent p-3.5">
+              <h4 className="text-sm font-semibold text-foreground mb-1">{t(titleKey)}</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">{t(descKey)}</p>
+            </div>
+          ))}
+        </div>
+        <DialogClose asChild>
+          <Button size="sm" className="w-full mt-2 text-xs">{t("tbmModal.close")}</Button>
+        </DialogClose>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
