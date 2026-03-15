@@ -277,7 +277,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "L'expérience pure du flux radio",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "Rembobinez le direct radio",
-    "onboarding.cta": "Disponible sur Google Play",
+    "onboarding.cta": "Bientôt disponible sur Google Play",
     "onboarding.dismiss": "Ne plus afficher",
   },
   en: {
