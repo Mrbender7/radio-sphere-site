@@ -129,16 +129,14 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
 
   // --- Timeline interaction (click + touch drag) ---
   const seekFromPosition = useCallback((clientX: number) => {
+    if (!canUseTBM) { setShowQuotaModal(true); return; }
     const el = timelineRef.current;
     if (!el || totalBuffer < 2) return;
     const rect = el.getBoundingClientRect();
     const x = clientX - rect.left;
     const pct = Math.max(0, Math.min(1, x / rect.width));
-    // Map click position to buffer time
-    // pct=0 → oldest buffered point, pct=bufferFillPct/100 → live
     const maxPct = bufferFillPct / 100;
     if (pct >= maxPct - 0.02) {
-      // Close enough to live edge
       returnToLive();
     } else if (pct <= maxPct) {
       const targetSeconds = pct * MAX_BUFFER_DISPLAY;
@@ -149,7 +147,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
         seekBack(Math.round(offset));
       }
     }
-  }, [totalBuffer, bufferFillPct, seekBack, returnToLive]);
+  }, [totalBuffer, bufferFillPct, seekBack, returnToLive, canUseTBM]);
 
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     seekFromPosition(e.clientX);
