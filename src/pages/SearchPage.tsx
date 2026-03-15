@@ -5,7 +5,7 @@ import { StationCard, StationViewMode } from "@/components/StationCard";
 import { RadioStation } from "@/types/radio";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, X, ChevronDown, ChevronUp, Check, ArrowUpDown, ArrowUp, AlertTriangle } from "lucide-react";
+import { Search, Loader2, X, ChevronDown, ChevronUp, Check, ArrowUpDown, ArrowUp, AlertTriangle, List, Grid3x3, LayoutGrid, Grip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 
