@@ -1065,6 +1065,7 @@ const translations: Record<Language, Record<string, string>> = {
     "favorites.viewList": "リスト",
     "favorites.viewMedium": "サムネイル",
     "favorites.viewLarge": "大サムネイル",
+    "favorites.viewSmall": "小サムネイル",
     "premium.title": "Radio Sphere プレミアム",
     "premium.subtitle": "究極のラジオ体験",
     "premium.active": "プレミアム有効",

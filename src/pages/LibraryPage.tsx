@@ -75,6 +75,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   );
 
   const viewModes: { mode: StationViewMode; icon: typeof List; labelKey: string }[] = [
+    { mode: "small", icon: Grip, labelKey: "favorites.viewSmall" },
     { mode: "list", icon: List, labelKey: "favorites.viewList" },
     { mode: "medium", icon: Grid3x3, labelKey: "favorites.viewMedium" },
     { mode: "large", icon: LayoutGrid, labelKey: "favorites.viewLarge" },
