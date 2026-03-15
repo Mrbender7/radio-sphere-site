@@ -441,7 +441,7 @@ const translations: Record<Language, Record<string, string>> = {
     "guide.sleepTimer": "Sleep Timer",
     "guide.sleepTimerContent": "Schedule automatic playback stop after a delay of your choice (15 min to 2 hours or custom duration). Perfect for falling asleep to the radio. Enable it from Settings.",
     "guide.recorder": "TimeBack Machine",
-    "guide.recorderContent": "Record your favorite shows as MP3 directly from the full-screen player. The 5-minute buffer also lets you rewind and relisten to what you just missed. Tap REC to start recording (10 min max).",
+    "guide.recorderContent": "Record your favorite shows as MP3 directly from the full-screen player. The 5-minute buffer also lets you rewind and relisten to what you just missed. Tap REC to start recording (10 min max). When the TBM icon blinks, it means the buffer is active and recording in the background. Tap the blinking icon to open the TimeBack player and relisten to the last few minutes.",
     "guide.chromecast": "Chromecast",
     "guide.chromecastContent": "Stream your radio stations to your TV or connected speaker via Chromecast. Tap the Cast icon in the player to start casting.",
     "welcome.subtitle": "World radio at your fingertips",
