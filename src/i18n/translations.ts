@@ -195,7 +195,7 @@ const translations: Record<Language, Record<string, string>> = {
     "guide.sleepTimer": "Minuterie de sommeil",
     "guide.sleepTimerContent": "Programmez l'arrêt automatique de la lecture après un délai de votre choix (15 min à 2 h ou durée personnalisée). Idéal pour s'endormir avec la radio. Activez-la depuis les Réglages.",
     "guide.recorder": "TimeBack Machine",
-    "guide.recorderContent": "Enregistrez vos émissions préférées en MP3 directement depuis le lecteur plein écran. Le buffer de 5 minutes vous permet aussi de rembobiner et réécouter ce que vous venez de manquer. Appuyez sur REC pour lancer l'enregistrement (10 min max).",
+    "guide.recorderContent": "Enregistrez vos émissions préférées en MP3 directement depuis le lecteur plein écran. Le buffer de 5 minutes vous permet aussi de rembobiner et réécouter ce que vous venez de manquer. Appuyez sur REC pour lancer l'enregistrement (10 min max). Lorsque l'icône TBM clignote, cela signifie que le buffer est actif et enregistre en arrière-plan. Cliquez sur l'icône clignotante pour accéder au lecteur TimeBack et réécouter les dernières minutes.",
     "guide.chromecast": "Chromecast",
     "guide.chromecastContent": "Diffusez vos stations de radio sur votre téléviseur ou enceinte connectée via Chromecast. Appuyez sur l'icône Cast dans le lecteur pour commencer la diffusion.",
     "welcome.subtitle": "La radio mondiale à portée de main",
