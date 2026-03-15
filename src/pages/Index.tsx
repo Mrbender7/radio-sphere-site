@@ -132,6 +132,7 @@ const Index = () => {
               style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
             >
               {renderContent()}
+              <Footer />
             </div>
 
             {/* Mobile: MiniPlayer + BottomNav */}
