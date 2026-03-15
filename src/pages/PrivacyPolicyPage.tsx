@@ -1,5 +1,5 @@
 import { useTranslation } from "@/contexts/LanguageContext";
-import { ShieldCheck, ArrowLeft, Mail } from "lucide-react";
+import { ShieldCheck, ArrowLeft, Mail, ExternalLink, BarChart3 } from "lucide-react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 interface PrivacyPolicyPageProps {
@@ -32,7 +32,7 @@ export function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
               <img src={radioSphereLogo} alt="Radio Sphere" className="w-8 h-8 rounded-lg" />
               <p className="font-semibold text-foreground">Radio Sphere — radiosphere.be</p>
             </div>
-            <p className="text-xs text-muted-foreground">{t("privacy.lastUpdated")}: 13 mars 2026</p>
+            <p className="text-xs text-muted-foreground">{t("privacy.lastUpdated")}: 15 mars 2026</p>
             <p className="text-xs text-muted-foreground mt-1">Web Player — radiosphere.be</p>
           </section>
 
@@ -52,9 +52,48 @@ export function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
             </ul>
           </section>
 
+          {/* Umami Analytics section */}
+          <section className="rounded-xl bg-accent/50 border border-border p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-heading font-semibold text-foreground">{t("privacy.analytics")}</h2>
+            </div>
+            <p className="text-muted-foreground mb-3">{t("privacy.analyticsDesc")}</p>
+            <ul className="space-y-2 text-xs text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("privacy.analyticsNoCookies")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("privacy.analyticsAnonymous")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("privacy.analyticsGDPR")}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("privacy.analyticsNoPersonal")}</span>
+              </li>
+            </ul>
+            <div className="mt-3">
+              <a
+                href="https://umami.is/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" />
+                {t("privacy.analyticsLearnMore")}
+              </a>
+            </div>
+          </section>
+
           <section>
             <h2 className="text-lg font-heading font-semibold text-foreground mb-3">{t("privacy.thirdParty")}</h2>
             <p className="text-muted-foreground">{t("privacy.thirdPartyDesc")}</p>
+            <p className="text-muted-foreground mt-2">{t("privacy.thirdPartyUmami")}</p>
           </section>
 
           <section>
