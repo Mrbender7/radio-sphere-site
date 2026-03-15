@@ -1107,6 +1107,11 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.tbmDesc": "Live-Radio zurückspulen",
     "onboarding.cta": "Bald bei Google Play verfügbar",
     "onboarding.dismiss": "Nicht mehr anzeigen",
+    "tbmQuota.title": "Zeitreisen ohne Limit?",
+    "tbmQuota.description": "Im mobilen Web ist die TimeBack Machine auf 10 Min/Tag begrenzt. Laden Sie die Radio Sphere App herunter für unbegrenztes Hören und HD-Qualität.",
+    "tbmQuota.cta": "Bei Google Play herunterladen",
+    "tbmQuota.continueLive": "Live weiter hören",
+    "tbmQuota.warning": "Genießen Sie die TimeBack Machine unbegrenzt in unserer App!",
   },
   ja: {
     "nav.home": "ホーム",
