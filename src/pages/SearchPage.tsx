@@ -180,51 +180,50 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         signal,
       };
 
-      const map = new Map<string, RadioStation>();
+      const allStations: RadioStation[] = [];
 
       // Multi-genre OR: one request per genre, then merge
       if (genres.length > 1) {
         const genreSearches = genres.map(g =>
           query
-            ? Promise.allSettled([
-                radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: query }),
-                radioBrowserProvider.searchStations({ ...baseParams, tag: [g, query].join(",") }),
-              ]).then(mergeSettled)
+            ? radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: query })
             : radioBrowserProvider.searchStations({ ...baseParams, tag: g })
         );
+        // Also search by name alone (no tag filter) to catch untagged stations
+        if (query) {
+          genreSearches.push(radioBrowserProvider.searchStations({ ...baseParams, name: query }));
+        }
         const settled = await Promise.allSettled(genreSearches);
-        const allBatches = mergeSettled(settled);
-        for (const s of allBatches) {
-          if (Array.isArray(s)) {
-            for (const st of s as RadioStation[]) if (!map.has(st.id)) map.set(st.id, st);
-          } else if (s && typeof s === "object" && "id" in s) {
-            if (!map.has((s as RadioStation).id)) map.set((s as RadioStation).id, s as RadioStation);
-          }
-        }
-        return Array.from(map.values());
-      }
-
-      // Single genre or no genre
-      const singleTag = genres.length === 1 ? genres[0] : undefined;
-      if (singleTag) baseParams["tag"] = singleTag;
-
-      if (query) {
-        const settled = await Promise.allSettled([
-          radioBrowserProvider.searchStations({ ...baseParams, name: query }),
-          radioBrowserProvider.searchStations({ ...baseParams, tag: singleTag ? [singleTag, query].join(",") : query }),
-        ]);
-        for (const r of settled) {
-          if (r.status === "fulfilled") {
-            for (const s of r.value) if (!map.has(s.id)) map.set(s.id, s);
-          }
-        }
-        if (map.size === 0 && settled.every(r => r.status === "rejected")) {
-          throw settled[0].status === "rejected" ? settled[0].reason : new Error("Search failed");
-        }
-        return Array.from(map.values());
+        allStations.push(...mergeSettled(settled));
       } else {
-        return radioBrowserProvider.searchStations(baseParams);
+        // Single genre or no genre
+        const singleTag = genres.length === 1 ? genres[0] : undefined;
+
+        if (query) {
+          const searches: Promise<RadioStation[]>[] = [
+            radioBrowserProvider.searchStations({ ...baseParams, name: query, tag: singleTag }),
+          ];
+          // Also search by tag=query to find stations tagged with the keyword
+          if (singleTag) {
+            // Search the genre with the keyword in name (already above)
+            // Also search name-only without genre filter
+            searches.push(radioBrowserProvider.searchStations({ ...baseParams, name: query }));
+          } else {
+            searches.push(radioBrowserProvider.searchStations({ ...baseParams, tag: query }));
+          }
+          const settled = await Promise.allSettled(searches);
+          allStations.push(...mergeSettled(settled));
+          if (allStations.length === 0 && settled.every(r => r.status === "rejected")) {
+            throw settled[0].status === "rejected" ? settled[0].reason : new Error("Search failed");
+          }
+        } else {
+          if (singleTag) baseParams["tag"] = singleTag;
+          const data = await radioBrowserProvider.searchStations(baseParams);
+          allStations.push(...data);
+        }
       }
+
+      return dedupeAndSort(allStations, sortBy);
     },
     enabled: hasFilters,
     staleTime: 2 * 60 * 1000,
