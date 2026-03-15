@@ -12,7 +12,7 @@ const translations: Record<Language, Record<string, string>> = {
   fr: {
     "nav.home": "Accueil",
     "nav.search": "Recherche",
-    "nav.explore": "Explorer",
+    "nav.explore": "Rechercher et explorer",
     "nav.favorites": "Favoris",
     "nav.premium": "Premium",
     "nav.settings": "Réglages",
