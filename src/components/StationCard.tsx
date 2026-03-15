@@ -59,7 +59,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         )}
       >
         <div className="w-12 h-12 rounded-md bg-accent flex items-center justify-center overflow-hidden flex-shrink-0">
-          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur Radio Sphere`} />
         </div>
         <div className="flex-1 min-w-0 text-left">
           <p className={cn("text-sm font-medium truncate", isActive && "text-primary")}>{station.name}</p>
