@@ -398,6 +398,44 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
           </div>
         </button>
 
+        {/* Analytics */}
+        <CollapsibleSection icon={ShieldCheck} title={t("settings.analytics") || "Mesure d'audience"}>
+          <div>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              {t("settings.analyticsDesc") || "Radio Sphere utilise Umami Analytics, une solution de mesure d'audience respectueuse de la vie privée et conforme au RGPD."}
+            </p>
+            <ul className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("settings.analyticsNoCookies") || "Aucun cookie de suivi"}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("settings.analyticsAnonymous") || "Données entièrement anonymisées"}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("settings.analyticsGDPR") || "Conforme au RGPD européen"}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">✓</span>
+                <span>{t("settings.analyticsUsage") || "Mesure uniquement l'utilisation globale (pages vues, fonctionnalités utilisées)"}</span>
+              </li>
+            </ul>
+            <div className="mt-3">
+              <a
+                href="https://umami.is/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" />
+                {t("settings.analyticsLearnMore") || "En savoir plus sur Umami"}
+              </a>
+            </div>
+          </div>
+        </CollapsibleSection>
+
         {/* Privacy Policy link */}
         <button
           onClick={onNavigatePrivacy}
