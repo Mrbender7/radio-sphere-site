@@ -96,51 +96,8 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         ))}
       </nav>
 
-      {/* Divider */}
-      <div className="mx-6 my-4 h-px bg-sidebar-border" />
-
-      {/* Quick Favorites */}
-      <div className="flex-1 min-h-0 flex flex-col px-3">
-        <h3 className="px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("nav.favorites")}
-        </h3>
-        <div className="flex-1 overflow-y-auto space-y-0.5 pr-1">
-          {favorites.length === 0 ? (
-            <p className="px-4 text-xs text-muted-foreground">{t("home.noFavorites")}</p>
-          ) : (
-            favorites.slice(0, 30).map((station) => {
-              const isActive = currentStation?.id === station.id;
-              return (
-                <button
-                  key={station.id}
-                  onClick={() => play(station)}
-                  className={cn(
-                    "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
-                  )}
-                >
-                  <div className="w-8 h-8 rounded-md bg-accent overflow-hidden flex-shrink-0">
-                    <SmartArtwork
-                      stationId={station.id}
-                      originalUrl={station.logo}
-                      homepage={station.homepage}
-                      stationName={station.name}
-                      alt={station.name}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{station.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{station.country}</p>
-                  </div>
-                  {isActive && isPlaying && <AudioVisualizer size="small" />}
-                </button>
-              );
-            })
-          )}
-        </div>
-      </div>
+      {/* Spacer */}
+      <div className="flex-1" />
 
       {/* Contact, Language & Copyright */}
       <div className="px-4 pb-6 pt-4 space-y-3">
