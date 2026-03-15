@@ -443,9 +443,23 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
         )}
 
         {/* Copyright */}
-        <p className="text-center text-[10px] text-muted-foreground mb-1 select-none">
-          © {new Date().getFullYear()} Radio Sphere — Créé par Franck Malherbe
-        </p>
+        <div className="text-center mb-6 select-none space-y-1">
+          <p className="text-[10px] text-muted-foreground">
+            © {new Date().getFullYear()} Radio Sphere — Créé par Franck Malherbe
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            Powered by the amazing{" "}
+            <a
+              href="https://www.radio-browser.info/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Radio Browser
+            </a>
+            . Special thanks to Alex Segler for this community-driven project.
+          </p>
+        </div>
 
         {/* Unavailable stations dialog */}
         <Dialog open={showUnavailableDialog} onOpenChange={setShowUnavailableDialog}>
