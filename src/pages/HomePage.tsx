@@ -150,6 +150,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
           </button>
         </div>
       </section>
+      <Footer />
       <button
         onClick={scrollToTop}
         className={cn(
