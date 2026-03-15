@@ -996,7 +996,7 @@ const translations: Record<Language, Record<string, string>> = {
   ja: {
     "nav.home": "ホーム",
     "nav.search": "検索",
-    "nav.explore": "探索",
+    "nav.explore": "検索と探索",
     "nav.favorites": "お気に入り",
     "nav.premium": "プレミアム",
     "nav.settings": "設定",
