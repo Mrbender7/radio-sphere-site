@@ -277,7 +277,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "L'expérience pure du flux radio",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "Rembobinez le direct radio",
-    "onboarding.cta": "Disponible sur Google Play",
+    "onboarding.cta": "Bientôt disponible sur Google Play",
     "onboarding.dismiss": "Ne plus afficher",
   },
   en: {
@@ -548,7 +548,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "Pure radio streaming experience",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "Rewind live radio anytime",
-    "onboarding.cta": "Get it on Google Play",
+    "onboarding.cta": "Coming soon on Google Play",
     "onboarding.dismiss": "Don't show again",
   },
   es: {
@@ -819,7 +819,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "Experiencia pura de radio en streaming",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "Rebobina la radio en directo",
-    "onboarding.cta": "Disponible en Google Play",
+    "onboarding.cta": "Próximamente en Google Play",
     "onboarding.dismiss": "No mostrar más",
   },
   de: {
@@ -1090,7 +1090,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "Reines Radio-Streaming-Erlebnis",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "Live-Radio zurückspulen",
-    "onboarding.cta": "Bei Google Play herunterladen",
+    "onboarding.cta": "Bald bei Google Play verfügbar",
     "onboarding.dismiss": "Nicht mehr anzeigen",
   },
   ja: {
@@ -1361,7 +1361,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.noAdsDesc": "純粋なラジオストリーミング体験",
     "onboarding.tbm": "TimeBack Machine",
     "onboarding.tbmDesc": "ライブラジオを巻き戻し",
-    "onboarding.cta": "Google Playで入手",
+    "onboarding.cta": "Google Playで近日公開",
     "onboarding.dismiss": "再表示しない",
   },
 };
