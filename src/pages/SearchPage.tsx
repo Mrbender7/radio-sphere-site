@@ -230,21 +230,22 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
     retry: 0,
   });
 
-  // Derive allResults from query data + extra loaded pages
+  // Derive allResults from query data + extra loaded pages, always sorted
   useEffect(() => {
     if (results) {
       setOffset(results.length);
       setHasMore(results.length >= PAGE_SIZE);
       if (extraResults.length > 0) {
         const ids = new Set(results.map(s => s.id));
-        setAllResults([...results, ...extraResults.filter(s => !ids.has(s.id))]);
+        const combined = [...results, ...extraResults.filter(s => !ids.has(s.id))];
+        setAllResults(sortStations(combined, sortBy));
       } else {
-        setAllResults(results);
+        setAllResults(results); // already sorted from query
       }
     } else {
       setAllResults([]);
     }
-  }, [results]);
+  }, [results, sortBy]);
 
   const loadMore = async () => {
     setLoadingMore(true);
@@ -258,53 +259,51 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         reverse: sortReverse,
       };
 
-      let data: RadioStation[];
-      const map = new Map<string, RadioStation>();
+      const allStations: RadioStation[] = [];
 
       if (genres.length > 1) {
         const genreSearches = genres.map(g =>
           query
-            ? Promise.allSettled([
-                radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: query }),
-                radioBrowserProvider.searchStations({ ...baseParams, tag: [g, query].join(",") }),
-              ]).then(mergeSettled)
+            ? radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: query })
             : radioBrowserProvider.searchStations({ ...baseParams, tag: g })
         );
-        const settled = await Promise.allSettled(genreSearches);
-        const allBatches = mergeSettled(settled);
-        for (const s of allBatches) {
-          if (Array.isArray(s)) {
-            for (const st of s as RadioStation[]) if (!map.has(st.id)) map.set(st.id, st);
-          } else if (s && typeof s === "object" && "id" in s) {
-            if (!map.has((s as RadioStation).id)) map.set((s as RadioStation).id, s as RadioStation);
-          }
+        if (query) {
+          genreSearches.push(radioBrowserProvider.searchStations({ ...baseParams, name: query }));
         }
-        data = Array.from(map.values());
+        const settled = await Promise.allSettled(genreSearches);
+        allStations.push(...mergeSettled(settled));
       } else {
         const singleTag = genres.length === 1 ? genres[0] : undefined;
-        if (singleTag) baseParams["tag"] = singleTag;
 
         if (query) {
-          const settled = await Promise.allSettled([
-            radioBrowserProvider.searchStations({ ...baseParams, name: query }),
-            radioBrowserProvider.searchStations({ ...baseParams, tag: singleTag ? [singleTag, query].join(",") : query }),
-          ]);
-          for (const r of settled) {
-            if (r.status === "fulfilled") {
-              for (const s of r.value) if (!map.has(s.id)) map.set(s.id, s);
-            }
+          const searches: Promise<RadioStation[]>[] = [
+            radioBrowserProvider.searchStations({ ...baseParams, name: query, tag: singleTag }),
+          ];
+          if (singleTag) {
+            searches.push(radioBrowserProvider.searchStations({ ...baseParams, name: query }));
+          } else {
+            searches.push(radioBrowserProvider.searchStations({ ...baseParams, tag: query }));
           }
-          data = Array.from(map.values());
+          const settled = await Promise.allSettled(searches);
+          allStations.push(...mergeSettled(settled));
         } else {
-          data = await radioBrowserProvider.searchStations(baseParams);
+          if (singleTag) baseParams["tag"] = singleTag;
+          const data = await radioBrowserProvider.searchStations(baseParams);
+          allStations.push(...data);
         }
       }
+
+      // Dedupe new data
+      const newMap = new Map<string, RadioStation>();
+      for (const s of allStations) if (!newMap.has(s.id)) newMap.set(s.id, s);
+      const data = Array.from(newMap.values());
 
       setExtraResults(prev => {
         const ids = new Set(prev.map(s => s.id));
         return [...prev, ...data.filter(s => !ids.has(s.id))];
       });
-      const newAll = [...allResults, ...data.filter(s => !new Set(allResults.map(x => x.id)).has(s.id))];
+      const existingIds = new Set(allResults.map(x => x.id));
+      const newAll = sortStations([...allResults, ...data.filter(s => !existingIds.has(s.id))], sortBy);
       setAllResults(newAll);
       setOffset(o => o + data.length);
       setHasMore(data.length >= PAGE_SIZE);
