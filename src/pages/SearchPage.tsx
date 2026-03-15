@@ -99,6 +99,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sortBy, setSortBy] = useState<"votes" | "name" | "clickcount">("votes");
+  const [viewMode, setViewMode] = useState<StationViewMode>("list");
   const { t } = useTranslation();
   const PAGE_SIZE = 40;
 
