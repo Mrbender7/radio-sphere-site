@@ -750,7 +750,7 @@ const translations: Record<Language, Record<string, string>> = {
   de: {
     "nav.home": "Startseite",
     "nav.search": "Suche",
-    "nav.explore": "Entdecken",
+    "nav.explore": "Suchen & Entdecken",
     "nav.favorites": "Favoriten",
     "nav.premium": "Premium",
     "nav.settings": "Einstellungen",
