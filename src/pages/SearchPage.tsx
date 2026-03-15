@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { radioBrowserProvider, getCountries, CountryInfo } from "@/services/RadioService";
-import { StationCard } from "@/components/StationCard";
+import { StationCard, StationViewMode } from "@/components/StationCard";
 import { RadioStation } from "@/types/radio";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, X, ChevronDown, ChevronUp, Check, ArrowUpDown, ArrowUp, AlertTriangle } from "lucide-react";
+import { Search, Loader2, X, ChevronDown, ChevronUp, Check, ArrowUpDown, ArrowUp, AlertTriangle, List, Grid3x3, LayoutGrid, Grip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 
@@ -99,6 +99,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sortBy, setSortBy] = useState<"votes" | "name" | "clickcount">("votes");
+  const [viewMode, setViewMode] = useState<StationViewMode>("list");
   const { t } = useTranslation();
   const PAGE_SIZE = 40;
 
@@ -435,8 +436,8 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         </div>
       )}
       {allResults.length > 0 && (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 mb-2">
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
             <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
             {(["votes", "name", "clickcount"] as const).map(key => (
               <button
@@ -452,10 +453,44 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
                 {t(key === "votes" ? "search.sortPopularity" : key === "name" ? "search.sortAZ" : "search.sortClicks")}
               </button>
             ))}
+
+            <div className="w-px h-5 bg-border mx-1" />
+
+            {([
+              { mode: "small" as StationViewMode, icon: Grip },
+              { mode: "list" as StationViewMode, icon: List },
+              { mode: "medium" as StationViewMode, icon: Grid3x3 },
+              { mode: "large" as StationViewMode, icon: LayoutGrid },
+            ]).map(({ mode, icon: Icon }) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "p-1.5 rounded-md transition-all",
+                  viewMode === mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            ))}
           </div>
-          {allResults.map(s => (
-            <StationCard key={s.id} station={s} compact isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
-          ))}
+          <div
+            key={viewMode}
+            className={cn(
+              "animate-fade-in",
+              viewMode === "small"
+                ? "grid grid-cols-5 sm:grid-cols-7 lg:grid-cols-9 gap-1.5"
+                : viewMode === "medium"
+                  ? "grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2"
+                  : viewMode === "large"
+                    ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                    : "space-y-1"
+            )}
+          >
+            {allResults.map(s => (
+              <StationCard key={s.id} station={s} viewMode={viewMode} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
+            ))}
+          </div>
           {hasMore && (
             <button
               onClick={loadMore}

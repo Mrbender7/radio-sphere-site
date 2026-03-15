@@ -1,29 +1,21 @@
 
 
-## Plan d'implémentation — View modes + animations + renommage sidebar
+## Plan : Correction moteur de recherche — TERMINÉ ✅
 
-### 4 fichiers à modifier
+### Problèmes corrigés
 
-#### 1. `src/components/StationCard.tsx`
-- Étendre le type : `export type StationViewMode = "small" | "list" | "medium" | "large"`
-- Ajouter un bloc `if (mode === "small")` avant le bloc `"list"` existant : vignette carrée compacte, artwork aspect-square piloté par la grille parent, petit coeur overlay (w-2.5), nom en `text-[10px]` avec gradient thème en dessous, pas de pays
+| # | Problème | Correction |
+|---|----------|------------|
+| 1 | Tri alphabétique ne fonctionnait pas après fusion multi-requêtes | Ajout `sortStations()` côté client après chaque fusion/dedup |
+| 2 | Recherche genre+mot-clé trop restrictive (`tag: "genre,query"`) | Remplacé par `tag: genre, name: query` + recherche `name` seule |
+| 3 | Fusion multi-genre fragile (double `Array.isArray` check) | Simplifié : chaque requête retourne `RadioStation[]`, fusion plate via `mergeSettled` |
+| 4 | `clickcount` manquant dans le modèle | Ajouté dans `RadioStation`, `normalizeStation`, et `AboutPage` |
 
-#### 2. `src/pages/LibraryPage.tsx`
-- Importer `Grip` de lucide-react
-- Ajouter `"small"` dans `viewModes` avec icône `Grip`
-- Ajouter le cas `"small"` dans `gridClass` : `grid grid-cols-5 sm:grid-cols-7 lg:grid-cols-9 gap-1.5`
-- Ajouter `key={viewMode}` et `animate-fade-in` sur le div dans `renderStations`
+### Fichiers modifiés
 
-#### 3. `src/pages/SearchPage.tsx`
-- Importer `StationViewMode` depuis StationCard et `List, Grid3x3, LayoutGrid, Grip` de lucide-react
-- Ajouter un state `viewMode` (défaut `"list"`) après les states existants (~ligne 100)
-- Après les boutons de tri (~ligne 454), ajouter un séparateur + 4 toggles de vue (small/list/medium/large)
-- Remplacer `<StationCard ... compact ...>` par `<StationCard ... viewMode={viewMode} ...>`
-- Wrapper les résultats dans un div avec `key={viewMode}`, `animate-fade-in`, et la classe de grille correspondante au mode
-
-#### 4. `src/i18n/translations.ts`
-- Renommer `nav.explore` dans chaque langue :
-  - FR: `"Rechercher et explorer"`, EN: `"Search & Explore"`, ES: `"Buscar y explorar"`, DE: `"Suchen & Entdecken"`, JA: `"検索と探索"`
-- Ajouter `favorites.viewSmall` après `favorites.viewLarge` dans chaque langue :
-  - FR: `"Mini vignettes"`, EN: `"Small thumbnails"`, ES: `"Miniaturas pequeñas"`, DE: `"Kleine Kacheln"`, JA: `"小サムネイル"`
-
+| Fichier | Changement |
+|---------|------------|
+| `src/types/radio.ts` | Ajout champ `clickcount: number` |
+| `src/services/RadioService.ts` | `normalizeStation` inclut `clickcount` |
+| `src/pages/SearchPage.tsx` | Tri client `dedupeAndSort`/`sortStations`, logique recherche corrigée, fusion simplifiée |
+| `src/pages/AboutPage.tsx` | Ajout `clickcount: 0` dans import CSV |

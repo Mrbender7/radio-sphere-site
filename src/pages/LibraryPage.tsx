@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { RadioStation } from "@/types/radio";
 import { StationCard, StationViewMode } from "@/components/StationCard";
-import { Heart, ArrowUp, List, Grid3x3, LayoutGrid } from "lucide-react";
+import { Heart, ArrowUp, List, Grid3x3, LayoutGrid, Grip } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -58,14 +58,16 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   }, [favorites, t]);
 
   const gridClass =
-    viewMode === "medium"
-      ? "grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2"
-      : viewMode === "large"
-        ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
-        : "space-y-1";
+    viewMode === "small"
+      ? "grid grid-cols-5 sm:grid-cols-7 lg:grid-cols-9 gap-1.5"
+      : viewMode === "medium"
+        ? "grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2"
+        : viewMode === "large"
+          ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+          : "space-y-1";
 
   const renderStations = (stations: RadioStation[]) => (
-    <div className={gridClass}>
+    <div key={viewMode} className={cn(gridClass, "animate-fade-in")}>
       {stations.map(s => (
         <StationCard key={s.id} station={s} viewMode={viewMode} isFavorite={isFavorite(s.id)} onToggleFavorite={onToggleFavorite} />
       ))}
@@ -73,6 +75,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   );
 
   const viewModes: { mode: StationViewMode; icon: typeof List; labelKey: string }[] = [
+    { mode: "small", icon: Grip, labelKey: "favorites.viewSmall" },
     { mode: "list", icon: List, labelKey: "favorites.viewList" },
     { mode: "medium", icon: Grid3x3, labelKey: "favorites.viewMedium" },
     { mode: "large", icon: LayoutGrid, labelKey: "favorites.viewLarge" },

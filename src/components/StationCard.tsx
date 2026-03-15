@@ -5,7 +5,7 @@ import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
 
-export type StationViewMode = "list" | "medium" | "large";
+export type StationViewMode = "small" | "list" | "medium" | "large";
 
 interface StationCardProps {
   station: RadioStation;
@@ -21,6 +21,33 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
 
   // viewMode takes priority over compact
   const mode = viewMode ?? (compact ? "list" : undefined);
+
+  if (mode === "small") {
+    return (
+      <button
+        onClick={() => play(station)}
+        className="relative flex flex-col items-center w-full p-1 rounded-lg transition-colors group"
+      >
+        <div className={cn("relative w-full aspect-square rounded-lg bg-accent overflow-hidden shadow-md", isActive && isPlaying && "animate-card-glow")}>
+          <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={station.name} />
+          {isActive && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+              {isPlaying ? <AudioVisualizer size="small" /> : <Play className="w-5 h-5 text-white" />}
+            </div>
+          )}
+          <button
+            onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/30 backdrop-blur-sm z-10"
+          >
+            <Heart className={cn("w-2.5 h-2.5", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-white/80")} />
+          </button>
+        </div>
+        <p className="mt-0.5 text-[10px] font-semibold truncate w-full text-center bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
+          {station.name}
+        </p>
+      </button>
+    );
+  }
 
   if (mode === "list") {
     return (
