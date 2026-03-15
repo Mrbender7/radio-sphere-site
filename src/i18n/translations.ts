@@ -555,6 +555,11 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.tbmDesc": "Rewind live radio anytime",
     "onboarding.cta": "Coming soon on Google Play",
     "onboarding.dismiss": "Don't show again",
+    "tbmQuota.title": "Want unlimited time travel?",
+    "tbmQuota.description": "On mobile web, the TimeBack Machine is limited to 10 min/day for stability. Download the Radio Sphere app for unlimited listening and HD quality.",
+    "tbmQuota.cta": "Download on Google Play",
+    "tbmQuota.continueLive": "Continue live",
+    "tbmQuota.warning": "Enjoy unlimited TimeBack Machine on our app!",
   },
   es: {
     "nav.home": "Inicio",
