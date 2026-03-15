@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { RadioStation } from "@/types/radio";
 import { StationCard, StationViewMode } from "@/components/StationCard";
-import { Heart, ArrowUp, List, Grid3x3, LayoutGrid } from "lucide-react";
+import { Heart, ArrowUp, List, Grid3x3, LayoutGrid, Grip } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
