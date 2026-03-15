@@ -687,7 +687,7 @@ const translations: Record<Language, Record<string, string>> = {
     "guide.sleepTimer": "Temporizador de sueño",
     "guide.sleepTimerContent": "Programa la parada automática de la reproducción tras un tiempo a tu elección (15 min a 2 horas o duración personalizada). Ideal para dormirse con la radio. Actívalo desde los Ajustes.",
     "guide.recorder": "TimeBack Machine",
-    "guide.recorderContent": "Graba tus programas favoritos en MP3 directamente desde el reproductor a pantalla completa. El búfer de 5 minutos también te permite rebobinar y volver a escuchar lo que acabas de perder. Pulsa REC para iniciar la grabación (10 min máx).",
+    "guide.recorderContent": "Graba tus programas favoritos en MP3 directamente desde el reproductor a pantalla completa. El búfer de 5 minutos también te permite rebobinar y volver a escuchar lo que acabas de perder. Pulsa REC para iniciar la grabación (10 min máx). Cuando el icono TBM parpadea, significa que el búfer está activo y grabando en segundo plano. Toca el icono parpadeante para abrir el reproductor TimeBack y volver a escuchar los últimos minutos.",
     "guide.chromecast": "Chromecast",
     "guide.chromecastContent": "Transmite tus estaciones de radio a tu televisor o altavoz conectado a través de Chromecast. Pulsa el icono Cast en el reproductor para empezar la transmisión.",
     "welcome.subtitle": "La radio mundial al alcance de tu mano",
