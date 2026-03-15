@@ -933,7 +933,7 @@ const translations: Record<Language, Record<string, string>> = {
     "guide.sleepTimer": "Schlaf-Timer",
     "guide.sleepTimerContent": "Plane das automatische Stoppen der Wiedergabe nach einer Zeitspanne deiner Wahl (15 Min bis 2 Stunden oder benutzerdefiniert). Perfekt zum Einschlafen mit Radio. Aktiviere ihn in den Einstellungen.",
     "guide.recorder": "TimeBack Machine",
-    "guide.recorderContent": "Nimm deine Lieblingssendungen als MP3 direkt im Vollbildmodus auf. Der 5-Minuten-Puffer ermöglicht es dir auch, zurückzuspulen und das Verpasste erneut zu hören. Tippe auf REC, um die Aufnahme zu starten (max. 10 Min).",
+    "guide.recorderContent": "Nimm deine Lieblingssendungen als MP3 direkt im Vollbildmodus auf. Der 5-Minuten-Puffer ermöglicht es dir auch, zurückzuspulen und das Verpasste erneut zu hören. Tippe auf REC, um die Aufnahme zu starten (max. 10 Min). Wenn das TBM-Symbol blinkt, bedeutet das, dass der Puffer aktiv ist und im Hintergrund aufnimmt. Tippe auf das blinkende Symbol, um den TimeBack-Player zu öffnen und die letzten Minuten erneut anzuhören.",
     "guide.chromecast": "Chromecast",
     "guide.chromecastContent": "Streame deine Radiosender auf deinen Fernseher oder vernetzten Lautsprecher über Chromecast. Tippe auf das Cast-Symbol im Player, um die Übertragung zu starten.",
     "welcome.subtitle": "Weltradio griffbereit",
