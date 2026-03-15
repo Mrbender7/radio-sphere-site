@@ -1,4 +1,5 @@
-import { Home, Compass, Heart, Info, Mail, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
@@ -6,8 +7,11 @@ import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import type { TabId } from "@/components/BottomNav";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
+import tbmLogo from "@/assets/tbm-logo.png";
 
 const navItems = [
   { id: "home" as TabId, labelKey: "nav.home", icon: Home },
