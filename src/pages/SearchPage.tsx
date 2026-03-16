@@ -55,6 +55,25 @@ function buildFlagUrl(code?: string): string | null {
 const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
 const LANGUAGES = ["arabic", "english", "french", "german", "japanese", "portuguese", "spanish"];
 
+/** Map Japanese search terms to their English genre equivalents */
+const JAPANESE_GENRE_MAP: Record<string, string> = {
+  "ジャズ": "jazz", "ロック": "rock", "ポップ": "pop", "ポップス": "pop",
+  "クラシック": "classical", "テクノ": "techno", "トランス": "trance",
+  "ブルース": "blues", "ソウル": "soul", "ファンク": "funk",
+  "メタル": "metal", "レゲエ": "reggae", "ヒップホップ": "hiphop",
+  "エレクトロニック": "electronic", "アンビエント": "ambient",
+  "カントリー": "country", "ラテン": "latin", "ニュース": "news",
+  "チルアウト": "chillout", "ワールド": "world",
+};
+
+/** Resolve Japanese query to English genre tag if applicable */
+function resolveJapaneseQuery(q: string): { query: string; extraTag?: string } {
+  const trimmed = q.trim();
+  const mapped = JAPANESE_GENRE_MAP[trimmed];
+  if (mapped) return { query: trimmed, extraTag: mapped };
+  return { query: trimmed };
+}
+
 /** Merge fulfilled results from Promise.allSettled, ignoring failures */
 function mergeSettled<T>(results: PromiseSettledResult<T[]>[]): T[] {
   const merged: T[] = [];
