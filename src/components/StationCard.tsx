@@ -68,6 +68,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       <button
         onClick={() => play(station)}
         aria-label={`${playLabel} ${station.name}`}
+        {...prefetchProps}
         className={cn(
           "flex items-center gap-3 w-full p-3 rounded-lg transition-colors",
           isActive ? "bg-primary/10 border-l-2 border-primary" : "hover:bg-accent"
