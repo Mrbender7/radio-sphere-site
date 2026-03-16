@@ -45,6 +45,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { RadioStation } from "@/types/radio";
 
+        <OnboardingBanner />
+
 
 function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: React.ElementType; title: string; badge?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
