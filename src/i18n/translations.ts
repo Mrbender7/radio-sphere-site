@@ -349,7 +349,7 @@ const translations: Record<Language, Record<string, string>> = {
     "privacy.analyticsNoPersonal": "No personally identifiable data collected",
     "privacy.analyticsLearnMore": "Learn more about Umami's privacy policy",
     "privacy.thirdParty": "Third-Party Services",
-    "privacy.thirdPartyDesc": "Audio streams are provided directly by radio stations via the community API Radio Browser (radio-browser.info). Radio Sphere does not control the content broadcast by these stations.",
+    "privacy.thirdPartyDesc": "Audio streams are provided directly by radio stations via the community API Radio Browser (radio-browser.info). Radio Sphere does not control the content broadcast by these stations. Audio streams may contain advertisements inserted directly by the broadcasting stations — Radio Sphere has no way to filter or block them.",
     "privacy.thirdPartyUmami": "Umami Analytics (cloud.umami.is) is used to measure website traffic anonymously. No cookies are used, no personal data is collected. Only aggregated and anonymous statistics are generated.",
     "privacy.permissions": "Web Browser",
     "privacy.permissionsDesc": "Radio Sphere is a website accessible from any modern browser. No installation is required. The site does not use third-party cookies. Only your browser's local storage (localStorage) is used to remember your preferences.",
