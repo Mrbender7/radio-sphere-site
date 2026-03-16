@@ -19,10 +19,16 @@ interface StationCardProps {
 export function StationCard({ station, isFavorite, onToggleFavorite, compact, viewMode }: StationCardProps) {
   const { play, currentStation, isPlaying } = usePlayer();
   const { t } = useTranslation();
+  const { onHover, onLeave } = useStreamPrefetch();
   const isActive = currentStation?.id === station.id;
 
   const favLabel = isFavorite ? t("aria.removeFavorite") : t("aria.addFavorite");
   const playLabel = isPlaying && isActive ? t("aria.pause") : t("aria.play");
+
+  const prefetchProps = {
+    onPointerEnter: () => onHover(station),
+    onPointerLeave: () => onLeave(station),
+  };
 
   // viewMode takes priority over compact
   const mode = viewMode ?? (compact ? "list" : undefined);
