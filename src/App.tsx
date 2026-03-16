@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { FavoritesProvider, useFavoritesContext } from "@/contexts/FavoritesContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { StreamBufferProvider } from "@/contexts/StreamBufferContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
