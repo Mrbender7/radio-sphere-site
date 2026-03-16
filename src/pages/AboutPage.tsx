@@ -1,4 +1,5 @@
 import { useTranslation } from "@/contexts/LanguageContext";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useSleepTimer, SLEEP_TIMER_OPTIONS } from "@/contexts/SleepTimerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
