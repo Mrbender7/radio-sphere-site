@@ -98,6 +98,8 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
           <h1 className="text-2xl lg:text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent drop-shadow-[0_0_12px_hsla(250,80%,60%,0.4)]">{t("nav.about")}</h1>
         </div>
 
+        <OnboardingBanner />
+
         {/* Language */}
         <div className="rounded-xl bg-accent p-4 mb-4">
           <h3 className="text-sm font-semibold text-foreground mb-1">{t("settings.language")}</h3>
