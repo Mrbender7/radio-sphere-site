@@ -38,6 +38,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       <button
         onClick={() => play(station)}
         aria-label={`${playLabel} ${station.name}`}
+        {...prefetchProps}
         className="relative flex flex-col items-center w-full p-1 rounded-lg transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-lg bg-accent overflow-hidden shadow-md", isActive && isPlaying && "animate-card-glow")}>
