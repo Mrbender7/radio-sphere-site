@@ -1,5 +1,6 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
+import { useTranslation } from "@/contexts/LanguageContext";
 import { useRef, useEffect, useState } from "react";
 import { Play, Pause, Heart, Loader2, Cast } from "lucide-react";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
