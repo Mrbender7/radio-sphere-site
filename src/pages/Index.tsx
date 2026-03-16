@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, Suspense, lazy } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
@@ -9,18 +9,19 @@ import { MiniPlayer } from "@/components/MiniPlayer";
 import { FullScreenPlayer } from "@/components/FullScreenPlayer";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { DesktopPlayerBar } from "@/components/DesktopPlayerBar";
+import { Footer } from "@/components/Footer";
 
 import { HomePage } from "@/pages/HomePage";
-import { SearchPage } from "@/pages/SearchPage";
-import { LibraryPage } from "@/pages/LibraryPage";
-import { AboutPage } from "@/pages/AboutPage";
-import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
+const SearchPage = lazy(() => import("@/pages/SearchPage").then(m => ({ default: m.SearchPage })));
+const LibraryPage = lazy(() => import("@/pages/LibraryPage").then(m => ({ default: m.LibraryPage })));
+const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
+const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicyPage").then(m => ({ default: m.PrivacyPolicyPage })));
+
 import { WelcomePage } from "@/pages/WelcomePage";
 import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
 import { useBackButton } from "@/hooks/useBackButton";
 import type { Language } from "@/i18n/translations";
-
 
 const ONBOARDING_KEY = "radiosphere_onboarded";
 
@@ -30,6 +31,14 @@ function hasCompletedOnboarding(): boolean {
   } catch {
     return false;
   }
+}
+
+function PageLoader() {
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 }
 
 const Index = () => {
@@ -131,7 +140,13 @@ const Index = () => {
               className={`flex-1 flex flex-col overflow-hidden ${currentStation ? 'pb-28 lg:pb-0' : 'pb-14 lg:pb-0'}`}
               style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
             >
-              {renderContent()}
+              <Suspense fallback={<PageLoader />}>
+                {renderContent()}
+              </Suspense>
+              {/* Desktop Footer */}
+              <div className="hidden lg:block">
+                <Footer />
+              </div>
             </div>
 
             {/* Mobile: MiniPlayer + BottomNav */}
