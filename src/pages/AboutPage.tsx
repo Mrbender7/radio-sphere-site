@@ -1,4 +1,5 @@
 import { useTranslation } from "@/contexts/LanguageContext";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { useSleepTimer, SLEEP_TIMER_OPTIONS } from "@/contexts/SleepTimerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
@@ -94,6 +95,8 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
           <img src={radioSphereLogo} alt="Radio Sphere" className="w-10 h-10 rounded-xl mix-blend-screen animate-logo-glow" />
           <h1 className="text-2xl lg:text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent drop-shadow-[0_0_12px_hsla(250,80%,60%,0.4)]">{t("nav.about")}</h1>
         </div>
+
+        <OnboardingBanner />
 
         {/* Language */}
         <div className="rounded-xl bg-accent p-4 mb-4">
