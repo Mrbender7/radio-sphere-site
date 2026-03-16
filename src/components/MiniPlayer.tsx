@@ -11,6 +11,7 @@ const MARQUEE_SPEED = 40; // pixels per second — constant speed
 export function MiniPlayer() {
   const { currentStation, isPlaying, isBuffering, togglePlay, openFullScreen, isCasting, castDeviceName } = usePlayer();
   const { isFavorite, toggleFavorite } = useFavoritesContext();
+  const { t } = useTranslation();
   const textContainerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const [needsMarquee, setNeedsMarquee] = useState(false);
