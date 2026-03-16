@@ -86,6 +86,7 @@ export function MiniPlayer() {
       </div>
       <button
         onClick={e => { e.stopPropagation(); toggleFavorite(currentStation); }}
+        aria-label={fav ? t("aria.removeFavorite") : t("aria.addFavorite")}
         className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
       >
         <Heart className={`w-4 h-4 ${fav ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : ""}`} />
