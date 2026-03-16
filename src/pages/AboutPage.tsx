@@ -486,10 +486,10 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
         {/* Copyright */}
         <div className="text-center mb-6 select-none space-y-1">
           <p className="text-[10px] text-muted-foreground">
-            © {new Date().getFullYear()} Radio Sphere — Créé par Franck Malherbe
+            © {new Date().getFullYear()} Radio Sphere — {t("footer.createdBy")}
           </p>
           <p className="text-[10px] text-muted-foreground">
-            Powered by the amazing{" "}
+            {t("footer.poweredByPrefix")}
             <a
               href="https://www.radio-browser.info/"
               target="_blank"
@@ -498,7 +498,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
             >
               Radio Browser
             </a>
-            . Special thanks to Alex Segler for this community-driven project.
+            {t("footer.poweredBySuffix")}
           </p>
         </div>
 

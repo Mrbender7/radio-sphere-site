@@ -15,7 +15,7 @@ export function BottomNav({ activeTab, onTabChange }: { activeTab: TabId; onTabC
   const { t } = useTranslation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around bg-secondary/60 backdrop-blur-lg border-t border-border px-2 py-1 pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <nav role="navigation" aria-label={t("nav.home")} className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around bg-secondary/60 backdrop-blur-lg border-t border-border px-2 py-1 pb-[env(safe-area-inset-bottom)] lg:hidden">
       {tabConfig.map(({ id, labelKey, icon: Icon }) => (
         <button
           key={id}

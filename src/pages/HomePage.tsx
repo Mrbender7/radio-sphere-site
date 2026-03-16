@@ -114,7 +114,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
               onClick={refresh}
               disabled={isRefreshing}
               className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-              aria-label="Rafraîchir"
+              aria-label={t("aria.refresh")}
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
             </button>

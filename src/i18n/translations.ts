@@ -1524,6 +1524,15 @@ const translations: Record<Language, Record<string, string>> = {
     "home.comingSoon": "近日公開",
     "notFound.message": "ページが見つかりません",
     "notFound.backHome": "ホームに戻る",
+    "footer.poweredByPrefix": "素晴らしい",
+    "footer.poweredBySuffix": "によって提供されています。Alex Seglerのコミュニティプロジェクトに感謝します。",
+    "footer.createdBy": "Franck Malherbe 作",
+    "aria.play": "再生",
+    "aria.pause": "一時停止",
+    "aria.addFavorite": "お気に入りに追加",
+    "aria.removeFavorite": "お気に入りから削除",
+    "aria.close": "閉じる",
+    "aria.refresh": "更新",
   },
 };
 

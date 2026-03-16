@@ -36,7 +36,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
 
   return (
     <>
-    <aside className="hidden lg:flex flex-col w-72 h-full bg-sidebar border-r border-sidebar-border flex-shrink-0">
+    <aside role="navigation" aria-label={t("nav.home")} className="hidden lg:flex flex-col w-72 h-full bg-sidebar border-r border-sidebar-border flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 pt-8 pb-6">
         <img
