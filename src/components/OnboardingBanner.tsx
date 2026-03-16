@@ -35,7 +35,7 @@ export function OnboardingBanner() {
         <button
           onClick={dismiss}
           className="absolute top-3 right-3 p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          aria-label="Fermer"
+          aria-label={t("aria.close")}
         >
           <X className="w-4 h-4" />
         </button>

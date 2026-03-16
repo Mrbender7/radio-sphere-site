@@ -1,5 +1,6 @@
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
+import { useTranslation } from "@/contexts/LanguageContext";
 import { useRef, useEffect, useState } from "react";
 import { Play, Pause, Heart, Loader2, Cast } from "lucide-react";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
@@ -10,6 +11,7 @@ const MARQUEE_SPEED = 40; // pixels per second — constant speed
 export function MiniPlayer() {
   const { currentStation, isPlaying, isBuffering, togglePlay, openFullScreen, isCasting, castDeviceName } = usePlayer();
   const { isFavorite, toggleFavorite } = useFavoritesContext();
+  const { t } = useTranslation();
   const textContainerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const [needsMarquee, setNeedsMarquee] = useState(false);
@@ -84,6 +86,7 @@ export function MiniPlayer() {
       </div>
       <button
         onClick={e => { e.stopPropagation(); toggleFavorite(currentStation); }}
+        aria-label={fav ? t("aria.removeFavorite") : t("aria.addFavorite")}
         className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
       >
         <Heart className={`w-4 h-4 ${fav ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : ""}`} />
@@ -91,6 +94,7 @@ export function MiniPlayer() {
       <button
         onClick={e => { e.stopPropagation(); togglePlay(); }}
         data-umami-event="play-clicked"
+        aria-label={isPlaying ? t("aria.pause") : t("aria.play")}
         className={`w-11 h-11 rounded-full bg-gradient-to-b from-primary to-primary/80 border-t border-white/20 flex items-center justify-center text-primary-foreground active:shadow-sm active:translate-y-0.5 transition-all flex-shrink-0 ${isPlaying ? "animate-play-breathe" : "shadow-lg shadow-primary/50"}`}
       >
         {isBuffering ? <Loader2 className="w-5 h-5 animate-spin" /> : isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}

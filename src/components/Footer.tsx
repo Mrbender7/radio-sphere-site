@@ -50,7 +50,7 @@ export function Footer(_props: FooterProps) {
           {/* Attribution */}
           <div className="flex flex-col gap-2">
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Powered by the amazing{" "}
+              {t("footer.poweredByPrefix")}
               <a
                 href="https://www.radio-browser.info/"
                 target="_blank"
@@ -59,7 +59,7 @@ export function Footer(_props: FooterProps) {
               >
                 Radio Browser
               </a>
-              . Special thanks to Alex Segler for this community-driven project.
+              {t("footer.poweredBySuffix")}
             </p>
           </div>
 
@@ -78,7 +78,7 @@ export function Footer(_props: FooterProps) {
 
         <div className="mt-8 pt-4 border-t border-border/50 flex flex-col items-center gap-1">
           <p className="text-[10px] text-muted-foreground">
-            © {new Date().getFullYear()} Radio Sphere — Créé par Franck Malherbe. {t("footer.rights")}
+            © {new Date().getFullYear()} Radio Sphere — {t("footer.createdBy")}. {t("footer.rights")}
           </p>
           <p className="text-[10px] text-muted-foreground">
             radiosphere.be
