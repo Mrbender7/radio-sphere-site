@@ -50,7 +50,7 @@ export function Footer(_props: FooterProps) {
           {/* Attribution */}
           <div className="flex flex-col gap-2">
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              Powered by the amazing{" "}
+              {t("footer.poweredByPrefix")}
               <a
                 href="https://www.radio-browser.info/"
                 target="_blank"
@@ -59,7 +59,7 @@ export function Footer(_props: FooterProps) {
               >
                 Radio Browser
               </a>
-              . Special thanks to Alex Segler for this community-driven project.
+              {t("footer.poweredBySuffix")}
             </p>
           </div>
 
