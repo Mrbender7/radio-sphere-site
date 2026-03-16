@@ -5,9 +5,9 @@ import { Heart, Play } from "lucide-react";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
+import { useStreamPrefetch } from "@/hooks/useStreamPrefetch";
 
 export type StationViewMode = "small" | "list" | "medium" | "large";
-
 interface StationCardProps {
   station: RadioStation;
   isFavorite: boolean;
