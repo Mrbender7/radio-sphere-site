@@ -63,9 +63,9 @@ export function OnboardingBanner() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => window.open("#", "_blank")}
+            disabled
             data-umami-event="google-play-clicked"
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity shadow-lg shadow-primary/25"
+            className="px-5 py-2 rounded-xl bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-xs font-bold opacity-70 cursor-default shadow-lg shadow-primary/25"
           >
             {t("onboarding.cta")}
           </button>

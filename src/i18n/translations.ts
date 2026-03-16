@@ -1483,6 +1483,11 @@ const translations: Record<Language, Record<string, string>> = {
     "tbmQuota.cta": "Google Playでダウンロード",
     "tbmQuota.continueLive": "ライブを続ける",
     "tbmQuota.warning": "アプリで無制限のTimeBack Machineをお楽しみください！",
+    "home.androidTitle": "Radio Sphere Android版",
+    "home.androidDesc": "Android Auto、Chromecast、オフラインモードで、お気に入りの局をどこでも聴けます。",
+    "home.comingSoon": "近日公開",
+    "notFound.message": "ページが見つかりません",
+    "notFound.backHome": "ホームに戻る",
   },
 };
 

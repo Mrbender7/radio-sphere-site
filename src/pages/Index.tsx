@@ -9,7 +9,7 @@ import { MiniPlayer } from "@/components/MiniPlayer";
 import { FullScreenPlayer } from "@/components/FullScreenPlayer";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { DesktopPlayerBar } from "@/components/DesktopPlayerBar";
-import { Footer } from "@/components/Footer";
+
 import { HomePage } from "@/pages/HomePage";
 import { SearchPage } from "@/pages/SearchPage";
 import { LibraryPage } from "@/pages/LibraryPage";

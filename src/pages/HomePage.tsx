@@ -142,15 +142,15 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-[hsl(280,80%,60%)] flex items-center justify-center mx-auto mb-3 shadow-lg shadow-primary/30">
             <img src={radioSphereLogo} alt="Radio Sphere" className="w-10 h-10 rounded-xl" />
           </div>
-          <h3 className="text-base font-heading font-bold text-foreground mb-1">Radio Sphere sur Android</h3>
+          <h3 className="text-base font-heading font-bold text-foreground mb-1">{t("home.androidTitle")}</h3>
           <p className="text-xs text-muted-foreground mb-4 max-w-[260px] mx-auto leading-relaxed">
-            Écoutez vos stations préférées partout, avec Android Auto, Chromecast et le mode hors-ligne.
+            {t("home.androidDesc")}
           </p>
           <button
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-primary/30"
-            onClick={() => window.open("#", "_blank")}
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-sm font-semibold opacity-70 cursor-default shadow-lg shadow-primary/30"
+            disabled
           >
-            Bientôt disponible
+            {t("home.comingSoon")}
           </button>
         </div>
       </section>
