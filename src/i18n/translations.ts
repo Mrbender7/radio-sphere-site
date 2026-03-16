@@ -640,7 +640,7 @@ const translations: Record<Language, Record<string, string>> = {
     "privacy.analyticsNoPersonal": "No se recopilan datos personales identificables",
     "privacy.analyticsLearnMore": "Más información sobre la política de privacidad de Umami",
     "privacy.thirdParty": "Servicios de terceros",
-    "privacy.thirdPartyDesc": "Los flujos de audio son proporcionados directamente por las estaciones de radio a través de la API Radio Browser.",
+    "privacy.thirdPartyDesc": "Los flujos de audio son proporcionados directamente por las estaciones de radio a través de la API Radio Browser. Los flujos pueden contener publicidad insertada por las propias estaciones — Radio Sphere no puede filtrarla ni bloquearla.",
     "privacy.thirdPartyUmami": "Umami Analytics (cloud.umami.is) se utiliza para medir el tráfico del sitio de forma anónima. No se utilizan cookies, no se recopilan datos personales. Solo se generan estadísticas agregadas y anónimas.",
     "privacy.permissions": "Navegador web",
     "privacy.permissionsDesc": "Radio Sphere es un sitio web accesible desde cualquier navegador moderno. No se requiere instalación. El sitio no utiliza cookies de terceros. Solo se utiliza el almacenamiento local (localStorage) de su navegador para recordar sus preferencias.",
