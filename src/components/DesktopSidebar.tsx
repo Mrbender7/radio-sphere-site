@@ -130,11 +130,11 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           ))}
         </div>
         <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
-          © {new Date().getFullYear()} Radio Sphere — Créé par Franck Malherbe
+          © {new Date().getFullYear()} Radio Sphere — {t("footer.createdBy")}
         </p>
         <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
-          Powered by the amazing{" "}
-          <a href="https://www.radio-browser.info/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Radio Browser</a>. Special thanks to Alex Segler for this community-driven project.
+          {t("footer.poweredByPrefix")}
+          <a href="https://www.radio-browser.info/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Radio Browser</a>{t("footer.poweredBySuffix")}
         </p>
       </div>
     </aside>
