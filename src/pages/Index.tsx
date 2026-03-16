@@ -149,9 +149,9 @@ const Index = () => {
             <MiniPlayer />
             <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
-            {/* Desktop: Footer + Player bar */}
-            <Footer />
+            {/* Desktop: Player bar + Footer */}
             <DesktopPlayerBar />
+            <Footer />
           </div>
         </div>
 
