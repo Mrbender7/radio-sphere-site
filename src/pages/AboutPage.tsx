@@ -377,7 +377,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
             )}
           >
             <p className="text-xs text-muted-foreground leading-relaxed pl-7 mb-3">
-              Powered by the amazing{" "}
+              {t("footer.poweredByPrefix")}
               <a
                 href="https://www.radio-browser.info/"
                 target="_blank"
@@ -387,7 +387,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
               >
                 Radio Browser
               </a>
-              . Special thanks to Alex Segler for this community-driven project.
+              {t("footer.poweredBySuffix")}
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed pl-7 mb-3">{t("settings.radioSourceDesc")}</p>
             <div className="flex flex-col gap-2 pl-7">
