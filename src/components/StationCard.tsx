@@ -1,5 +1,6 @@
 import { RadioStation } from "@/types/radio";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useTranslation } from "@/contexts/LanguageContext";
 import { Heart, Play } from "lucide-react";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
@@ -17,7 +18,11 @@ interface StationCardProps {
 
 export function StationCard({ station, isFavorite, onToggleFavorite, compact, viewMode }: StationCardProps) {
   const { play, currentStation, isPlaying } = usePlayer();
+  const { t } = useTranslation();
   const isActive = currentStation?.id === station.id;
+
+  const favLabel = isFavorite ? t("aria.removeFavorite") : t("aria.addFavorite");
+  const playLabel = isPlaying && isActive ? t("aria.pause") : t("aria.play");
 
   // viewMode takes priority over compact
   const mode = viewMode ?? (compact ? "list" : undefined);
@@ -26,6 +31,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
     return (
       <button
         onClick={() => play(station)}
+        aria-label={`${playLabel} ${station.name}`}
         className="relative flex flex-col items-center w-full p-1 rounded-lg transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-lg bg-accent overflow-hidden shadow-md", isActive && isPlaying && "animate-card-glow")}>
@@ -37,6 +43,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
           )}
           <button
             onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            aria-label={favLabel}
             className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/30 backdrop-blur-sm z-10"
           >
             <Heart className={cn("w-2.5 h-2.5", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-white/80")} />
@@ -53,6 +60,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
     return (
       <button
         onClick={() => play(station)}
+        aria-label={`${playLabel} ${station.name}`}
         className={cn(
           "flex items-center gap-3 w-full p-3 rounded-lg transition-colors",
           isActive ? "bg-primary/10 border-l-2 border-primary" : "hover:bg-accent"
@@ -70,6 +78,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         )}
         <button
           onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+          aria-label={favLabel}
           className="p-1.5"
         >
           <Heart className={cn("w-4 h-4", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-muted-foreground")} />
@@ -82,6 +91,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
     return (
       <button
         onClick={() => play(station)}
+        aria-label={`${playLabel} ${station.name}`}
         className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
@@ -93,6 +103,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
           )}
           <button
             onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            aria-label={favLabel}
             className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/30 backdrop-blur-sm z-10"
           >
             <Heart className={cn("w-3.5 h-3.5", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-white/80")} />
@@ -109,6 +120,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
     return (
       <button
         onClick={() => play(station)}
+        aria-label={`${playLabel} ${station.name}`}
         className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
@@ -120,6 +132,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
           )}
           <button
             onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            aria-label={favLabel}
             className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 backdrop-blur-sm z-10"
           >
             <Heart className={cn("w-4 h-4", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-white/80")} />
@@ -137,6 +150,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
   return (
     <button
       onClick={() => play(station)}
+      aria-label={`${playLabel} ${station.name}`}
       className="relative flex flex-col items-center w-[7.5rem] flex-shrink-0 p-2 rounded-xl transition-colors"
     >
       <div className={cn("relative w-[5.5rem] h-[5.5rem] rounded-xl bg-accent mb-1.5 overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
@@ -152,6 +166,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         )}
         <button
           onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+          aria-label={favLabel}
           className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/30 backdrop-blur-sm z-10"
         >
           <Heart className={cn("w-3.5 h-3.5", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-white/80")} />

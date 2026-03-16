@@ -55,6 +55,25 @@ function buildFlagUrl(code?: string): string | null {
 const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
 const LANGUAGES = ["arabic", "english", "french", "german", "japanese", "portuguese", "spanish"];
 
+/** Map Japanese search terms to their English genre equivalents */
+const JAPANESE_GENRE_MAP: Record<string, string> = {
+  "ジャズ": "jazz", "ロック": "rock", "ポップ": "pop", "ポップス": "pop",
+  "クラシック": "classical", "テクノ": "techno", "トランス": "trance",
+  "ブルース": "blues", "ソウル": "soul", "ファンク": "funk",
+  "メタル": "metal", "レゲエ": "reggae", "ヒップホップ": "hiphop",
+  "エレクトロニック": "electronic", "アンビエント": "ambient",
+  "カントリー": "country", "ラテン": "latin", "ニュース": "news",
+  "チルアウト": "chillout", "ワールド": "world",
+};
+
+/** Resolve Japanese query to English genre tag if applicable */
+function resolveJapaneseQuery(q: string): { query: string; extraTag?: string } {
+  const trimmed = q.trim();
+  const mapped = JAPANESE_GENRE_MAP[trimmed];
+  if (mapped) return { query: trimmed, extraTag: mapped };
+  return { query: trimmed };
+}
+
 /** Merge fulfilled results from Promise.allSettled, ignoring failures */
 function mergeSettled<T>(results: PromiseSettledResult<T[]>[]): T[] {
   const merged: T[] = [];
@@ -171,6 +190,10 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const { data: results, isLoading, isError: isSearchError, refetch: retrySearch } = useQuery({
     queryKey: ["search", query, country, genres, languages, sortBy],
     queryFn: async ({ signal }) => {
+      const resolved = resolveJapaneseQuery(query);
+      const searchName = resolved.query;
+      const japaneseExtraTag = resolved.extraTag;
+
       const baseParams = {
         country: country || undefined,
         language: languages.length ? languages.join(",") : undefined,
@@ -186,13 +209,17 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
       // Multi-genre OR: one request per genre, then merge
       if (genres.length > 1) {
         const genreSearches = genres.map(g =>
-          query
-            ? radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: query })
+          searchName
+            ? radioBrowserProvider.searchStations({ ...baseParams, tag: g, name: searchName })
             : radioBrowserProvider.searchStations({ ...baseParams, tag: g })
         );
         // Also search by name alone (no tag filter) to catch untagged stations
-        if (query) {
-          genreSearches.push(radioBrowserProvider.searchStations({ ...baseParams, name: query }));
+        if (searchName) {
+          genreSearches.push(radioBrowserProvider.searchStations({ ...baseParams, name: searchName }));
+        }
+        // If Japanese term maps to a genre, also search by that tag
+        if (japaneseExtraTag) {
+          genreSearches.push(radioBrowserProvider.searchStations({ ...baseParams, tag: japaneseExtraTag }));
         }
         const settled = await Promise.allSettled(genreSearches);
         allStations.push(...mergeSettled(settled));
@@ -200,17 +227,19 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
         // Single genre or no genre
         const singleTag = genres.length === 1 ? genres[0] : undefined;
 
-        if (query) {
+        if (searchName) {
           const searches: Promise<RadioStation[]>[] = [
-            radioBrowserProvider.searchStations({ ...baseParams, name: query, tag: singleTag }),
+            radioBrowserProvider.searchStations({ ...baseParams, name: searchName, tag: singleTag }),
           ];
           // Also search by tag=query to find stations tagged with the keyword
           if (singleTag) {
-            // Search the genre with the keyword in name (already above)
-            // Also search name-only without genre filter
-            searches.push(radioBrowserProvider.searchStations({ ...baseParams, name: query }));
+            searches.push(radioBrowserProvider.searchStations({ ...baseParams, name: searchName }));
           } else {
-            searches.push(radioBrowserProvider.searchStations({ ...baseParams, tag: query }));
+            searches.push(radioBrowserProvider.searchStations({ ...baseParams, tag: searchName }));
+          }
+          // If Japanese term maps to a genre, also search by that English tag
+          if (japaneseExtraTag) {
+            searches.push(radioBrowserProvider.searchStations({ ...baseParams, tag: japaneseExtraTag }));
           }
           const settled = await Promise.allSettled(searches);
           allStations.push(...mergeSettled(settled));
