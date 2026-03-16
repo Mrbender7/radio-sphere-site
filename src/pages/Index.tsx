@@ -143,17 +143,14 @@ const Index = () => {
               <Suspense fallback={<PageLoader />}>
                 {renderContent()}
               </Suspense>
-              {/* Desktop Footer */}
-              <div className="hidden lg:block">
-                <Footer />
-              </div>
             </div>
 
             {/* Mobile: MiniPlayer + BottomNav */}
             <MiniPlayer />
             <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
-            {/* Desktop: Player bar */}
+            {/* Desktop: Footer + Player bar */}
+            <Footer />
             <DesktopPlayerBar />
           </div>
         </div>
