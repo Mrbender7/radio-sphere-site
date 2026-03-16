@@ -5,9 +5,9 @@ import { Heart, Play } from "lucide-react";
 import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
+import { useStreamPrefetch } from "@/hooks/useStreamPrefetch";
 
 export type StationViewMode = "small" | "list" | "medium" | "large";
-
 interface StationCardProps {
   station: RadioStation;
   isFavorite: boolean;
@@ -19,10 +19,16 @@ interface StationCardProps {
 export function StationCard({ station, isFavorite, onToggleFavorite, compact, viewMode }: StationCardProps) {
   const { play, currentStation, isPlaying } = usePlayer();
   const { t } = useTranslation();
+  const { onHover, onLeave } = useStreamPrefetch();
   const isActive = currentStation?.id === station.id;
 
   const favLabel = isFavorite ? t("aria.removeFavorite") : t("aria.addFavorite");
   const playLabel = isPlaying && isActive ? t("aria.pause") : t("aria.play");
+
+  const prefetchProps = {
+    onPointerEnter: () => onHover(station),
+    onPointerLeave: () => onLeave(station),
+  };
 
   // viewMode takes priority over compact
   const mode = viewMode ?? (compact ? "list" : undefined);
@@ -32,6 +38,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       <button
         onClick={() => play(station)}
         aria-label={`${playLabel} ${station.name}`}
+        {...prefetchProps}
         className="relative flex flex-col items-center w-full p-1 rounded-lg transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-lg bg-accent overflow-hidden shadow-md", isActive && isPlaying && "animate-card-glow")}>
@@ -61,6 +68,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       <button
         onClick={() => play(station)}
         aria-label={`${playLabel} ${station.name}`}
+        {...prefetchProps}
         className={cn(
           "flex items-center gap-3 w-full p-3 rounded-lg transition-colors",
           isActive ? "bg-primary/10 border-l-2 border-primary" : "hover:bg-accent"
@@ -92,6 +100,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       <button
         onClick={() => play(station)}
         aria-label={`${playLabel} ${station.name}`}
+        {...prefetchProps}
         className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
@@ -121,6 +130,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       <button
         onClick={() => play(station)}
         aria-label={`${playLabel} ${station.name}`}
+        {...prefetchProps}
         className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
@@ -151,6 +161,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
     <button
       onClick={() => play(station)}
       aria-label={`${playLabel} ${station.name}`}
+      {...prefetchProps}
       className="relative flex flex-col items-center w-[7.5rem] flex-shrink-0 p-2 rounded-xl transition-colors"
     >
       <div className={cn("relative w-[5.5rem] h-[5.5rem] rounded-xl bg-accent mb-1.5 overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
