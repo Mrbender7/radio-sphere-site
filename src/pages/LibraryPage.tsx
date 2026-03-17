@@ -117,7 +117,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
             {t("favorites.sortName")}
           </button>
           <button
-            onClick={() => setSortMode("country")}
+            onClick={() => updateSortMode("country")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
               sortMode === "country" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
