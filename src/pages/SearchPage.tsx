@@ -118,7 +118,14 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sortBy, setSortBy] = useState<"votes" | "name" | "clickcount">("votes");
-  const [viewMode, setViewMode] = useState<StationViewMode>("list");
+  const [viewMode, setViewMode] = useState<StationViewMode>(() => {
+    try { const v = localStorage.getItem("radiosphere_view_mode"); if (v) return v as StationViewMode; } catch {}
+    return "list";
+  });
+  const updateViewMode = useCallback((mode: StationViewMode) => {
+    setViewMode(mode);
+    try { localStorage.setItem("radiosphere_view_mode", mode); } catch {}
+  }, []);
   const { t } = useTranslation();
   const PAGE_SIZE = 40;
 
@@ -493,7 +500,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
             ]).map(({ mode, icon: Icon }) => (
               <button
                 key={mode}
-                onClick={() => setViewMode(mode)}
+                onClick={() => updateViewMode(mode)}
                 className={cn(
                   "p-1.5 rounded-md transition-all",
                   viewMode === mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"

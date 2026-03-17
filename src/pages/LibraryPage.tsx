@@ -16,7 +16,14 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [sortMode, setSortMode] = useState<"name" | "country" | "genre">("name");
-  const [viewMode, setViewMode] = useState<StationViewMode>("list");
+  const [viewMode, setViewMode] = useState<StationViewMode>(() => {
+    try { const v = localStorage.getItem("radiosphere_view_mode"); if (v) return v as StationViewMode; } catch {}
+    return "list";
+  });
+  const updateViewMode = useCallback((mode: StationViewMode) => {
+    setViewMode(mode);
+    try { localStorage.setItem("radiosphere_view_mode", mode); } catch {}
+  }, []);
 
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -127,7 +134,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
           {viewModes.map(({ mode, icon: Icon, labelKey }) => (
             <button
               key={mode}
-              onClick={() => setViewMode(mode)}
+              onClick={() => updateViewMode(mode)}
               title={t(labelKey)}
               className={cn(
                 "p-1.5 rounded-md transition-all",
