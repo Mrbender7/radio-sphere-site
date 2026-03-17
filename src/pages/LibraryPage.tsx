@@ -15,7 +15,14 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">("name");
+  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">(() => {
+    try { const v = localStorage.getItem("radiosphere_sort_mode"); if (v === "name" || v === "country" || v === "genre") return v; } catch {}
+    return "name";
+  });
+  const updateSortMode = useCallback((mode: "name" | "country" | "genre") => {
+    setSortMode(mode);
+    try { localStorage.setItem("radiosphere_sort_mode", mode); } catch {}
+  }, []);
   const [viewMode, setViewMode] = useState<StationViewMode>(() => {
     try { const v = localStorage.getItem("radiosphere_view_mode"); if (v) return v as StationViewMode; } catch {}
     return "list";
@@ -101,7 +108,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           {/* Sort buttons */}
           <button
-            onClick={() => setSortMode("name")}
+            onClick={() => updateSortMode("name")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
               sortMode === "name" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
@@ -110,7 +117,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
             {t("favorites.sortName")}
           </button>
           <button
-            onClick={() => setSortMode("country")}
+            onClick={() => updateSortMode("country")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
               sortMode === "country" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
@@ -119,7 +126,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
             {t("favorites.sortCountry")}
           </button>
           <button
-            onClick={() => setSortMode("genre")}
+            onClick={() => updateSortMode("genre")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
               sortMode === "genre" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
