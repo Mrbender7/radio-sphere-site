@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => ({
       ],
       manifest: false, // use existing public/manifest.json
       workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         globPatterns: ["**/*.{js,css,html,png,jpg,jpeg,svg,webp,woff,woff2}"],
         runtimeCaching: [
           {
