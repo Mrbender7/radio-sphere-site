@@ -108,7 +108,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           {/* Sort buttons */}
           <button
-            onClick={() => setSortMode("name")}
+            onClick={() => updateSortMode("name")}
             className={cn(
               "px-3 py-1.5 text-xs font-semibold rounded-full transition-all",
               sortMode === "name" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
