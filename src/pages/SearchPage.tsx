@@ -500,7 +500,7 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
             ]).map(({ mode, icon: Icon }) => (
               <button
                 key={mode}
-                onClick={() => setViewMode(mode)}
+                onClick={() => updateViewMode(mode)}
                 className={cn(
                   "p-1.5 rounded-md transition-all",
                   viewMode === mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"

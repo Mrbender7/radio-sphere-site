@@ -134,7 +134,7 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
           {viewModes.map(({ mode, icon: Icon, labelKey }) => (
             <button
               key={mode}
-              onClick={() => setViewMode(mode)}
+              onClick={() => updateViewMode(mode)}
               title={t(labelKey)}
               className={cn(
                 "p-1.5 rounded-md transition-all",
