@@ -15,7 +15,14 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">("name");
+  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">(() => {
+    try { const v = localStorage.getItem("radiosphere_sort_mode"); if (v === "name" || v === "country" || v === "genre") return v; } catch {}
+    return "name";
+  });
+  const updateSortMode = useCallback((mode: "name" | "country" | "genre") => {
+    setSortMode(mode);
+    try { localStorage.setItem("radiosphere_sort_mode", mode); } catch {}
+  }, []);
   const [viewMode, setViewMode] = useState<StationViewMode>(() => {
     try { const v = localStorage.getItem("radiosphere_view_mode"); if (v) return v as StationViewMode; } catch {}
     return "list";
