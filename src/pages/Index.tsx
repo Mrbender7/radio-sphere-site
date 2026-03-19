@@ -1,4 +1,5 @@
-import { useState, useCallback, Suspense, lazy } from "react";
+import { useState, useCallback, useEffect, Suspense, lazy } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
