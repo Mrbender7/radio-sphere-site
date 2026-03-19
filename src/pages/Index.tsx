@@ -80,7 +80,8 @@ const Index = () => {
     if (tab !== "search") setSelectedGenre(undefined);
     setShowPrivacy(false);
     setActiveTab(tab);
-  }, []);
+    navigate(TAB_TO_ROUTE[tab] || "/", { replace: true });
+  }, [navigate]);
 
   const handleWelcomeComplete = useCallback((lang: Language) => {
     setLanguage(lang);
