@@ -59,7 +59,7 @@ export default defineConfig(({ mode }) => ({
         ],
         // Don't cache audio streams
         navigateFallback: "index.html",
-        navigateFallbackDenylist: [/^\/cast-receiver\.html/, /^\/privacy-policy\.html/, /^\/app-privacy\.html/],
+        navigateFallbackDenylist: [/^\/cast-receiver\.html/, /^\/privacy-policy\.html/, /^\/app-privacy\.html/, /^\/sitemap\.xml/, /^\/robots\.txt/],
       },
     }),
   ].filter(Boolean),
