@@ -42,12 +42,31 @@ function PageLoader() {
   );
 }
 
+const ROUTE_TO_TAB: Record<string, TabId> = {
+  "/": "home",
+  "/search": "search",
+  "/library": "library",
+  "/about": "about",
+};
+const TAB_TO_ROUTE: Record<TabId, string> = {
+  home: "/",
+  search: "/search",
+  library: "/library",
+  about: "/about",
+};
+
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<TabId>("home");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const initialTab = ROUTE_TO_TAB[location.pathname] || "home";
+  const initialPrivacy = location.pathname === "/privacy";
+
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [selectedGenre, setSelectedGenre] = useState<string | undefined>();
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showWelcome, setShowWelcome] = useState(!hasCompletedOnboarding());
-  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(initialPrivacy);
   const { favorites, toggleFavorite, isFavorite, recent } = useFavoritesContext();
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
   const { setLanguage } = useTranslation();
