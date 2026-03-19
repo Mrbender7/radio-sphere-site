@@ -107,7 +107,8 @@ const Index = () => {
   const handleNavigatePrivacy = useCallback(() => {
     setShowPrivacy(true);
     setActiveTab("about");
-  }, []);
+    navigate("/privacy", { replace: true });
+  }, [navigate]);
 
   useBackButton({
     onBack: () => {
