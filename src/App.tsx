@@ -14,6 +14,8 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+/** All tab routes render the same Index shell — it reads the URL to pick the active tab */
+
 function CoreProviders({ children }: { children: React.ReactNode }) {
   const { addRecent } = useFavoritesContext();
 
@@ -38,6 +40,10 @@ const App = () => (
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/search" element={<Index />} />
+                  <Route path="/library" element={<Index />} />
+                  <Route path="/about" element={<Index />} />
+                  <Route path="/privacy" element={<Index />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
