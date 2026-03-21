@@ -30,7 +30,7 @@ export function PrivacyPolicyPage({ onBack }: PrivacyPolicyPageProps) {
           <section className="rounded-xl bg-accent/50 border border-border p-6">
             <div className="flex items-center gap-3 mb-3">
               <img src={radioSphereLogo} alt="Radio Sphere" className="w-8 h-8 rounded-lg" />
-              <p className="font-semibold text-foreground">Radio Sphere — radiosphere.be</p>
+              <p className="font-semibold text-foreground">RadioSphere.be</p>
             </div>
             <p className="text-xs text-muted-foreground">{t("privacy.lastUpdated")}: 15 mars 2026</p>
             <p className="text-xs text-muted-foreground mt-1">Web Player — radiosphere.be</p>

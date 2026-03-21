@@ -41,7 +41,7 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
 
       {/* Title */}
       <h1 className="text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent mb-2 drop-shadow-[0_0_16px_hsla(250,80%,60%,0.4)]">
-        Radio Sphere
+        RadioSphere.be
       </h1>
       <p className="text-sm text-muted-foreground mb-8">
         {t("welcome.subtitle")}

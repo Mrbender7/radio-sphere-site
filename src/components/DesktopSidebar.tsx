@@ -45,7 +45,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           className="w-11 h-11 rounded-xl mix-blend-screen animate-logo-glow"
         />
         <h1 className="text-xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
-          Radio Sphere
+          RadioSphere.be
         </h1>
       </div>
 
