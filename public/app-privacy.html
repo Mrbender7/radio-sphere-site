@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg-color: #0b0b14;
-            --card-bg: rgba(25, 25, 45, 0.6);
+            --card-bg: rgba(25, 25, 45, 0.8); /* Opacité augmentée pour plus de lisibilité */
             --text-main: #e2e8f0;
             --text-muted: #94a3b8;
             --accent-start: #4a90ff;
@@ -25,6 +25,7 @@
             color: var(--text-main);
             min-height: 100vh;
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
         .container {
@@ -41,6 +42,7 @@
             border-radius: 24px;
             padding: 2.5rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            min-height: 300px; /* Empêche l'effet de carte vide pendant le chargement */
         }
 
         .header {
@@ -98,12 +100,17 @@
             box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
         }
 
+        /* Correction CSS : L'animation ne doit se déclencher que sur la classe active */
         .lang-section { 
             display: none; 
-            animation: fadeIn 0.4s ease-out forwards;
+            opacity: 0;
         }
 
-        .lang-section.active { display: block; }
+        .lang-section.active { 
+            display: block; 
+            opacity: 1;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -170,11 +177,6 @@
             color: var(--accent-end);
         }
 
-        .policy ul li strong { 
-            color: #fff; 
-            font-weight: 600;
-        }
-
         .policy footer {
             margin-top: 3rem;
             padding-top: 1.5rem;
@@ -188,10 +190,6 @@
         .policy footer a {
             color: var(--accent-start);
             text-decoration: none;
-        }
-
-        .policy footer a:hover {
-            text-decoration: underline;
         }
     </style>
 </head>
@@ -213,4 +211,6 @@
         <div class="card">
             <div id="fr" class="lang-section">
                 <div class="policy">
-                    <h2>Politique
+                    <h2>Politique de Confidentialité</h2>
+                    <span class="date">Dernière mise à jour : 21 mars 2026</span>
+                    <p>L'application <strong>RadioSphere.be</strong> respecte votre vie privée. Cette politique détaille la gestion de vos données conformément au RG
