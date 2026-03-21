@@ -11,7 +11,7 @@ if ("serviceWorker" in navigator) {
       immediate: true,
       onNeedRefresh() {
         // Auto-reload when a new version is available
-        if (confirm("Une nouvelle version de Radio Sphere est disponible. Recharger ?")) {
+        if (confirm("Une nouvelle version de RadioSphere.be est disponible. Recharger ?")) {
           window.location.reload();
         }
       },

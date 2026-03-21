@@ -41,7 +41,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
       <div className="flex items-center gap-3 px-6 pt-8 pb-6">
         <img
           src={radioSphereLogo}
-          alt="Radio Sphere"
+          alt="RadioSphere.be"
           className="w-11 h-11 rounded-xl mix-blend-screen animate-logo-glow"
         />
         <h1 className="text-xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
@@ -130,7 +130,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           ))}
         </div>
         <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
-          © {new Date().getFullYear()} Radio Sphere — {t("footer.createdBy")}
+          © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy")}
         </p>
         <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
           {t("footer.poweredByPrefix")}
