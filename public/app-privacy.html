@@ -213,4 +213,101 @@
                 <div class="policy">
                     <h2>Politique de Confidentialité</h2>
                     <span class="date">Dernière mise à jour : 21 mars 2026</span>
-                    <p>L'application <strong>RadioSphere.be</strong> respecte votre vie privée. Cette politique détaille la gestion de vos données conformément au RG
+                    <p>L'application <strong>RadioSphere.be</strong> respecte votre vie privée. Cette politique détaille la gestion de vos données conformément au RGPD.</p>
+                    <h3>1. Collecte des données</h3>
+                    <p>RadioSphere.be ne collecte aucune donnée personnelle identifiable. Aucun compte n'est requis.</p>
+                    <ul>
+                        <li><strong>TimeBack Machine :</strong> Les enregistrements sont stockés localement sur votre appareil.</li>
+                        <li><strong>Favoris :</strong> Stockés exclusivement sur votre appareil.</li>
+                    </ul>
+                    <footer>
+                        Développé par Franck H. Malherbe<br>
+                        <a href="mailto:info@radiosphere.be">info@radiosphere.be</a><br>
+                        Liège, Belgique
+                    </footer>
+                </div>
+            </div>
+
+            <div id="en" class="lang-section active">
+                <div class="policy">
+                    <h2>Privacy and Usage Policy</h2>
+                    <span class="date">Last updated: March 21, 2026</span>
+                    <p>The <strong>RadioSphere.be</strong> application values your privacy. This policy outlines our data practices in accordance with GDPR and Google Play requirements.</p>
+                    <h3>1. Data Collection and Use</h3>
+                    <p>RadioSphere.be does not collect any personally identifiable information. No user account is required to use the app.</p>
+                    <ul>
+                        <li><strong>Premium Features:</strong> Audio recordings are saved strictly locally on your device.</li>
+                        <li><strong>Favorites:</strong> Stored exclusively on your device (local storage).</li>
+                        <li><strong>Streaming:</strong> Third-party servers receive your IP address solely for technical delivery.</li>
+                    </ul>
+                    <footer>
+                        Developed by Franck H. Malherbe<br>
+                        <a href="mailto:info@radiosphere.be">info@radiosphere.be</a><br>
+                        Liège, Belgium
+                    </footer>
+                </div>
+            </div>
+
+            <div id="es" class="lang-section">
+                <div class="policy">
+                    <h2>Política de Privacidad</h2>
+                    <span class="date">Última actualización: 21 de marzo de 2026</span>
+                    <p>La aplicación <strong>RadioSphere.be</strong> respeta su privacidad de acuerdo con el RGPD.</p>
+                    <footer>
+                        Desarrollado por Franck H. Malherbe<br>
+                        <a href="mailto:info@radiosphere.be">info@radiosphere.be</a>
+                    </footer>
+                </div>
+            </div>
+
+            <div id="de" class="lang-section">
+                <div class="policy">
+                    <h2>Datenschutzrichtlinie</h2>
+                    <span class="date">Letzte Aktualisierung: 21. März 2026</span>
+                    <p>Die Anwendung <strong>RadioSphere.be</strong> respektiert Ihre Privatsphäre gemäß der DSGVO.</p>
+                    <footer>
+                        Entwickelt von Franck H. Malherbe<br>
+                        <a href="mailto:info@radiosphere.be">info@radiosphere.be</a>
+                    </footer>
+                </div>
+            </div>
+
+            <div id="ja" class="lang-section">
+                <div class="policy">
+                    <h2>プライバシーポリシー</h2>
+                    <span class="date">最終更新日：2026年3月21日</span>
+                    <p><strong>RadioSphere.be</strong>アプリは、お客様のプライバシーを尊重します。</p>
+                    <footer>
+                        開発者：Franck H. Malherbe<br>
+                        <a href="mailto:info@radiosphere.be">info@radiosphere.be</a>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLang(lang) {
+            // Cacher toutes les sections
+            document.querySelectorAll('.lang-section').forEach(s => {
+                s.classList.remove('active');
+            });
+            // Désactiver tous les boutons
+            document.querySelectorAll('.lang-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            
+            // Afficher la section sélectionnée
+            const selectedSection = document.getElementById(lang);
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+            }
+            // Activer le bouton correspondant
+            const selectedBtn = document.getElementById('btn-' + lang);
+            if (selectedBtn) {
+                selectedBtn.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
