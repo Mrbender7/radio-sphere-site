@@ -92,7 +92,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
     <div className="flex-1 overflow-y-auto px-4 lg:px-8 pb-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mt-6 mb-6">
-          <img src={radioSphereLogo} alt="Radio Sphere" className="w-10 h-10 rounded-xl mix-blend-screen animate-logo-glow" />
+          <img src={radioSphereLogo} alt="RadioSphere.be" className="w-10 h-10 rounded-xl mix-blend-screen animate-logo-glow" />
           <h1 className="text-2xl lg:text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent drop-shadow-[0_0_12px_hsla(250,80%,60%,0.4)]">{t("nav.about")}</h1>
         </div>
 
@@ -208,7 +208,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
                       data: btoa(unescape(encodeURIComponent(csv))),
                       directory: Directory.Cache,
                     });
-                    await Share.share({ title: "Radio Sphere Favorites", url: result.uri });
+                    await Share.share({ title: "RadioSphere.be Favorites", url: result.uri });
                   } catch {
                     toast({ title: `❌ ${t("favorites.importError")}`, variant: "destructive" });
                   }
@@ -405,7 +405,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
         <CollapsibleSection icon={ShieldCheck} title={t("settings.analytics") || "Mesure d'audience"}>
           <div>
             <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-              {t("settings.analyticsDesc") || "Radio Sphere utilise Umami Analytics, une solution de mesure d'audience respectueuse de la vie privée et conforme au RGPD."}
+              {t("settings.analyticsDesc") || "RadioSphere.be utilise Umami Analytics, une solution de mesure d'audience respectueuse de la vie privée et conforme au RGPD."}
             </p>
             <ul className="space-y-2 text-xs text-muted-foreground leading-relaxed">
               <li className="flex items-start gap-2">
@@ -486,7 +486,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
         {/* Copyright */}
         <div className="text-center mb-6 select-none space-y-1">
           <p className="text-[10px] text-muted-foreground">
-            © {new Date().getFullYear()} Radio Sphere — {t("footer.createdBy")}
+            © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy")}
           </p>
           <p className="text-[10px] text-muted-foreground">
             {t("footer.poweredByPrefix")}

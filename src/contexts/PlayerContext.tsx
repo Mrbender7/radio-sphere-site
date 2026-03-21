@@ -231,7 +231,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     const artworkUrl = station.logo ? station.logo.replace('http://', 'https://') : new URL('/android-chrome-512x512.png', window.location.origin).href;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: station.name,
-      artist: "Radio Sphere",
+      artist: "RadioSphere.be",
       album: station.country || "Live",
       artwork: [{ src: artworkUrl, sizes: '512x512', type: 'image/png' }],
     });

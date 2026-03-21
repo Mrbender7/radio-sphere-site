@@ -305,7 +305,7 @@ export function useCast() {
           mediaInfo.streamType = chr.cast.media.StreamType.LIVE;
           mediaInfo.metadata = new chr.cast.media.MusicTrackMediaMetadata();
           mediaInfo.metadata.title = station.name;
-          mediaInfo.metadata.artist = "Radio Sphere";
+          mediaInfo.metadata.artist = "RadioSphere.be";
 
           const logoUrl = station.logo
             ? station.logo.replace("http://", "https://")

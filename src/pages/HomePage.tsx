@@ -44,9 +44,9 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
       <div className="bg-background px-4 lg:px-8 pt-6 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 lg:hidden">
-            <img src={radioSphereLogo} alt="Radio Sphere — Radio gratuite sans pub" className="w-12 h-12 rounded-xl mix-blend-screen animate-logo-glow" />
+            <img src={radioSphereLogo} alt="RadioSphere.be — Radio gratuite sans pub" className="w-12 h-12 rounded-xl mix-blend-screen animate-logo-glow" />
             <h1 className="text-2xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap">
-              Radio Sphere
+              RadioSphere.be
               <span className="sr-only"> — Le lecteur radio gratuit sans publicité</span>
             </h1>
           </div>
@@ -140,7 +140,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
       <section className="mb-6 lg:hidden">
         <div className="rounded-2xl bg-gradient-to-br from-primary/15 to-[hsl(280,80%,60%,0.1)] border border-primary/10 p-6 text-center">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-[hsl(280,80%,60%)] flex items-center justify-center mx-auto mb-3 shadow-lg shadow-primary/30">
-            <img src={radioSphereLogo} alt="Radio Sphere" className="w-10 h-10 rounded-xl" />
+            <img src={radioSphereLogo} alt="RadioSphere.be" className="w-10 h-10 rounded-xl" />
           </div>
           <h3 className="text-base font-heading font-bold text-foreground mb-1">{t("home.androidTitle")}</h3>
           <p className="text-xs text-muted-foreground mb-4 max-w-[260px] mx-auto leading-relaxed">
