@@ -3,18 +3,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { FavoritesProvider, useFavoritesContext } from "@/contexts/FavoritesContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { StreamBufferProvider } from "@/contexts/StreamBufferContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-
-/** All tab routes render the same Index shell — it reads the URL to pick the active tab */
 
 function CoreProviders({ children }: { children: React.ReactNode }) {
   const { addRecent } = useFavoritesContext();
@@ -30,28 +28,22 @@ function CoreProviders({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <LanguageProvider>
-          <FavoritesProvider>
-            <CoreProviders>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/search" element={<Index />} />
-                  <Route path="/library" element={<Index />} />
-                  <Route path="/about" element={<Index />} />
-                  <Route path="/privacy" element={<Index />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </CoreProviders>
-          </FavoritesProvider>
-        </LanguageProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <LanguageProvider>
+            <FavoritesProvider>
+              <CoreProviders>
+                <Toaster />
+                <Sonner />
+                <Index />
+                <Outlet />
+              </CoreProviders>
+            </FavoritesProvider>
+          </LanguageProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   </ErrorBoundary>
 );
 
