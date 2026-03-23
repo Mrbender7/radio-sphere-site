@@ -13,16 +13,22 @@ import { SSLWarningDialog } from "@/components/SSLWarningDialog";
 
 // Global audio instance — survives React lifecycle, never destroyed by re-renders
 // Exported so StreamBufferContext can swap src for seek-back
-export const globalAudio = new Audio();
-(globalAudio as any).playsInline = true;
-globalAudio.preload = "auto";
+// Guarded for SSG: Audio is not available in Node
+const isBrowser = typeof window !== "undefined";
+export const globalAudio = isBrowser ? new Audio() : ({} as HTMLAudioElement);
+if (isBrowser) {
+  (globalAudio as any).playsInline = true;
+  globalAudio.preload = "auto";
+}
 
 // Silent 1-second WAV as base64 data URI (~1KB) — keeps Android WebView process alive
 const SILENCE_DATA_URI = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-const silentAudio = new Audio();
-silentAudio.loop = true;
-silentAudio.volume = 0.01;
-silentAudio.src = SILENCE_DATA_URI;
+const silentAudio = isBrowser ? new Audio() : ({} as HTMLAudioElement);
+if (isBrowser) {
+  silentAudio.loop = true;
+  silentAudio.volume = 0.01;
+  silentAudio.src = SILENCE_DATA_URI;
+}
 
 function startSilentLoop() {
   silentAudio.play().catch(() => {});

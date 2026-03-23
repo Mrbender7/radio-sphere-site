@@ -13,6 +13,11 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  ssgOptions: {
+    script: "async",
+    dirStyle: "nested",
+    mock: true,
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -67,5 +72,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  ssr: {
+    noExternal: ["react-helmet-async"],
   },
 }));

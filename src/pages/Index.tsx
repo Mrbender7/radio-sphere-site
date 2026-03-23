@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Head } from "vite-react-ssg";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
@@ -28,6 +29,8 @@ const ONBOARDING_KEY = "radiosphere_onboarded";
 
 function hasCompletedOnboarding(): boolean {
   try {
+    // During SSG build, skip welcome page to render real content for SEO
+    if (import.meta.env.SSR) return true;
     return localStorage.getItem(ONBOARDING_KEY) === "true";
   } catch {
     return false;
@@ -55,6 +58,30 @@ const TAB_TO_ROUTE: Record<TabId, string> = {
   about: "/about",
 };
 
+// SEO metadata per tab
+const PAGE_META: Record<string, { title: string; description: string }> = {
+  home: {
+    title: "RadioSphere.be — Radio gratuite sans pub | TimeBack Machine",
+    description: "Écoutez 50 000+ stations radio gratuites sans publicité. Découvrez la TimeBack Machine pour réécouter le direct. Streaming HD, Chromecast.",
+  },
+  search: {
+    title: "Rechercher des stations — RadioSphere.be",
+    description: "Recherchez parmi 50 000+ stations radio par genre, pays ou langue. Trouvez votre radio préférée sur RadioSphere.be.",
+  },
+  library: {
+    title: "Ma bibliothèque — RadioSphere.be",
+    description: "Retrouvez vos stations radio favorites et récemment écoutées. Gérez votre collection sur RadioSphere.be.",
+  },
+  about: {
+    title: "À propos — RadioSphere.be",
+    description: "Paramètres, langue, minuterie de sommeil et informations sur RadioSphere.be, votre lecteur radio gratuit sans publicité.",
+  },
+  privacy: {
+    title: "Politique de confidentialité — RadioSphere.be",
+    description: "Découvrez comment RadioSphere.be protège vos données. Aucun compte requis, données stockées localement uniquement.",
+  },
+};
+
 const Index = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -70,6 +97,9 @@ const Index = () => {
   const { favorites, toggleFavorite, isFavorite, recent } = useFavoritesContext();
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
   const { setLanguage } = useTranslation();
+
+  const currentMetaKey = showPrivacy ? "privacy" : activeTab;
+  const meta = PAGE_META[currentMetaKey] || PAGE_META.home;
 
   const handleTagClick = useCallback((tag: string) => {
     setSelectedGenre(tag);
@@ -150,6 +180,16 @@ const Index = () => {
 
   return (
     <SleepTimerProvider>
+        <Head>
+          <title>{meta.title}</title>
+          <meta name="description" content={meta.description} />
+          <link rel="canonical" href={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
+          <meta property="og:title" content={meta.title} />
+          <meta property="og:description" content={meta.description} />
+          <meta property="og:url" content={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
+          <meta name="twitter:title" content={meta.title} />
+          <meta name="twitter:description" content={meta.description} />
+        </Head>
         <SleepTimerIndicator />
         <div className="flex h-full bg-background">
           {/* Desktop sidebar */}
