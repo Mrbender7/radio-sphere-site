@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, Suspense, lazy } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { Head } from "vite-react-ssg";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
