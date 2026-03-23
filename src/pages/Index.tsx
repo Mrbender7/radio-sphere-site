@@ -187,6 +187,8 @@ const Index = () => {
           <meta property="og:title" content={meta.title} />
           <meta property="og:description" content={meta.description} />
           <meta property="og:url" content={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
+          <meta name="twitter:title" content={meta.title} />
+          <meta name="twitter:description" content={meta.description} />
         </Head>
         <SleepTimerIndicator />
         <div className="flex h-full bg-background">
