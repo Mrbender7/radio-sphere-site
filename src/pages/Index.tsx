@@ -29,7 +29,8 @@ const ONBOARDING_KEY = "radiosphere_onboarded";
 
 function hasCompletedOnboarding(): boolean {
   try {
-    if (typeof window === "undefined") return true; // SSG: skip welcome
+    // During SSG build, skip welcome page to render real content for SEO
+    if (import.meta.env.SSR) return true;
     return localStorage.getItem(ONBOARDING_KEY) === "true";
   } catch {
     return false;
