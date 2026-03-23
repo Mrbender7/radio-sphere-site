@@ -179,14 +179,14 @@ const Index = () => {
 
   return (
     <SleepTimerProvider>
-        <Helmet>
+        <Head>
           <title>{meta.title}</title>
           <meta name="description" content={meta.description} />
           <link rel="canonical" href={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
           <meta property="og:title" content={meta.title} />
           <meta property="og:description" content={meta.description} />
           <meta property="og:url" content={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
-        </Helmet>
+        </Head>
         <SleepTimerIndicator />
         <div className="flex h-full bg-background">
           {/* Desktop sidebar */}
