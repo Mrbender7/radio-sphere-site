@@ -301,7 +301,7 @@ const translations: Record<Language, Record<string, string>> = {
     "tbmQuota.continueLive": "Continuer en direct",
     "tbmQuota.warning": "Profitez de la TimeBack Machine en illimité sur notre application !",
     "home.androidTitle": "RadioSphere.be sur Android",
-    "home.androidDesc": "Écoutez vos stations préférées partout, avec Android Auto, Chromecast et le mode hors-ligne.",
+    "home.androidDesc": "Écoutez vos stations préférées partout, avec Android Auto, Chromecast et la TimeBack Machine.",
     "home.comingSoon": "Bientôt disponible",
     "notFound.message": "Oups ! Page introuvable",
     "notFound.backHome": "Retour à l'accueil",
