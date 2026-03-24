@@ -97,6 +97,21 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
 
       {/* Contact, Language & Copyright */}
       <div className="px-4 pb-6 pt-4 space-y-3">
+        {/* PodcastSphere promo */}
+        <a
+          href="https://podcast.radiosphere.be/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-accent/60 hover:bg-accent transition-colors group"
+        >
+          <img src={podcastLogo} alt="PodcastSphere" className="w-8 h-8 rounded-lg" loading="lazy" width={32} height={32} />
+          <div className="flex-1 min-w-0">
+            <span className="text-[11px] font-semibold text-foreground block">PodcastSphere</span>
+            <span className="text-[10px] text-muted-foreground">podcast.radiosphere.be</span>
+          </div>
+          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+        </a>
+
         <a
           href="mailto:info@radiosphere.be"
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs text-muted-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
