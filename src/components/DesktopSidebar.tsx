@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import type { TabId } from "@/components/BottomNav";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import tbmLogo from "@/assets/tbm-logo.png";
+import podcastLogo from "@/assets/podcastsphere-logo.png";
 
 const navItems = [
   { id: "home" as TabId, labelKey: "nav.home", icon: Home },
