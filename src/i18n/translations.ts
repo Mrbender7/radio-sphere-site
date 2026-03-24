@@ -607,7 +607,7 @@ const translations: Record<Language, Record<string, string>> = {
     "tbmQuota.continueLive": "Continue live",
     "tbmQuota.warning": "Enjoy unlimited TimeBack Machine on our app!",
     "home.androidTitle": "RadioSphere.be on Android",
-    "home.androidDesc": "Listen to your favorite stations anywhere, with Android Auto, Chromecast and offline mode.",
+    "home.androidDesc": "Listen to your favorite stations anywhere, with Android Auto, Chromecast and the TimeBack Machine.",
     "home.comingSoon": "Coming soon",
     "notFound.message": "Oops! Page not found",
     "notFound.backHome": "Return to Home",
