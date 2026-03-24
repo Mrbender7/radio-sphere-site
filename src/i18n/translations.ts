@@ -1244,6 +1244,7 @@ const translations: Record<Language, Record<string, string>> = {
     "sidebar.stationCount": "50,000以上のラジオ局、230以上の国、無料、登録不要。",
     "sidebar.tbmTeaser": "独自機能：TimeBack Machine — ライブラジオを巻き戻し、直近5分間を再生、MP3で番組を録音。時間を巻き戻せるオンラインラジオプレーヤー。",
     "sidebar.tbmHowItWorks": "どう使うの？",
+    "sidebar.podcastTeaser": "ポッドキャストはいかが？",
     "tbmModal.title": "TimeBack Machine — 使い方",
     "tbmModal.intro": "TimeBack MachineはRadioSphere.be独自の機能で、オンラインラジオの聴き方を革新します。大事なライブの瞬間を二度と見逃しません！",
     "tbmModal.bufferTitle": "🔄 スマートバッファ（5分間）",
