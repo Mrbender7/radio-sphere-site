@@ -20,6 +20,7 @@ const translations: Record<Language, Record<string, string>> = {
     "sidebar.stationCount": "Plus de 50 000 stations radio à travers 230+ pays, gratuitement, sans inscription.",
     "sidebar.tbmTeaser": "Notre exclusivité : la TimeBack Machine — rembobinez le direct radio, réécoutez les 5 dernières minutes, enregistrez vos émissions en MP3. Le lecteur radio en ligne qui vous permet de remonter le temps.",
     "sidebar.tbmHowItWorks": "Comment ça marche ?",
+    "sidebar.podcastTeaser": "Envie d'un podcast ?",
     "tbmModal.title": "TimeBack Machine — Comment ça marche ?",
     "tbmModal.intro": "La TimeBack Machine est une fonctionnalité exclusive de RadioSphere.be qui révolutionne l'écoute de la radio en ligne. Fini de rater un moment important en direct !",
     "tbmModal.bufferTitle": "🔄 Le buffer intelligent (5 minutes)",
