@@ -107,7 +107,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           <img src={podcastLogo} alt="PodcastSphere" className="w-9 h-9 rounded-lg" loading="lazy" width={36} height={36} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
-              <span className="text-sm font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">PodcastSphere</span>
+              <span className="text-base font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">PodcastSphere</span>
               <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
             </div>
             <span className="text-[10px] text-muted-foreground leading-tight block">podcast.radiosphere.be</span>
