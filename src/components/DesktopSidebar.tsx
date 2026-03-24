@@ -104,12 +104,15 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           rel="noopener noreferrer"
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-accent/60 hover:bg-accent transition-colors group"
         >
-          <img src={podcastLogo} alt="PodcastSphere" className="w-8 h-8 rounded-lg" loading="lazy" width={32} height={32} />
+          <img src={podcastLogo} alt="PodcastSphere" className="w-9 h-9 rounded-lg" loading="lazy" width={36} height={36} />
           <div className="flex-1 min-w-0">
-            <span className="text-[11px] font-semibold text-foreground block">PodcastSphere</span>
-            <span className="text-[10px] text-muted-foreground">podcast.radiosphere.be</span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">PodcastSphere</span>
+              <ExternalLink className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            </div>
+            <span className="text-[10px] text-muted-foreground leading-tight block">podcast.radiosphere.be</span>
+            <span className="text-[10px] text-muted-foreground/70 italic leading-tight block">{t("sidebar.podcastTeaser")}</span>
           </div>
-          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
         </a>
 
         <a
