@@ -66,7 +66,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
       {/* Collapse/Expand toggle — centered on right edge */}
       <button
         onClick={() => setCollapsed(c => !c)}
-        className="absolute top-1/2 -right-4 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-primary/10 border border-primary/30 shadow-lg shadow-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 hover:border-primary/50 hover:shadow-primary/20 transition-all duration-200"
+        className="absolute top-1/2 -right-5 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary/25 border border-primary/50 shadow-lg shadow-primary/15 flex items-center justify-center text-primary hover:bg-primary/35 hover:border-primary/60 hover:shadow-primary/25 transition-all duration-200"
         title={collapsed ? "Expand" : "Collapse"}
       >
         {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
