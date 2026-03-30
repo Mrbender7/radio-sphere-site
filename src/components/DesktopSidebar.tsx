@@ -33,6 +33,7 @@ interface DesktopSidebarProps {
 
 export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) {
   const { t, language, setLanguage } = useTranslation();
+  const currentLangOption = LANGUAGE_OPTIONS.find(o => o.value === language) ?? LANGUAGE_OPTIONS[0];
   const [tbmModalOpen, setTbmModalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => readBool(SIDEBAR_COLLAPSED_KEY, false));
   const [tbmDismissed, setTbmDismissed] = useState(() => readBool(TBM_TEASER_DISMISSED_KEY, false));
