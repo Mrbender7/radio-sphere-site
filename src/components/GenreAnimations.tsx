@@ -63,7 +63,7 @@ export function GenreAnimation({ genre }: GenreAnimationProps) {
     <img
       src={src}
       alt={genre}
-      className="absolute right-1 top-1/2 -translate-y-1/2 w-16 h-16 object-contain pointer-events-none drop-shadow-lg"
+      className="absolute right-1 top-1/2 -translate-y-1/2 w-16 h-16 object-contain pointer-events-none drop-shadow-lg transition-transform duration-500 ease-out group-hover:scale-125"
       loading="lazy"
     />
   );
