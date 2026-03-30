@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import type { TabId } from "@/components/BottomNav";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
