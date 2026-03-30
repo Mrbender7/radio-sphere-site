@@ -9,7 +9,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const SUPPORTED_LANGUAGES: Language[] = ["fr", "en", "es", "de", "ja", "it", "nl", "pt", "pl"];
+const SUPPORTED_LANGUAGES: Language[] = ["fr", "en", "es", "de", "ja", "it", "nl", "pt", "pl", "zh"];
 
 function detectInitialLanguage(): Language {
   try {
