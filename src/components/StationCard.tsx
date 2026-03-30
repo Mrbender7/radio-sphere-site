@@ -39,7 +39,7 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         onClick={() => play(station)}
         aria-label={`${playLabel} ${station.name}`}
         {...prefetchProps}
-        className="relative flex flex-col items-center w-full p-1 rounded-lg transition-colors group"
+        className="relative flex flex-col items-center w-full p-1 rounded-lg transition-all duration-300 ease-out group hover:scale-105 hover:drop-shadow-[0_4px_12px_hsl(var(--primary)/0.3)]"
       >
         <div className={cn("relative w-full aspect-square rounded-lg bg-accent overflow-hidden shadow-md", isActive && isPlaying && "animate-card-glow")}>
           <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur RadioSphere.be`} />
