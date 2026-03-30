@@ -2787,7 +2787,7 @@ const translations: Record<Language, Record<string, string>> = {
     "tbmModal.iconTitle": "💡 闪烁的TBM图标",
     "tbmModal.iconDesc": "当播放器中的TBM图标闪烁时，表示缓冲区正在活动并持续录制。点击它可打开TimeBack Machine，访问最近几分钟的收听内容。",
     "tbmModal.liveTitle": "📡 返回直播",
-    "tbmModal.liveDesc": "随时按下"直播"即可立即返回电台的实时流媒体。",
+    "tbmModal.liveDesc": "随时按下「直播」即可立即返回电台的实时流媒体。",
     "tbmModal.close": "知道了",
     "app.downloadTitle": "移动应用",
     "app.downloadDesc": "使用Android应用随时随地收听广播。",
