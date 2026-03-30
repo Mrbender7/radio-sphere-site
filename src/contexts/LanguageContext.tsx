@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import translations, { type Language } from "@/i18n/translations";
 
 interface LanguageContextType {
@@ -9,15 +9,16 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+const SUPPORTED_LANGUAGES: Language[] = ["fr", "en", "es", "de", "ja", "it", "nl"];
+
 function detectInitialLanguage(): Language {
   try {
     const stored = localStorage.getItem("radiosphere_language");
-    if (stored === "fr" || stored === "en" || stored === "es" || stored === "de" || stored === "ja") return stored;
+    if (stored && SUPPORTED_LANGUAGES.includes(stored as Language)) return stored as Language;
     const nav = navigator.language?.toLowerCase();
-    if (nav?.startsWith("fr")) return "fr";
-    if (nav?.startsWith("es")) return "es";
-    if (nav?.startsWith("de")) return "de";
-    if (nav?.startsWith("ja")) return "ja";
+    for (const lang of SUPPORTED_LANGUAGES) {
+      if (nav?.startsWith(lang)) return lang;
+    }
     return "en";
   } catch {
     return "en";
@@ -31,6 +32,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setLanguageState(lang);
     try { localStorage.setItem("radiosphere_language", lang); } catch {}
   }, []);
+
+  // Update <html lang> and <title> dynamically
+  useEffect(() => {
+    try {
+      document.documentElement.lang = language;
+    } catch {}
+  }, [language]);
 
   const t = useCallback((key: string): string => {
     return translations[language][key] ?? key;
