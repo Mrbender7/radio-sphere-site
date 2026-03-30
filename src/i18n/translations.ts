@@ -1,4 +1,4 @@
-export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pl" | "zh";
+export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pl" | "zh" | "tr" | "ru" | "id";
 
 export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string; label: string }[] = [
   { value: "fr", flag: "🇫🇷", flagUrl: "https://flagcdn.com/w40/fr.png", label: "Français" },
@@ -11,6 +11,9 @@ export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string;
   { value: "pl", flag: "🇵🇱", flagUrl: "https://flagcdn.com/w40/pl.png", label: "Polski" },
   { value: "zh", flag: "🇨🇳", flagUrl: "https://flagcdn.com/w40/cn.png", label: "中文" },
   { value: "ja", flag: "🇯🇵", flagUrl: "https://flagcdn.com/w40/jp.png", label: "日本語" },
+  { value: "tr", flag: "🇹🇷", flagUrl: "https://flagcdn.com/w40/tr.png", label: "Türkçe" },
+  { value: "ru", flag: "🇷🇺", flagUrl: "https://flagcdn.com/w40/ru.png", label: "Русский" },
+  { value: "id", flag: "🇮🇩", flagUrl: "https://flagcdn.com/w40/id.png", label: "Bahasa Indonesia" },
 ];
 
 const translations: Record<Language, Record<string, string>> = {
