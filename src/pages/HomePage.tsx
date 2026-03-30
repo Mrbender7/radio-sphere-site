@@ -200,7 +200,7 @@ const GENRE_COLORS: Record<string, string> = {
 function GenreCard({ genre, onClick, t }: { genre: string; onClick: () => void; t: (key: string) => string }) {
   return (
     <div
-      className={`rounded-xl p-4 h-20 flex items-end bg-gradient-to-br ${GENRE_COLORS[genre] || "from-gray-700 to-gray-500"} cursor-pointer active:scale-95 transition-all shadow-lg border-t border-white/10 relative overflow-hidden`}
+      className={`rounded-xl p-4 h-20 flex items-end bg-gradient-to-br ${GENRE_COLORS[genre] || "from-gray-700 to-gray-500"} cursor-pointer active:scale-95 hover:scale-105 hover:shadow-xl hover:shadow-primary/20 hover:brightness-110 transition-all duration-200 shadow-lg border-t border-white/10 relative overflow-hidden`}
       onClick={onClick}
     >
       <GenreAnimation genre={genre} />
