@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import type { TabId } from "@/components/BottomNav";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
@@ -32,6 +33,7 @@ interface DesktopSidebarProps {
 
 export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) {
   const { t, language, setLanguage } = useTranslation();
+  const currentLangOption = LANGUAGE_OPTIONS.find(o => o.value === language) ?? LANGUAGE_OPTIONS[0];
   const [tbmModalOpen, setTbmModalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => readBool(SIDEBAR_COLLAPSED_KEY, false));
   const [tbmDismissed, setTbmDismissed] = useState(() => readBool(TBM_TEASER_DISMISSED_KEY, false));
@@ -176,6 +178,50 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           </a>
         )}
 
+        {/* Language switcher */}
+        <Popover>
+          <PopoverTrigger asChild>
+            {!collapsed ? (
+              <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-accent/40 hover:bg-accent/70 transition-colors text-left">
+                <img
+                  src={currentLangOption?.flagUrl}
+                  alt={currentLangOption?.label}
+                  className="w-6 h-6 object-cover rounded-full flex-shrink-0 ring-1 ring-border/50"
+                />
+                <span className="text-xs font-medium text-foreground flex-1">{currentLangOption?.label}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+              </button>
+            ) : (
+              <button className="flex justify-center w-full py-1" title={currentLangOption?.label}>
+                <img
+                  src={currentLangOption?.flagUrl}
+                  alt={currentLangOption?.label}
+                  className="w-7 h-7 object-cover rounded-full ring-2 ring-primary/50"
+                />
+              </button>
+            )}
+          </PopoverTrigger>
+          <PopoverContent side="top" align="start" className="w-48 p-1.5 rounded-xl">
+            <div className="space-y-0.5">
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setLanguage(opt.value)}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs transition-colors",
+                    language === opt.value
+                      ? "bg-primary/15 text-primary font-medium"
+                      : "text-foreground hover:bg-accent"
+                  )}
+                >
+                  <img src={opt.flagUrl} alt={opt.label} className="w-5 h-5 object-cover rounded-full" />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         {!collapsed && (
           <>
             <a
@@ -194,23 +240,6 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
               <ShieldCheck className="w-3.5 h-3.5" />
               {t("settings.privacyPolicy")}
             </a>
-            <div className="flex items-center gap-2 px-4">
-              {LANGUAGE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setLanguage(opt.value)}
-                  className={cn(
-                    "transition-all rounded-full overflow-hidden",
-                    language === opt.value
-                      ? "ring-2 ring-primary scale-110"
-                      : "opacity-50 hover:opacity-100 hover:scale-105 grayscale hover:grayscale-0"
-                  )}
-                  title={opt.label}
-                >
-                  <img src={opt.flagUrl} alt={opt.label} className="w-6 h-6 object-cover rounded-full" />
-                </button>
-              ))}
-            </div>
             <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
               © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy")}
             </p>
