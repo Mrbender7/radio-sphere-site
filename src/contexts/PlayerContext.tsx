@@ -414,6 +414,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
           if (isPlayingRef.current && !recentPause) {
             audio.play().catch(() => {});
             startSilentLoop();
+            startHeartbeat();
             requestWakeLock();
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
           }
