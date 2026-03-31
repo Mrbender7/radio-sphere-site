@@ -626,9 +626,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       setState(s => ({ ...s, isPlaying: false }));
       updateMediaSession(state.currentStation, false);
     } else {
+      retryCountRef.current = 0;
+      streamDeadRef.current = false;
       audio.play().then(() => {
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-        retryCountRef.current = 0;
         isPlayingRef.current = true;
         setState(s => ({ ...s, isPlaying: true }));
         startSilentLoop();
@@ -639,6 +640,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       }).catch(() => {
         console.log("[RadioSphere] togglePlay: play() failed, reloading stream");
         retryCountRef.current = 0;
+        streamDeadRef.current = false;
         reloadStream();
       });
     }
