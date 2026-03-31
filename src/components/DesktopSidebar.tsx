@@ -241,7 +241,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
               {t("settings.privacyPolicy")}
             </a>
             <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
-              © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy")}
+              © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy").split("Franck Malherbe")[0]}<a href="https://franckmalherbe.be" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Franck Malherbe</a>{t("footer.createdBy").split("Franck Malherbe")[1]}
             </p>
             <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
               {t("footer.poweredByPrefix")}
