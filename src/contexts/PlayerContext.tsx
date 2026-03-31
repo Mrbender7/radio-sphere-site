@@ -502,6 +502,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
 
       retryCountRef.current = 0;
+      streamDeadRef.current = false;
       isPlayingRef.current = false;
       setState(s => ({ ...s, currentStation: station, isBuffering: true, isPlaying: false }));
       const secureLogo = station.logo?.replace('http://', 'https://');
