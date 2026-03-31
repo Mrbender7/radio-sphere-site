@@ -486,7 +486,7 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
         {/* Copyright */}
         <div className="text-center mb-6 select-none space-y-1">
           <p className="text-[10px] text-muted-foreground">
-            © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy")}
+            © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy").split("Franck Malherbe")[0]}<a href="https://franckmalherbe.be" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Franck Malherbe</a>{t("footer.createdBy").split("Franck Malherbe")[1]}
           </p>
           <p className="text-[10px] text-muted-foreground">
             {t("footer.poweredByPrefix")}
