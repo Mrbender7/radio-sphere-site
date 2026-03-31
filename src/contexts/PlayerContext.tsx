@@ -85,6 +85,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pausedAtRef = useRef<number>(0);
   const currentStationRef = useRef<RadioStation | null>(null);
+  const streamDeadRef = useRef(false);
   const reloadStreamRef = useRef<() => void>(() => {});
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
@@ -367,7 +368,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         return;
       }
 
-      setState(s => ({ ...s, isPlaying: false }));
+      streamDeadRef.current = true;
+      console.error("[RadioSphere] Stream marked as dead (error event)");
+      isPlayingRef.current = false;
+      setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
       stopSilentLoop();
       stopHeartbeat();
       notifyNativePlaybackState(null, false);
@@ -410,6 +414,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
           if (isPlayingRef.current && !recentPause) {
             audio.play().catch(() => {});
             startSilentLoop();
+            startHeartbeat();
             requestWakeLock();
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
           }
@@ -497,6 +502,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
 
       retryCountRef.current = 0;
+      streamDeadRef.current = false;
       isPlayingRef.current = false;
       setState(s => ({ ...s, currentStation: station, isBuffering: true, isPlaying: false }));
       const secureLogo = station.logo?.replace('http://', 'https://');
@@ -620,9 +626,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       setState(s => ({ ...s, isPlaying: false }));
       updateMediaSession(state.currentStation, false);
     } else {
+      retryCountRef.current = 0;
+      streamDeadRef.current = false;
       audio.play().then(() => {
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-        retryCountRef.current = 0;
         isPlayingRef.current = true;
         setState(s => ({ ...s, isPlaying: true }));
         startSilentLoop();
@@ -633,6 +640,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       }).catch(() => {
         console.log("[RadioSphere] togglePlay: play() failed, reloading stream");
         retryCountRef.current = 0;
+        streamDeadRef.current = false;
         reloadStream();
       });
     }
