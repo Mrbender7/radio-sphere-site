@@ -368,7 +368,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         return;
       }
 
-      setState(s => ({ ...s, isPlaying: false }));
+      streamDeadRef.current = true;
+      console.error("[RadioSphere] Stream marked as dead (error event)");
+      isPlayingRef.current = false;
+      setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
       stopSilentLoop();
       stopHeartbeat();
       notifyNativePlaybackState(null, false);
