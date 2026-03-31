@@ -3674,7 +3674,7 @@ const translations: Record<Language, Record<string, string>> = {
     "notFound.backHome": "Вернуться на главную",
     "footer.poweredByPrefix": "Работает на основе ",
     "footer.poweredBySuffix": ". Спасибо Алексу Сеглеру за этот общественный проект.",
-    "footer.createdBy": "Создано Франком Мальерб",
+    "footer.createdBy": "Создано Franck Malherbe",
     "aria.play": "Воспроизвести",
     "aria.pause": "Пауза",
     "aria.addFavorite": "Добавить в избранное",
