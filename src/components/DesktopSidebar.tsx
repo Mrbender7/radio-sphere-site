@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
