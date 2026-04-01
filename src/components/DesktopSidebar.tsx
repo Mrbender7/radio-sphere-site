@@ -11,6 +11,7 @@ import type { TabId } from "@/components/BottomNav";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import tbmLogo from "@/assets/tbm-logo.png";
 import podcastLogo from "@/assets/podcastsphere-logo.png";
+import googlePlayIcon from "@/assets/google-play-icon.png";
 
 const navItems = [
   { id: "home" as TabId, labelKey: "nav.home", icon: Home },
@@ -191,7 +192,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             <img
               src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
               alt="Get it on Google Play"
-              className="h-11"
+              className="h-14"
             />
           </a>
         ) : (
@@ -203,9 +204,12 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             title="Google Play"
           >
             <img
-              src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+              src={googlePlayIcon}
               alt="Google Play"
               className="w-8 h-8 object-contain"
+              loading="lazy"
+              width={32}
+              height={32}
             />
           </a>
         )}
