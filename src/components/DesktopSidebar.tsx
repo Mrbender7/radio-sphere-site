@@ -211,7 +211,6 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
               width={32}
               height={32}
             />
-            />
           </a>
         )}
 
