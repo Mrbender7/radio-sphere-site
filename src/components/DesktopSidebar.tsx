@@ -179,20 +179,36 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         )}
 
         {/* Google Play badge */}
-        <a
-          href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-umami-event="google-play-sidebar"
-          className={cn("block hover:opacity-90 transition-opacity", collapsed ? "flex justify-center" : "px-1")}
-          title="Google Play"
-        >
-          <img
-            src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-            alt="Get it on Google Play"
-            className={cn(collapsed ? "h-6" : "h-9")}
-          />
-        </a>
+        {!collapsed ? (
+          <a
+            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-umami-event="google-play-sidebar"
+            className="block hover:opacity-90 transition-opacity px-1"
+            title="Google Play"
+          >
+            <img
+              src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+              alt="Get it on Google Play"
+              className="h-11"
+            />
+          </a>
+        ) : (
+          <a
+            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex justify-center"
+            title="Google Play"
+          >
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+              alt="Google Play"
+              className="w-8 h-8 object-contain"
+            />
+          </a>
+        )}
 
         {/* Language switcher */}
         <Popover>
