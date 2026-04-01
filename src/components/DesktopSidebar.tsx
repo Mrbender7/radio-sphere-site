@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Compass, Heart, Info, Mail, ShieldCheck, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
@@ -259,31 +259,13 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         </Popover>
 
         {!collapsed && (
-          <>
-            <a
-              href="mailto:info@radiosphere.be"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs text-muted-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
-            >
-              <Mail className="w-4 h-4" />
-              info@radiosphere.be
-            </a>
-            <a
-              href="https://radiosphere.be/privacy-policy.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] text-muted-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {t("settings.privacyPolicy")}
-            </a>
-            <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
-              © {new Date().getFullYear()} RadioSphere.be — {t("footer.createdBy").split("Franck Malherbe")[0]}<a href="https://franckmalherbe.be" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Franck Malherbe</a>{t("footer.createdBy").split("Franck Malherbe")[1]}
-            </p>
-            <p className="px-4 text-[10px] text-muted-foreground leading-relaxed">
-              {t("footer.poweredByPrefix")}
-              <a href="https://www.radio-browser.info/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Radio Browser</a>{t("footer.poweredBySuffix")}
-            </p>
-          </>
+          <a
+            href="mailto:info@radiosphere.be"
+            className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
+          >
+            <Mail className="w-4 h-4" />
+            info@radiosphere.be
+          </a>
         )}
       </div>
     </aside>
