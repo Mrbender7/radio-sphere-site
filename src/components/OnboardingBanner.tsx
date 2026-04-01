@@ -62,13 +62,19 @@ export function OnboardingBanner() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            disabled
+          <a
+            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+            target="_blank"
+            rel="noopener noreferrer"
             data-umami-event="google-play-clicked"
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] text-primary-foreground text-xs font-bold opacity-70 cursor-default shadow-lg shadow-primary/25"
+            className="inline-block hover:opacity-90 transition-opacity"
           >
-            {t("onboarding.cta")}
-          </button>
+            <img
+              src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+              alt="Get it on Google Play"
+              className="h-10"
+            />
+          </a>
           <button
             onClick={dismiss}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
