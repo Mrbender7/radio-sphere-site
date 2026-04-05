@@ -1,4 +1,4 @@
-# 🌍 Radio Sphere
+# 🌍 RadioSphere.be
 
 > **The ultimate gateway to global radio waves.**
 
