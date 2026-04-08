@@ -185,6 +185,38 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy }: Ab
           </div>
         </CollapsibleSection>
 
+        {/* TimeBack Machine */}
+        <CollapsibleSection icon={RotateCcw} title="TimeBack Machine">
+          <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">
+            <p>{t("tbmModal.intro")}</p>
+            <div className="space-y-2">
+              <p className="font-semibold text-foreground">{t("tbmModal.bufferTitle")}</p>
+              <p>{t("tbmModal.bufferDesc")}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="font-semibold text-foreground">{t("tbmModal.rewindTitle")}</p>
+              <p>{t("tbmModal.rewindDesc")}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="font-semibold text-foreground">{t("tbmModal.recordTitle")}</p>
+              <p>{t("tbmModal.recordDesc")}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="font-semibold text-foreground">{t("tbmModal.iconTitle")}</p>
+              <p>{t("tbmModal.iconDesc")}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="font-semibold text-foreground">{t("tbmModal.liveTitle")}</p>
+              <p>{t("tbmModal.liveDesc")}</p>
+            </div>
+            {/* Mobile quota info */}
+            <div className="mt-3 p-3 rounded-lg border border-border bg-accent/30">
+              <p className="font-semibold text-foreground text-xs mb-1">📱 {t("tbmQuota.title")}</p>
+              <p className="text-xs">{t("tbmQuota.description")}</p>
+            </div>
+          </div>
+        </CollapsibleSection>
+
         {/* Favorites management */}
         <CollapsibleSection icon={Heart} title={t("favorites.manage")}>
           <div className="space-y-2">
