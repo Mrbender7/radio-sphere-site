@@ -101,7 +101,13 @@ export function UserGuideModal({ onReopenWelcome }: UserGuideModalProps) {
                       )}
                     </div>
                   )}
-                  {!isPermissions && (
+                  {id === "recorder" && isOpen && (
+                    <div className="mx-3.5 mb-3 p-2.5 rounded-lg border border-border bg-accent/30">
+                      <p className="font-semibold text-foreground text-[11px] mb-1">📱 {t("tbmQuota.title")}</p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">{t("tbmQuota.description")}</p>
+                    </div>
+                  )}
+                  {!isPermissions && id !== "recorder" && (
                     <div className="pb-1.5" />
                   )}
                 </div>
