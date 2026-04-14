@@ -1,1 +1,409 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InsuDose Pro – Politique de Confidentialité / Privacy Policy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
 
+  :root {
+    --blue: #1a3a5c;
+    --blue-mid: #2563a8;
+    --blue-light: #e8f0fb;
+    --accent: #e74c3c;
+    --accent-light: #fdf0ef;
+    --gold: #c8a84b;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: rgba(221, 229, 240, 0.5);
+    --white: #ffffff;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: linear-gradient(135deg, #f4f7fb 0%, #e8f0fb 100%);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--blue);
+    color: white;
+    padding: 48px 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .logo-img {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    object-fit: contain;
+    background: var(--white);
+    padding: 2px;
+  }
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    letter-spacing: 0.02em;
+  }
+  .logo-text span { color: var(--gold); }
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .header-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* LANG TABS */
+  .lang-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 2px solid var(--border);
+    padding: 0 40px;
+  }
+  .lang-tab {
+    padding: 16px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    color: var(--muted);
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .lang-tab.active {
+    color: var(--blue-mid);
+    border-bottom-color: var(--blue-mid);
+  }
+  .lang-tab:hover:not(.active) {
+    color: var(--text);
+  }
+
+  /* CONTAINER */
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* GLASS CARD STYLING (Inspired by React code) */
+  .section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: var(--glass-shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .section-num {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    color: white;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--blue);
+  }
+  .section-body {
+    padding: 24px;
+    font-size: 15px;
+    line-height: 1.75;
+    color: #374151;
+  }
+  .section-body ul {
+    padding-left: 20px;
+    margin-top: 12px;
+  }
+  .section-body li {
+    margin-bottom: 10px;
+  }
+  .section-body strong {
+    color: var(--text);
+  }
+
+  /* CONTACT BOX */
+  .contact-box {
+    background: var(--blue);
+    color: white;
+    border-radius: 16px;
+    padding: 30px 28px;
+    margin-top: 40px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(26, 58, 92, 0.2);
+  }
+  .contact-box h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin-bottom: 10px;
+  }
+  .contact-box p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 0;
+  }
+  .contact-box a {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .contact-box a:hover {
+    text-decoration: underline;
+  }
+
+  /* VERSION NOTE */
+  .version-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 32px;
+    letter-spacing: 0.03em;
+  }
+
+  /* LANG PANELS */
+  .lang-panel { display: none; animation: fadeIn 0.3s ease-in-out; }
+  .lang-panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    .header { padding: 32px 20px 28px; }
+    .lang-tabs { padding: 0 16px; }
+    .container { padding: 24px 16px 60px; }
+    .section-body { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-row">
+    <img src="/logo_insudose.png" alt="Insudose Pro" class="logo-img" onerror="this.style.display='none'">
+    <div class="logo-text">Insu<span>Dose</span> Pro</div>
+  </div>
+  <h1>Politique de Confidentialité<br><em style="font-style:italic;opacity:0.7;font-size:0.75em">Privacy Policy</em></h1>
+  <div class="header-sub">Version 1.0 — Avril 2026</div>
+</div>
+
+<div class="lang-tabs">
+  <div class="lang-tab active" onclick="switchLang('fr')">🇫🇷 Français</div>
+  <div class="lang-tab" onclick="switchLang('en')">🇬🇧 English</div>
+</div>
+
+<div class="lang-panel active" id="panel-fr">
+<div class="container">
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">Principe fondamental : Le 100% Local</div>
+    </div>
+    <div class="section-body">
+      La sécurité de vos données de santé est la priorité absolue d'InsuDose Pro. 
+      L'application a été conçue sur un modèle <strong>"hors ligne par défaut"</strong>.
+      <ul>
+        <li><strong>Aucun serveur cloud :</strong> InsuDose Pro ne possède pas de base de données externe.</li>
+        <li><strong>Stockage local :</strong> Toutes vos données (glycémie, doses, historiques, paramètres FSI et ratios) sont enregistrées de manière sécurisée <strong>uniquement sur votre appareil</strong> (smartphone ou tablette).</li>
+        <li><strong>Pas de création de compte :</strong> L'utilisation de l'application ne requiert aucune adresse e-mail, aucun nom et aucune identification préalable.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-title">Utilisation de l'Appareil Photo et Intelligence Artificielle</div>
+    </div>
+    <div class="section-body">
+      L'application demande l'accès à votre appareil photo uniquement pour la fonctionnalité d'estimation des glucides des repas.
+      <ul>
+        <li><strong>Traitement éphémère :</strong> Lorsque vous prenez une photo de votre repas, l'image est envoyée de manière sécurisée et cryptée à un service d'Intelligence Artificielle tiers pour analyse.</li>
+        <li><strong>Aucune conservation :</strong> La photo n'est pas sauvegardée sur nos serveurs (puisque nous n'en avons pas), et le service d'IA est configuré pour <strong>ne pas conserver, ni utiliser vos images</strong> pour entraîner ses modèles.</li>
+        <li>L'accès à l'appareil photo est strictement limité à cette fonctionnalité et nécessite votre action manuelle.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-title">Partage et Vente de Données</div>
+    </div>
+    <div class="section-body">
+      La règle est simple : <strong>Nous ne vendons, ne louons et ne partageons aucune de vos données personnelles ou médicales.</strong>
+      <br><br>
+      Étant donné que les données ne quittent jamais votre téléphone (à l'exception de la requête temporaire pour la photo du repas), il nous est techniquement impossible d'y accéder ou de les monétiser.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-title">Vos Droits et le Contrôle de vos Données</div>
+    </div>
+    <div class="section-body">
+      Vous gardez le contrôle total sur vos informations :
+      <ul>
+        <li><strong>Exportation :</strong> Vous pouvez exporter votre historique localement (ex: format CSV/PDF) pour le partager avec votre équipe médicale. Vous gérez cet export manuellement.</li>
+        <li><strong>Suppression :</strong> Vous pouvez à tout moment effacer l'intégralité de votre historique depuis les paramètres de l'application. Désinstaller l'application supprimera également de manière irréversible toutes les données qui y sont liées.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="contact-box">
+    <h3>Une question sur vos données ?</h3>
+    <p>Vous pouvez contacter le développeur à tout moment via l'adresse :<br>
+    <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a></p>
+  </div>
+
+  <div class="version-note">
+    InsuDose Pro v2 — Politique de Confidentialité v1.0 — Avril 2026<br>
+    Développé par Franck Malherbe — Belgique
+  </div>
+
+</div>
+</div>
+
+<div class="lang-panel" id="panel-en">
+<div class="container">
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">Core Principle: 100% Local Storage</div>
+    </div>
+    <div class="section-body">
+      The security of your health data is the absolute priority of InsuDose Pro. 
+      The application was built on an <strong>"offline by default"</strong> model.
+      <ul>
+        <li><strong>No cloud servers:</strong> InsuDose Pro does not use any external databases.</li>
+        <li><strong>Local storage:</strong> All your data (blood glucose, doses, history, ISF, and ratios) is securely saved <strong>only on your device</strong> (smartphone or tablet).</li>
+        <li><strong>No account required:</strong> Using the app requires no email address, no name, and no prior registration.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-title">Camera Usage and Artificial Intelligence</div>
+    </div>
+    <div class="section-body">
+      The app requests access to your camera solely for the meal carbohydrate estimation feature.
+      <ul>
+        <li><strong>Ephemeral processing:</strong> When you take a picture of your meal, the image is securely and entirely encrypted before being sent to a third-party AI service for analysis.</li>
+        <li><strong>No retention:</strong> The photo is not saved on our servers (since we don't have any), and the AI service is configured to <strong>not store or use your images</strong> to train its models.</li>
+        <li>Camera access is strictly limited to this specific feature and requires your manual action.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-title">Data Sharing and Sales</div>
+    </div>
+    <div class="section-body">
+      The rule is simple: <strong>We do not sell, rent, or share any of your personal or medical data.</strong>
+      <br><br>
+      Since your data never leaves your phone (except for the temporary meal photo request), it is technically impossible for us to access or monetize it.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-title">Your Rights and Data Control</div>
+    </div>
+    <div class="section-body">
+      You retain full control over your information:
+      <ul>
+        <li><strong>Export:</strong> You can export your history locally (e.g., CSV/PDF format) to share with your medical team. You manage this export manually.</li>
+        <li><strong>Deletion:</strong> You can erase your entire history at any time from the app settings. Uninstalling the app will also irreversibly delete all associated data.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="contact-box">
+    <h3>Questions about your data?</h3>
+    <p>You can contact the developer at any time via email:<br>
+    <a href="mailto:peak.beryl8090@eagereverest.com">peak.beryl8090@eagereverest.com</a></p>
+  </div>
+
+  <div class="version-note">
+    InsuDose Pro v2 — Privacy Policy v1.0 — April 2026<br>
+    Developed by Franck Malherbe — Belgium
+  </div>
+
+</div>
+</div>
+
+<script>
+function switchLang(lang) {
+  document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[onclick="switchLang('${lang}')"]`).classList.add('active');
+  document.getElementById(`panel-${lang}`).classList.add('active');
+}
+</script>
+
+</body>
+</html>
