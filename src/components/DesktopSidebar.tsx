@@ -101,7 +101,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             <img
               src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
               alt="Get it on Google Play"
-              className="h-[3.25rem]"
+              className="h-[4.5rem]"
             />
           </a>
         )}
