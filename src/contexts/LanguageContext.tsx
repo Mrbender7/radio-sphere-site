@@ -11,7 +11,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const SUPPORTED_LANGUAGES: Language[] = ["fr", "en", "es", "de", "ja", "it", "nl", "pt", "pl", "zh", "tr", "ru", "id"];
 
-function detectInitialLanguage(): Language {
+export function detectInitialLanguage(): Language {
   try {
     const stored = localStorage.getItem("radiosphere_language");
     if (stored && SUPPORTED_LANGUAGES.includes(stored as Language)) return stored as Language;
