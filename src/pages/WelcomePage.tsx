@@ -43,9 +43,24 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
       <h1 className="text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent mb-2 drop-shadow-[0_0_16px_hsla(250,80%,60%,0.4)]">
         RadioSphere.be
       </h1>
-      <p className="text-sm text-muted-foreground mb-8">
+      <p className="text-sm text-muted-foreground mb-4">
         {t("welcome.subtitle")}
       </p>
+
+      {/* Google Play badge — prominent */}
+      <a
+        href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-umami-event="google-play-welcome"
+        className="block hover:opacity-90 transition-opacity mb-8"
+      >
+        <img
+          src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+          alt="Get it on Google Play"
+          className="h-16 mx-auto drop-shadow-lg"
+        />
+      </a>
 
       {/* Features grid */}
       <div className="grid grid-cols-2 gap-3 w-full max-w-xs mb-10">

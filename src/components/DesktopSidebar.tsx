@@ -76,16 +76,34 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
       </button>
 
       {/* Logo */}
-      <div className={cn("flex items-center gap-3 pt-8 pb-6", collapsed ? "px-3 justify-center" : "px-6")}>
-        <img
-          src={radioSphereLogo}
-          alt="RadioSphere.be"
-          className={cn("rounded-xl mix-blend-screen animate-logo-glow flex-shrink-0 object-contain", collapsed ? "w-10 h-auto" : "w-11 h-11")}
-        />
+      <div className={cn("flex flex-col pt-8 pb-4", collapsed ? "px-3 items-center" : "px-6")}>
+        <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "")}>
+          <img
+            src={radioSphereLogo}
+            alt="RadioSphere.be"
+            className={cn("rounded-xl mix-blend-screen animate-logo-glow flex-shrink-0 object-contain", collapsed ? "w-10 h-auto" : "w-11 h-11")}
+          />
+          {!collapsed && (
+            <h1 className="text-xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
+              RadioSphere.be
+            </h1>
+          )}
+        </div>
         {!collapsed && (
-          <h1 className="text-xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
-            RadioSphere.be
-          </h1>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-umami-event="google-play-sidebar"
+            className="block hover:opacity-90 transition-opacity mt-3 -ml-1"
+            title="Google Play"
+          >
+            <img
+              src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+              alt="Get it on Google Play"
+              className="h-[3.25rem]"
+            />
+          </a>
         )}
       </div>
 
@@ -179,23 +197,8 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           </a>
         )}
 
-        {/* Google Play badge */}
-        {!collapsed ? (
-          <a
-            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
-            target="_blank"
-            rel="noopener noreferrer"
-            data-umami-event="google-play-sidebar"
-            className="block hover:opacity-90 transition-opacity px-1"
-            title="Google Play"
-          >
-            <img
-              src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-              alt="Get it on Google Play"
-              className="h-14"
-            />
-          </a>
-        ) : (
+        {/* Google Play badge (collapsed only — expanded version is under logo) */}
+        {collapsed && (
           <a
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
             target="_blank"
