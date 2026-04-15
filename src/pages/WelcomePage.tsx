@@ -2,6 +2,7 @@ import { useState } from "react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { Globe, Radio, Heart, Search, Music, ChevronRight, ShieldCheck } from "lucide-react";
 import type { Language } from "@/i18n/translations";
+import { detectInitialLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import translations from "@/i18n/translations";
 import {
@@ -20,7 +21,7 @@ const FEATURE_ICONS = [Radio, Search, Heart, Music] as const;
 const FEATURE_KEYS = ["welcome.stations", "welcome.search", "welcome.favExport", "welcome.genres"] as const;
 
 export function WelcomePage({ onComplete }: WelcomePageProps) {
-  const [selectedLang, setSelectedLang] = useState<Language>("fr");
+  const [selectedLang, setSelectedLang] = useState<Language>(detectInitialLanguage);
   const t = (key: string) => translations[selectedLang][key] ?? key;
 
   const handleContinue = () => {
