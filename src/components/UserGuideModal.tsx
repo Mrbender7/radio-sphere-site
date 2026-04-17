@@ -4,6 +4,7 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { BookOpen, Home, Search, Heart, Settings, ChevronDown, Moon, Cast, ShieldAlert, RefreshCw, Disc } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { requestAllPermissions } from "@/utils/permissions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SECTIONS = [
   { id: "home", icon: Home, titleKey: "guide.home", contentKey: "guide.homeContent" },
@@ -22,6 +23,7 @@ interface UserGuideModalProps {
 
 export function UserGuideModal({ onReopenWelcome }: UserGuideModalProps) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
 
@@ -51,6 +53,9 @@ export function UserGuideModal({ onReopenWelcome }: UserGuideModalProps) {
         {SECTIONS.map(({ id, icon: Icon, titleKey, contentKey }) => {
             const isOpen = openSection === id;
             const isPermissions = id === "permissions";
+            const resolvedContentKey = isPermissions
+              ? (isMobile ? "guide.permissionsContentMobile" : "guide.permissionsContentDesktop")
+              : contentKey;
             return (
               <div key={id} className="rounded-xl bg-accent overflow-hidden">
                 <button
@@ -74,9 +79,9 @@ export function UserGuideModal({ onReopenWelcome }: UserGuideModalProps) {
                   )}
                 >
                   <p className="text-xs text-muted-foreground leading-relaxed px-3.5 pb-2">
-                    {t(contentKey)}
+                    {t(resolvedContentKey)}
                   </p>
-                  {isPermissions && isOpen && (
+                  {isPermissions && isOpen && isMobile && (
                     <div className="flex flex-col gap-2 px-3.5 pb-3.5">
                       <button
                         onClick={handleReRequestPermissions}
