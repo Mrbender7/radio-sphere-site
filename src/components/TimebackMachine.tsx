@@ -226,7 +226,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
             disabled={totalBuffer < 2}
             className="transport-btn w-12 h-12 rounded-lg bg-gradient-to-b from-[hsl(0,0%,22%)] to-[hsl(0,0%,14%)] border border-[hsl(0,0%,28%)] flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all disabled:opacity-30"
           >
-            <Rewind className="w-5 h-5 text-foreground" />
+            <Rewind className="w-5 h-5 text-foreground rtl-flip" />
           </button>
 
           {/* Play/Pause */}
@@ -267,7 +267,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
             disabled={isLive}
             className="transport-btn w-12 h-12 rounded-lg bg-gradient-to-b from-[hsl(0,0%,22%)] to-[hsl(0,0%,14%)] border border-[hsl(0,0%,28%)] flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] active:translate-y-0.5 transition-all disabled:opacity-30"
           >
-            <FastForward className="w-5 h-5 text-foreground" />
+            <FastForward className="w-5 h-5 text-foreground rtl-flip" />
           </button>
         </div>
 
