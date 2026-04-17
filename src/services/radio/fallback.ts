@@ -53,7 +53,26 @@ async function loadFallbackData(): Promise<RadioStation[]> {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const raw: any[] = await res.json();
+      // Validate content-type to avoid JSON.parse crashes when in-app browsers
+      // (Facebook, Instagram, captive portals, etc.) return HTML interstitials.
+      const contentType = res.headers.get("content-type") || "";
+      let raw: any[];
+      if (!contentType.includes("application/json") && !contentType.includes("text/json")) {
+        const text = await res.text();
+        if (text.trim().startsWith("<!") || text.includes("<html")) {
+          throw new Error(`[RadioService] HTML response from fallback URL (likely WebView interstitial)`);
+        }
+        try {
+          raw = JSON.parse(text);
+        } catch {
+          throw new Error(`[RadioService] Unexpected fallback format: ${contentType}`);
+        }
+      } else {
+        raw = await res.json();
+      }
+      if (!Array.isArray(raw)) {
+        throw new Error(`[RadioService] Fallback expected array, got ${typeof raw}`);
+      }
       const stations = raw
         .map(normalizeStation)
         .filter((s) => s.streamUrl && s.name);
