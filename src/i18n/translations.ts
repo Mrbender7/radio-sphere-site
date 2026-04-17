@@ -305,7 +305,7 @@ const translations: Record<Language, Record<string, string>> = {
     "onboarding.cta": "Bientôt disponible sur Google Play",
     "onboarding.dismiss": "Ne plus afficher",
     "tbmQuota.title": "Envie de remonter le temps sans limite ?",
-    "tbmQuota.description": "Sur le web, la TimeBack Machine est limitée : rembobinage jusqu'à 2 minutes en arrière et enregistrement jusqu'à 5 minutes maximum, avec un quota global de 10 min/jour sur mobile pour garantir la stabilité. La version premium gratuite disponible sur Google Play permet de remonter jusqu'à 5 minutes en arrière et d'enregistrer jusqu'à 30 minutes, sans quota.",
+    "tbmQuota.description": "Sur le web, la TimeBack Machine est limitée : rembobinage jusqu'à 2 minutes en arrière et enregistrement jusqu'à 5 minutes maximum, avec un quota global de 10 min/jour sur mobile pour garantir la stabilité. La version premium disponible sur Google Play permet de remonter jusqu'à 5 minutes en arrière et d'enregistrer jusqu'à 30 minutes, sans quota.",
     "tbmQuota.cta": "Télécharger sur Google Play",
     "tbmQuota.continueLive": "Continuer en direct",
     "tbmQuota.warning": "Profitez de la TimeBack Machine en illimité sur notre application !",
