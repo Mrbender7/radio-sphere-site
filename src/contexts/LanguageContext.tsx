@@ -9,7 +9,9 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const SUPPORTED_LANGUAGES: Language[] = ["fr", "en", "es", "de", "ja", "it", "nl", "pt", "pl", "zh", "tr", "ru", "id"];
+const SUPPORTED_LANGUAGES: Language[] = ["fr", "en", "es", "de", "ja", "it", "nl", "pt", "pl", "zh", "tr", "ru", "id", "ar"];
+
+const RTL_LANGUAGES: Language[] = ["ar"];
 
 export function detectInitialLanguage(): Language {
   try {
@@ -33,10 +35,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem("radiosphere_language", lang); } catch {}
   }, []);
 
-  // Update <html lang> and <title> dynamically
+  // Update <html lang> and <dir> dynamically (RTL for Arabic)
   useEffect(() => {
     try {
       document.documentElement.lang = language;
+      document.documentElement.dir = RTL_LANGUAGES.includes(language) ? "rtl" : "ltr";
     } catch {}
   }, [language]);
 
