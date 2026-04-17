@@ -441,6 +441,32 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
       )}
 
       {!isLoading && allResults.length > 0 && (
+        <div className="mb-3 p-3 rounded-lg bg-accent/40 border border-border/50 text-xs text-muted-foreground leading-relaxed">
+          <p>
+            <span className="font-medium text-foreground">{t("search.notFoundTitle")}</span>{" "}
+            {t("search.notFoundAddOn")}{" "}
+            <a
+              href="https://www.radio-browser.info/add"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              Radio Browser
+            </a>
+            {". "}
+            {t("search.notFoundEmailUs")}{" "}
+            <a
+              href={`mailto:info@radiosphere.be?subject=${encodeURIComponent(t("search.addStationSubject"))}`}
+              className="text-primary hover:underline font-medium"
+            >
+              info@radiosphere.be
+            </a>
+            {"."}
+          </p>
+        </div>
+      )}
+
+      {!isLoading && allResults.length > 0 && (
         <p className="text-xs text-muted-foreground mb-3">
           {hasMore ? `${allResults.length}+` : allResults.length} {t("search.resultsCount")}
         </p>
