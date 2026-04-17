@@ -72,7 +72,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         className="absolute top-1/2 -right-5 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-primary/25 border border-primary/50 shadow-lg shadow-primary/15 flex items-center justify-center text-primary hover:bg-primary/35 hover:border-primary/60 hover:shadow-primary/25 transition-all duration-200"
         title={collapsed ? "Expand" : "Collapse"}
       >
-        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+        {collapsed ? <ChevronRight className="w-3.5 h-3.5 rtl-flip" /> : <ChevronLeft className="w-3.5 h-3.5 rtl-flip" />}
       </button>
 
       {/* Logo */}

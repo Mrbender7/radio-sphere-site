@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=Poppins:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -131,4 +131,17 @@
 /* Vintage filter for station logos in cassette */
 .vintage-filter {
   filter: sepia(0.6) brightness(0.8) contrast(1.1) saturate(0.7);
+}
+
+/* RTL support — Arabic typography and directional icon mirroring */
+html[dir="rtl"] body {
+  font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
+  text-align: right;
+}
+
+/* Mirror only directional icons (chevrons, rewind/forward arrows).
+   Apply class .rtl-flip to icons that should flip in RTL.
+   Do NOT apply to Play / Pause / Stop / Record / Circle / volume icons. */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
 }

@@ -89,7 +89,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
                 className="flex flex-col items-center justify-center w-28 flex-shrink-0 p-3 rounded-xl hover:bg-accent transition-colors gap-1"
               >
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] flex items-center justify-center shadow-lg">
-                  <ChevronRight className="w-5 h-5 text-white" />
+                  <ChevronRight className="w-5 h-5 text-white rtl-flip" />
                 </div>
                 <span className="text-xs font-semibold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
                   +{Math.min(10, favorites.length - favLimit)}
