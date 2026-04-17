@@ -1,67 +1,46 @@
 
 
-## Plan : Support de l'arabe avec interface RTL
+## Plan : Robustesse dans les navigateurs in-app (Facebook, Instagram, etc.)
 
-### Vue d'ensemble
-Ajouter l'arabe (`ar`) comme 14e langue, avec basculement automatique de l'interface en RTL (right-to-left) lorsque la langue est sélectionnée. L'inversion sera gérée principalement via l'attribut natif `dir="rtl"` sur `<html>` que le navigateur propage à toute la mise en page Flexbox/Grid existante, ce qui évite de réécrire les centaines de classes Tailwind du projet.
+### Diagnostic
 
-### Fichiers à modifier
+L'écran "Unexpected Application Error! Unexpected token '<', '<!DOCTYPE'..." vient de **react-router-dom** : une erreur non capturée se propage jusqu'au routeur, qui affiche son propre écran d'erreur (qui contourne notre `ErrorBoundary` React).
 
-**1. `src/i18n/translations.ts`**
-- Ajouter `"ar"` au type `Language`.
-- Ajouter une entrée dans `LANGUAGE_OPTIONS` : `{ value: "ar", flag: "🇸🇦", flagUrl: "https://flagcdn.com/w40/sa.png", label: "العربية" }`.
-- Ajouter le bloc `ar: { ... }` avec les ~330 clés traduites en arabe (couvrant nav, home, welcome, player, sidebar, tbmModal, tbmQuota, settings, footer, privacy, about, favorites, search, library, genres). Les clés clés demandées seront intégrées :
-  - `nav.home` → الرئيسية
-  - `nav.search` / `nav.explore` → بحث
-  - `nav.favorites` → المفضلة
-  - `nav.settings` / `nav.about` → الإعدادات / حول
-  - `home.recentlyPlayed` → الإذاعات الأخيرة
-  - `tbm` titles → آلة الزمن
-  - `welcome.allStations` → جميع الإذاعات
-  - `welcome.chooseLanguage` → اللغة
-  - + le reste du dictionnaire complet pour ne pas avoir d'écran moitié anglais/moitié arabe.
+**Cause racine** : dans le navigateur in-app de Facebook (et parfois Firefox mobile au premier essai), les requêtes externes vers `raw.githubusercontent.com` (fallback stations.json) ou `api.radio-browser.info` peuvent renvoyer une **page HTML** (avertissement WebView, captive portal, blocage proxy) au lieu de JSON. Le `await res.json()` plante alors avec exactement le message visible sur la capture.
 
-**2. `src/contexts/LanguageContext.tsx`**
-- Ajouter `"ar"` à `SUPPORTED_LANGUAGES`.
-- Dans le `useEffect` qui synchronise `document.documentElement.lang`, ajouter aussi :
-  ```ts
-  document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
-  ```
-  Ceci propage automatiquement la direction RTL à tout l'arbre DOM. Tailwind/Flexbox inversent alors naturellement l'ordre visuel des éléments (sidebar à droite, marges miroir via les utilitaires logiques existants, etc.).
+`src/services/radio/fallback.ts` (ligne 56) appelle `await res.json()` **sans valider le content-type** — contrairement à `mirrors.ts` qui le fait déjà bien. Et au-dessus, certains chargements de page (dans `HomePage`, `useWeeklyDiscoveries`, etc.) lancent ces fetchs au montage : si tout échoue, la promesse rejetée remonte.
 
-**3. `src/index.css`**
-- Ajouter une famille de polices arabes via Google Fonts (`Noto Sans Arabic`) en import au début du fichier, déjà dans le même bloc que les autres fonts.
-- Ajouter une règle ciblée :
-  ```css
-  html[dir="rtl"] body { font-family: 'Noto Sans Arabic', system-ui, sans-serif; text-align: right; }
-  ```
-- Ajouter quelques règles utilitaires globales pour inverser uniquement les **icônes directionnelles** (chevrons, flèches « retour/suivant »), sans toucher aux icônes médias :
-  ```css
-  html[dir="rtl"] .rtl-flip { transform: scaleX(-1); }
-  ```
+### Corrections
 
-**4. Icônes directionnelles à marquer `rtl-flip`**
-Ajouter la classe `rtl-flip` uniquement aux icônes directionnelles, en laissant Play/Pause/Stop/Record/Circle intactes :
-- `src/components/DesktopSidebar.tsx` : les `ChevronLeft`/`ChevronRight` du bouton collapse.
-- `src/pages/HomePage.tsx` : `ChevronRight` du bouton « voir plus ».
-- `src/pages/WelcomePage.tsx` : `ChevronRight` du bouton « Continuer ».
-- `src/components/TimebackMachine.tsx` : icônes `Rewind` et `FastForward` (ce sont des flèches directionnelles, donc à miroiter en RTL pour rester cohérentes — passé à droite, futur à gauche).
-- `src/components/ui/breadcrumb.tsx`, `pagination.tsx`, `carousel.tsx`, `dropdown-menu.tsx`, `calendar.tsx` : ajouter `rtl-flip` sur les chevrons/arrows internes (ces composants shadcn sont utilisés ailleurs).
+**1. Sécuriser `fallback.ts`** (cause directe du message d'erreur)
+- Remplacer `await res.json()` par la même logique de garde que `mirrors.ts` : vérifier content-type, détecter les pages HTML (`<!`, `<html`), lever une erreur claire au lieu de laisser exploser le parser JSON.
 
-**5. Sidebar à droite en mode RTL**
-Aucun changement nécessaire dans `src/pages/Index.tsx` : avec `dir="rtl"` sur `<html>`, le conteneur Flex parent inverse automatiquement l'ordre `DesktopSidebar` ↔ contenu principal. La bordure droite de la sidebar (`border-r`) deviendra visuellement à gauche, ce qui est correct. Le bouton collapse `-right-5` reste correct visuellement (devient à gauche en RTL — l'utilisateur arabe s'attend à le trouver vers le centre, ce qui est le cas).
+**2. Ajouter une `errorElement` au router**
+- Dans `src/routes.tsx`, attacher un `errorElement` à la route racine qui réutilise notre `ErrorBoundary` visuel (logo + bouton recharger). Cela remplace l'écran brut de react-router par notre UI cohérente, peu importe d'où vient l'erreur.
 
-**6. Timeback Machine — cohérence RTL**
-- Le slider de temps reste positionné de gauche à droite physiquement, mais en RTL le « passé » apparaîtra naturellement à droite et le « live » à gauche, ce qui correspond à la convention de lecture arabe. Les icônes `Rewind`/`FastForward` recevront `rtl-flip` pour pointer dans la direction cohérente. Les labels temps (`-formatTime`) restent identiques.
+**3. Capture globale des promesses rejetées**
+- Dans `src/main.tsx`, ajouter un listener `window.addEventListener("unhandledrejection", ...)` qui log proprement et empêche les crashs silencieux. Utile pour les `fetch` lancés en arrière-plan.
 
-### Détails techniques
+**4. Détection navigateur in-app + bandeau d'aide (optionnel mais recommandé)**
+- Détecter via `navigator.userAgent` les WebViews connues : `FBAN`, `FBAV` (Facebook), `Instagram`, `Line`, `MicroMessenger` (WeChat), `Twitter`.
+- Si détecté, afficher un petit bandeau discret en haut : "Pour une meilleure expérience, ouvrez radiosphere.be dans votre navigateur." avec bouton "Ouvrir dans le navigateur" (qui tente `window.open` ou copie le lien).
+- Texte traduit dans les 14 langues.
 
-- **Pas d'AbortController de plugin Tailwind RTL** : on s'appuie sur le comportement natif de `dir="rtl"` qui inverse Flex/Grid, plus la classe utilitaire `rtl-flip` appliquée chirurgicalement. Cela évite une dépendance et reste léger.
-- **Détection initiale** : `detectInitialLanguage` détectera déjà `navigator.language === "ar-*"` grâce à la boucle `startsWith` existante, dès que `"ar"` sera ajouté à `SUPPORTED_LANGUAGES`.
-- **Page de bienvenue** : `WelcomePage` applique aussi `dir` immédiatement quand l'utilisateur sélectionne arabe dans le `<Select>` (via un `useEffect` local sur `selectedLang`).
-- **Polices** : Noto Sans Arabic ajouté seulement pour `dir="rtl"` afin de ne pas pénaliser le poids de chargement pour les autres langues.
+**5. Retry doux côté hooks de chargement**
+- Dans `useWeeklyDiscoveries` et autres hooks qui fetchent au montage : envelopper dans try/catch silencieux qui ne propage pas l'erreur (l'app reste utilisable même si la liste est vide).
+
+### Fichiers modifiés
+
+- `src/services/radio/fallback.ts` — validation content-type avant `.json()`
+- `src/routes.tsx` — ajout `errorElement` réutilisant `ErrorBoundary`
+- `src/main.tsx` — listener `unhandledrejection`
+- `src/components/InAppBrowserBanner.tsx` — nouveau composant de détection
+- `src/pages/Index.tsx` — montage du bandeau
+- `src/i18n/translations.ts` — clés `inAppBrowser.warning` et `inAppBrowser.openExternal` (14 langues)
+- `src/hooks/useWeeklyDiscoveries.ts` — try/catch défensif
 
 ### Hors périmètre
-- Pas de traduction des contenus dynamiques venant de l'API Radio Browser (noms de stations, tags) — ils restent dans la langue d'origine.
-- Pas d'inversion des `AudioVisualizer` ni des animations cassette (visuels symétriques).
+
+- Pas de proxy server-side (le projet est statique, pas de backend disponible).
+- Pas de service worker offline pour les données API (déjà couvert par cache PWA mais limité dans WebView Facebook qui isole le SW).
 
