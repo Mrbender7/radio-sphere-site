@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { Globe, Radio, Heart, Search, Music, ChevronRight, ShieldCheck } from "lucide-react";
 import type { Language } from "@/i18n/translations";
@@ -23,6 +23,14 @@ const FEATURE_KEYS = ["welcome.stations", "welcome.search", "welcome.favExport",
 export function WelcomePage({ onComplete }: WelcomePageProps) {
   const [selectedLang, setSelectedLang] = useState<Language>(detectInitialLanguage);
   const t = (key: string) => translations[selectedLang][key] ?? key;
+
+  // Apply RTL direction immediately when Arabic is selected on the welcome page
+  useEffect(() => {
+    try {
+      document.documentElement.lang = selectedLang;
+      document.documentElement.dir = selectedLang === "ar" ? "rtl" : "ltr";
+    } catch {}
+  }, [selectedLang]);
 
   const handleContinue = () => {
     onComplete(selectedLang);
