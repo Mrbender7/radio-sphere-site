@@ -22,6 +22,7 @@ const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicyPage").then(m 
 import { WelcomePage } from "@/pages/WelcomePage";
 import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
+import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
 import { useBackButton } from "@/hooks/useBackButton";
 import type { Language } from "@/i18n/translations";
 
@@ -191,6 +192,7 @@ const Index = () => {
           <meta name="twitter:description" content={meta.description} />
         </Head>
         <SleepTimerIndicator />
+        <InAppBrowserBanner />
         <div className="flex h-full bg-background">
           {/* Desktop sidebar */}
           <DesktopSidebar activeTab={activeTab} onTabChange={handleTabChange} />

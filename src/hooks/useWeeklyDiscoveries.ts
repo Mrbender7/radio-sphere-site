@@ -66,37 +66,43 @@ export function useWeeklyDiscoveries(favorites: RadioStation[]) {
   const { data, isFetching } = useQuery({
     queryKey: ["weeklyDiscoveries", weekKey, profile.tags.join(","), profile.countries.join(","), forceRefresh],
     queryFn: async (): Promise<RadioStation[]> => {
-      if (favorites.length === 0) {
-        const stations = await radioBrowserProvider.getTopStations(20);
-        return pickThree(stations, []);
+      try {
+        if (favorites.length === 0) {
+          const stations = await radioBrowserProvider.getTopStations(20);
+          return pickThree(stations, []);
+        }
+
+        const history = loadHistory();
+        const favoriteIds = new Set(favorites.map(f => f.id));
+        const exclude = new Set([...history, ...favoriteIds]);
+
+        const searches: Promise<RadioStation[]>[] = [];
+        for (const tag of profile.tags.slice(0, 3)) {
+          searches.push(radioBrowserProvider.searchStations({ tag, limit: 15 }));
+        }
+        for (const country of profile.countries.slice(0, 2)) {
+          searches.push(radioBrowserProvider.searchStations({ country, limit: 15 }));
+        }
+
+        const settled = await Promise.allSettled(searches);
+        const all: RadioStation[] = [];
+        for (const r of settled) {
+          if (r.status === "fulfilled") all.push(...r.value);
+        }
+
+        const seen = new Set<string>();
+        const candidates = all.filter(s => {
+          if (!s.id || seen.has(s.id) || exclude.has(s.id)) return false;
+          seen.add(s.id);
+          return true;
+        });
+
+        return pickThree(candidates, Array.from(exclude));
+      } catch (e) {
+        // Fail silently in restrictive environments (e.g. Facebook WebView)
+        console.warn("[useWeeklyDiscoveries] fetch failed, returning empty:", e);
+        return [];
       }
-
-      const history = loadHistory();
-      const favoriteIds = new Set(favorites.map(f => f.id));
-      const exclude = new Set([...history, ...favoriteIds]);
-
-      const searches: Promise<RadioStation[]>[] = [];
-      for (const tag of profile.tags.slice(0, 3)) {
-        searches.push(radioBrowserProvider.searchStations({ tag, limit: 15 }));
-      }
-      for (const country of profile.countries.slice(0, 2)) {
-        searches.push(radioBrowserProvider.searchStations({ country, limit: 15 }));
-      }
-
-      const settled = await Promise.allSettled(searches);
-      const all: RadioStation[] = [];
-      for (const r of settled) {
-        if (r.status === "fulfilled") all.push(...r.value);
-      }
-
-      const seen = new Set<string>();
-      const candidates = all.filter(s => {
-        if (!s.id || seen.has(s.id) || exclude.has(s.id)) return false;
-        seen.add(s.id);
-        return true;
-      });
-
-      return pickThree(candidates, Array.from(exclude));
     },
     enabled: needsFetch && favorites.length > 0,
     staleTime: forceRefresh > 0 ? 0 : Infinity,
