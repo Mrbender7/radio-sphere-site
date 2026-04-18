@@ -91,7 +91,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         </div>
         {!collapsed && (
           <a
-            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
             data-umami-event="google-play-sidebar"
@@ -200,7 +200,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
         {/* Google Play badge (collapsed only — expanded version is under logo) */}
         {collapsed && (
           <a
-            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-center"

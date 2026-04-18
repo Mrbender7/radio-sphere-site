@@ -58,7 +58,7 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
 
       {/* Google Play badge — prominent */}
       <a
-        href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere&pcampaignid=web_share"
+        href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
         target="_blank"
         rel="noopener noreferrer"
         data-umami-event="google-play-welcome"
