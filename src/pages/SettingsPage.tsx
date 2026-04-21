@@ -356,6 +356,30 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
         {/* User Guide */}
         <UserGuideModal onReopenWelcome={onReopenWelcome} />
 
+        {/* Reset app */}
+        {onResetApp && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="flex items-center justify-center gap-1.5 text-xs text-destructive hover:underline mb-4 mt-2 w-full">
+                <Trash2 className="w-3.5 h-3.5" />
+                {t("settings.resetApp")}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("settings.resetApp")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("settings.resetConfirm")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={onResetApp} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {t("settings.resetButton")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+
         {/* Shared footer */}
         <AboutFooter />
 
