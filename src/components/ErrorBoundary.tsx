@@ -4,6 +4,32 @@ import radioSphereLogo from "@/assets/new-radio-logo.png";
 interface State {
   hasError: boolean;
   error?: Error;
+  clearing?: boolean;
+}
+
+async function clearAllCachesAndReload() {
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+    }
+  } catch {
+    /* noop */
+  }
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+    }
+  } catch {
+    /* noop */
+  }
+  try {
+    sessionStorage.removeItem("radiosphere_crash_purge_pending");
+  } catch {
+    /* noop */
+  }
+  window.location.reload();
 }
 
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
@@ -20,6 +46,11 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     console.error("[RadioSphere] ErrorBoundary caught:", error, info.componentStack);
   }
 
+  private handleClearCache = async () => {
+    this.setState({ clearing: true });
+    await clearAllCachesAndReload();
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -29,12 +60,21 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           <p className="text-sm text-muted-foreground max-w-sm">
             An unexpected error occurred. Please reload the page to continue.
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
-          >
-            Reload
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
+            >
+              Reload
+            </button>
+            <button
+              onClick={this.handleClearCache}
+              disabled={this.state.clearing}
+              className="px-6 py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-semibold border border-border hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {this.state.clearing ? "Clearing…" : "Clear cache & reload"}
+            </button>
+          </div>
         </div>
       );
     }

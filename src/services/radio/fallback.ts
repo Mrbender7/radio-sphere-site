@@ -53,27 +53,34 @@ async function loadFallbackData(): Promise<RadioStation[]> {
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // Validate content-type to avoid JSON.parse crashes when in-app browsers
-      // (Facebook, Instagram, captive portals, etc.) return HTML interstitials.
-      const contentType = res.headers.get("content-type") || "";
-      let raw: any[];
-      if (!contentType.includes("application/json") && !contentType.includes("text/json")) {
-        const text = await res.text();
-        if (text.trim().startsWith("<!") || text.includes("<html")) {
-          throw new Error(`[RadioService] HTML response from fallback URL (likely WebView interstitial)`);
-        }
-        try {
-          raw = JSON.parse(text);
-        } catch {
-          throw new Error(`[RadioService] Unexpected fallback format: ${contentType}`);
-        }
-      } else {
-        raw = await res.json();
+      // Always read as text first — service workers / WebViews can return HTML
+      // interstitials with a JSON content-type. Never trust the header alone.
+      let text: string;
+      try {
+        text = await res.text();
+      } catch (e) {
+        throw new Error(`[RadioService] Failed to read fallback body: ${e instanceof Error ? e.message : String(e)}`);
       }
+
+      const trimmed = text.trim();
+      if (!trimmed) {
+        throw new Error(`[RadioService] Empty fallback body`);
+      }
+      if (trimmed.startsWith("<!") || trimmed.startsWith("<html") || trimmed.startsWith("<HTML")) {
+        throw new Error(`[RadioService] HTML response from fallback URL (likely WebView interstitial / poisoned cache)`);
+      }
+
+      let raw: unknown;
+      try {
+        raw = JSON.parse(trimmed);
+      } catch (e) {
+        throw new Error(`[RadioService] Fallback JSON parse failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
+
       if (!Array.isArray(raw)) {
         throw new Error(`[RadioService] Fallback expected array, got ${typeof raw}`);
       }
-      const stations = raw
+      const stations = (raw as any[])
         .map(normalizeStation)
         .filter((s) => s.streamUrl && s.name);
 
