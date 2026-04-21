@@ -3163,7 +3163,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.premium": "Premium",
     "nav.settings": "Ayarlar",
     "nav.about": "Hakkında",
-    "sidebar.stationCount": "230'dan fazla ülkede 50.000'den fazla radyo istasyonu, ücretsiz, kayıt gerektirmez.",
+    "sidebar.stationCount": "230'dan fazla ülkede 50.000'den fazla radyo istasyonu, ücretsiz, kayıt gerektirmez, ek reklam yok.",
     "sidebar.tbmTeaser": "Özel özelliğimiz: TimeBack Machine — canlı radyoyu geri sarın, son 5 dakikayı yeniden dinleyin, programlarınızı MP3 olarak kaydedin.",
     "sidebar.tbmHowItWorks": "Nasıl çalışır?",
     "sidebar.podcastTeaser": "Podcast dinlemek ister misiniz?",
