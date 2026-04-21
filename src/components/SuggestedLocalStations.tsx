@@ -53,26 +53,10 @@ function normalizeRaw(raw: any): RadioStation {
     country: raw.country || "",
     countryCode: raw.countrycode || "",
     language: raw.language || "",
-    bitrate: raw.bitrate || 0,
-    votes: raw.votes || 0,
-/** Normalize a raw Radio Browser station object into our RadioStation shape. */
-function normalizeRaw(raw: any): RadioStation {
-  return {
-    id: raw.stationuuid,
-    name: raw.name,
-    streamUrl: raw.url_resolved || raw.url,
-    logo: raw.favicon || "",
-    tags: raw.tags ? raw.tags.split(",").filter(Boolean) : [],
-    country: raw.country || "",
-    countryCode: raw.countrycode || "",
-    language: raw.language || "",
     codec: raw.codec || "",
     bitrate: raw.bitrate || 0,
     votes: raw.votes || 0,
     clickcount: raw.clickcount || 0,
-    homepage: raw.homepage || "",
-  };
-}
     homepage: raw.homepage || "",
   };
 }
