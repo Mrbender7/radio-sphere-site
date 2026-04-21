@@ -15,6 +15,7 @@ export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string;
   { value: "ru", flag: "🇷🇺", flagUrl: "https://flagcdn.com/w40/ru.png", label: "Русский" },
   { value: "id", flag: "🇮🇩", flagUrl: "https://flagcdn.com/w40/id.png", label: "Bahasa Indonesia" },
   { value: "ms", flag: "🇲🇾", flagUrl: "https://flagcdn.com/w40/my.png", label: "Bahasa Malaysia" },
+  { value: "th", flag: "🇹🇭", flagUrl: "https://flagcdn.com/w40/th.png", label: "ภาษาไทย" },
   { value: "ar", flag: "🇸🇦", flagUrl: "https://flagcdn.com/w40/sa.png", label: "العربية" },
 ];
 
