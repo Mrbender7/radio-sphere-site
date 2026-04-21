@@ -87,21 +87,42 @@ export function WelcomeModal({ open, onOpenChange, onComplete }: WelcomeModalPro
           </a>
 
           {/* Features grid */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-xs mb-8">
+          <div className="grid grid-cols-2 gap-2 w-full max-w-xs mb-3">
             {FEATURE_KEYS.map((key, i) => {
               const Icon = FEATURE_ICONS[i];
               return (
                 <div
                   key={key}
-                  className="flex items-center gap-2.5 rounded-xl bg-accent/80 border border-border/50 p-3"
+                  className="flex items-center gap-1.5 rounded-lg bg-accent/80 border border-border/50 px-2.5 py-2"
                 >
-                  <Icon className="w-4 h-4 text-primary shrink-0" />
-                  <span className="text-xs font-medium text-foreground text-left leading-tight">
+                  <Icon className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-[11px] font-medium text-foreground text-left leading-tight">
                     {t(key)}
                   </span>
                 </div>
               );
             })}
+          </div>
+
+          {/* Secondary feature row: Sleep Timer + TimeBack Machine (gold) */}
+          <div className="grid grid-cols-2 gap-2 w-full max-w-xs mb-6">
+            <div className="flex items-center gap-1.5 rounded-lg bg-accent/80 border border-border/50 px-2.5 py-2">
+              <Moon className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-[11px] font-medium text-foreground text-left leading-tight">
+                {t("welcome.sleepTimer")}
+              </span>
+            </div>
+            <div className="relative flex flex-col justify-center rounded-lg border border-[hsl(45,90%,55%)]/60 bg-gradient-to-br from-[hsl(45,90%,55%)]/20 via-[hsl(40,95%,60%)]/15 to-[hsl(35,95%,50%)]/20 shadow-[0_0_12px_-2px_hsl(45,90%,55%,0.45)] px-2.5 py-1.5 text-left">
+              <div className="flex items-center gap-1.5">
+                <Rewind className="w-3.5 h-3.5 text-[hsl(45,95%,60%)] shrink-0 drop-shadow-[0_0_4px_hsl(45,95%,60%,0.6)]" />
+                <span className="text-[11px] font-bold leading-tight bg-gradient-to-r from-[hsl(45,95%,65%)] to-[hsl(35,95%,55%)] bg-clip-text text-transparent">
+                  {t("welcome.tbm")}
+                </span>
+              </div>
+              <span className="text-[9px] text-[hsl(45,90%,75%)]/90 leading-tight mt-0.5">
+                {t("welcome.tbmDesc")}
+              </span>
+            </div>
           </div>
 
           {/* Language selector — dropdown */}
