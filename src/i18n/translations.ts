@@ -1975,6 +1975,7 @@ const translations: Record<Language, Record<string, string>> = {
     "home.exploreByGenre": "Verken per genre",
     "home.yourFavorites": "Je favorieten",
     "home.weeklyDiscoveries": "Ontdekkingen van de week",
+    "home.popularNearYou": "Populair bij jou in de buurt",
     "home.noFavorites": "Voeg favorieten toe om ze hier te zien",
     "search.title": "Zoeken",
     "search.placeholder": "Zoek een station...",
