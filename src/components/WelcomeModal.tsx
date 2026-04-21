@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
-import { Globe, Radio, Heart, Search, Music, ChevronRight, ShieldCheck } from "lucide-react";
+import { Globe, Radio, Heart, Search, Music, ChevronRight, ShieldCheck, Moon, Rewind } from "lucide-react";
 import type { Language } from "@/i18n/translations";
 import { detectInitialLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
