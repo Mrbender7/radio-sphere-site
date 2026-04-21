@@ -40,7 +40,9 @@ export function WelcomePage({ onComplete }: WelcomePageProps) {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background px-6 py-10 text-center overflow-y-auto">
       {/* Logo */}
       <div className="relative mb-6">
-        <div className="absolute inset-0 rounded-full bg-primary/20 blur-3xl scale-150 animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-primary/60 blur-3xl scale-[2.2] animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-[hsl(280,80%,60%)]/50 blur-2xl scale-[1.8] animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-[hsl(220,90%,60%)]/40 blur-xl scale-150" />
         <img
           src={radioSphereLogo}
           alt="RadioSphere.be"
