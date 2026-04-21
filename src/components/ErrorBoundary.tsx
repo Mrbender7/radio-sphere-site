@@ -8,16 +8,19 @@ interface State {
 }
 
 async function clearAllCachesAndReload() {
+  // Service Worker — may be unavailable in Chrome WebView, private mode, or
+  // when the page is served over an insecure origin. Each call is guarded.
   try {
-    if ("serviceWorker" in navigator) {
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
     }
   } catch {
     /* noop */
   }
+  // Cache Storage — not available in older WebView builds.
   try {
-    if ("caches" in window) {
+    if (typeof window !== "undefined" && "caches" in window) {
       const keys = await caches.keys();
       await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
     }
@@ -27,9 +30,13 @@ async function clearAllCachesAndReload() {
   try {
     sessionStorage.removeItem("radiosphere_crash_purge_pending");
   } catch {
-    /* noop */
+    /* sessionStorage blocked in some WebViews — ignore */
   }
-  window.location.reload();
+  try {
+    window.location.reload();
+  } catch {
+    /* extremely defensive — should never throw */
+  }
 }
 
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
