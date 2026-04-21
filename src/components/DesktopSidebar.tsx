@@ -78,7 +78,16 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
 
       {/* Logo */}
       <div className={cn("flex flex-col pt-8 pb-4", collapsed ? "px-3 items-center" : "px-6")}>
-        <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "")}>
+        <button
+          type="button"
+          onClick={() => onTabChange("home")}
+          title={t("nav.home")}
+          aria-label={t("nav.home")}
+          className={cn(
+            "flex items-center gap-3 rounded-xl hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+            collapsed ? "justify-center" : ""
+          )}
+        >
           <img
             src={radioSphereLogo}
             alt="RadioSphere.be"
@@ -89,7 +98,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
               RadioSphere.be
             </h1>
           )}
-        </div>
+        </button>
         {!collapsed && (
           <a
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
