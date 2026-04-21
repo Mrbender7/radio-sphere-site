@@ -97,7 +97,12 @@ export function DesktopPlayerBar() {
       {/* Right: Volume + actions */}
       <div className="flex items-center gap-3 w-64 flex-shrink-0 justify-end">
         <CastButton />
-        <button onClick={openFullScreen} className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+        <button
+          onClick={openFullScreen}
+          aria-label={t("aria.openFullPlayer") || "Open full player"}
+          className="w-9 h-9 rounded-full bg-gradient-to-b from-primary to-primary/80 border-t border-white/20 flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/40 hover:scale-105 hover:shadow-primary/60 transition-all flex-shrink-0"
+          style={{ boxShadow: '0 0 14px hsla(250, 80%, 50%, 0.45), 0 4px 12px -2px hsla(220, 90%, 60%, 0.35)' }}
+        >
           <Maximize2 className="w-4 h-4" />
         </button>
         <div className="flex items-center gap-2 w-36">
