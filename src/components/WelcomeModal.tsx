@@ -18,7 +18,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface WelcomeModalProps {
   open: boolean;
@@ -49,10 +48,8 @@ export function WelcomeModal({ open, onOpenChange, onComplete }: WelcomeModalPro
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto p-6 rounded-2xl">
-        <VisuallyHidden>
-          <DialogTitle>RadioSphere.be — {t("welcome.subtitle")}</DialogTitle>
-          <DialogDescription>{t("welcome.subtitle")}</DialogDescription>
-        </VisuallyHidden>
+        <DialogTitle className="sr-only">RadioSphere.be — {t("welcome.subtitle")}</DialogTitle>
+        <DialogDescription className="sr-only">{t("welcome.subtitle")}</DialogDescription>
 
         <div className="flex flex-col items-center text-center">
           {/* Logo */}
