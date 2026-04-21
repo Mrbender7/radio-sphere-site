@@ -1661,6 +1661,7 @@ const translations: Record<Language, Record<string, string>> = {
     "home.exploreByGenre": "Esplora per genere",
     "home.yourFavorites": "I tuoi preferiti",
     "home.weeklyDiscoveries": "Scoperte della settimana",
+    "home.popularNearYou": "Popolari vicino a te",
     "home.noFavorites": "Aggiungi dei preferiti per trovarli qui",
     "search.title": "Cerca",
     "search.placeholder": "Cerca una stazione...",
