@@ -3476,7 +3476,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.premium": "Премиум",
     "nav.settings": "Настройки",
     "nav.about": "О нас",
-    "sidebar.stationCount": "Более 50 000 радиостанций в 230+ странах, бесплатно, без регистрации.",
+    "sidebar.stationCount": "Более 50 000 радиостанций в 230+ странах, бесплатно, без регистрации, без добавленной рекламы.",
     "sidebar.tbmTeaser": "Наша эксклюзивная функция: TimeBack Machine — перемотайте прямой эфир, переслушайте последние 5 минут, записывайте передачи в MP3.",
     "sidebar.tbmHowItWorks": "Как это работает?",
     "sidebar.podcastTeaser": "Хотите подкаст?",
