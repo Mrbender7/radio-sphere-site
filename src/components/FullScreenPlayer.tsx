@@ -156,8 +156,13 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
     <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-y-auto animate-in slide-in-from-bottom duration-300">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pb-2" style={{ paddingTop: "max(env(safe-area-inset-top, 24px), 1.5rem)" }}>
-        <button onClick={closeFullScreen} className="p-2 -ml-2">
-          <ChevronDown className="w-6 h-6 text-muted-foreground" />
+        <button
+          onClick={closeFullScreen}
+          aria-label={t("aria.close") || "Close"}
+          className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] flex items-center justify-center text-white shadow-lg shadow-primary/40 hover:scale-105 hover:shadow-xl hover:shadow-primary/60 transition-all"
+          style={{ boxShadow: '0 0 16px hsla(250, 80%, 50%, 0.45), 0 4px 14px -2px hsla(220, 90%, 60%, 0.35)' }}
+        >
+          <ChevronDown className="w-5 h-5" />
         </button>
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("player.nowPlaying")}</span>
         <div className="flex items-center gap-1 -mr-2">
