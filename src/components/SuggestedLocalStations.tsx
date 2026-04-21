@@ -158,18 +158,6 @@ export function SuggestedLocalStations({ isFavorite, onToggleFavorite }: Suggest
       cancelled = true;
     };
   }, [language]);
-      } catch (e) {
-        console.warn("[SuggestedLocalStations] failed", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   if (loading) {
     return (
