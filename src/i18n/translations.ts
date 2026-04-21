@@ -4416,4 +4416,7 @@ const translations: Record<Language, Record<string, string>> = {
 // dedicated Malay strings are added.
 translations.ms = { ...translations.id };
 
+// Thai translation - temporary fallback from Indonesian (pending proper Thai translations)
+translations.th = { ...translations.id };
+
 export default translations;
