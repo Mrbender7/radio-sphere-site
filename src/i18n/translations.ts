@@ -1346,6 +1346,7 @@ const translations: Record<Language, Record<string, string>> = {
     "home.exploreByGenre": "ジャンルで探す",
     "home.yourFavorites": "お気に入り",
     "home.weeklyDiscoveries": "今週のおすすめ",
+    "home.popularNearYou": "あなたの近くで人気",
     "home.noFavorites": "お気に入りに追加すると、ここに表示されます",
     "search.title": "検索",
     "search.placeholder": "ステーションを検索...",
