@@ -44,6 +44,21 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[RadioSphere] ErrorBoundary caught:", error, info.componentStack);
+
+    // Auto-recovery: if this is the first crash this session, the user is likely
+    // running a stale cached bundle (e.g. after a deploy). Purge SW + caches and
+    // reload once. Subsequent crashes show the manual UI to avoid infinite loops.
+    try {
+      const AUTO_RECOVERY_KEY = "radiosphere_auto_recovery_attempted";
+      const alreadyTried = sessionStorage.getItem(AUTO_RECOVERY_KEY) === "1";
+      if (!alreadyTried) {
+        sessionStorage.setItem(AUTO_RECOVERY_KEY, "1");
+        console.warn("[RadioSphere] Attempting auto-recovery (clear caches + reload)");
+        void clearAllCachesAndReload();
+      }
+    } catch {
+      /* sessionStorage unavailable — fall through to manual UI */
+    }
   }
 
   private handleClearCache = async () => {
