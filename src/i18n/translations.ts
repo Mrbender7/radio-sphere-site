@@ -2850,7 +2850,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.premium": "高级版",
     "nav.settings": "设置",
     "nav.about": "关于",
-    "sidebar.stationCount": "超过50,000个电台，覆盖230多个国家，免费，无需注册。",
+    "sidebar.stationCount": "超过50,000个电台，覆盖230多个国家，免费，无需注册，无额外广告。",
     "sidebar.tbmTeaser": "我们的独家功能：TimeBack Machine — 倒带直播广播，重听最近5分钟，将节目录制为MP3。让您回到过去的在线广播播放器。",
     "sidebar.tbmHowItWorks": "如何使用？",
     "sidebar.podcastTeaser": "想听播客吗？",
