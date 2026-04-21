@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Home, Compass, Heart, Info, Mail, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown } from "lucide-react";
+import { Home, Compass, Heart, Info, Mail, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
@@ -17,6 +17,7 @@ const navItems = [
   { id: "home" as TabId, labelKey: "nav.home", icon: Home },
   { id: "search" as TabId, labelKey: "nav.explore", icon: Compass },
   { id: "library" as TabId, labelKey: "nav.favorites", icon: Heart },
+  { id: "settings" as TabId, labelKey: "nav.settings", icon: Settings },
   { id: "about" as TabId, labelKey: "nav.about", icon: Info },
 ];
 

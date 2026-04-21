@@ -9,7 +9,8 @@ const tabConfig = [
   { id: "about", labelKey: "nav.about", icon: Info },
 ] as const;
 
-export type TabId = (typeof tabConfig)[number]["id"];
+// Mobile bottom nav stays at 4 tabs; "settings" is desktop sidebar / mobile via About link.
+export type TabId = (typeof tabConfig)[number]["id"] | "settings";
 
 export function BottomNav({ activeTab, onTabChange }: { activeTab: TabId; onTabChange: (tab: TabId) => void }) {
   const { t } = useTranslation();

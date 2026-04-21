@@ -60,6 +60,7 @@ export const routes: RouteRecord[] = [
       { index: true, Component: () => null },
       { path: "search", Component: () => null },
       { path: "library", Component: () => null },
+      { path: "settings", Component: () => null },
       { path: "about", Component: () => null },
       { path: "privacy", Component: () => null },
     ],
@@ -67,4 +68,4 @@ export const routes: RouteRecord[] = [
 ];
 
 // Routes to pre-render during SSG build
-export const includedRoutes = ["/", "/search", "/library", "/about", "/privacy"];
+export const includedRoutes = ["/", "/search", "/library", "/settings", "/about", "/privacy"];

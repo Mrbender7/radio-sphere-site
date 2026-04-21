@@ -17,6 +17,7 @@ import { HomePage } from "@/pages/HomePage";
 const SearchPage = lazy(() => import("@/pages/SearchPage").then(m => ({ default: m.SearchPage })));
 const LibraryPage = lazy(() => import("@/pages/LibraryPage").then(m => ({ default: m.LibraryPage })));
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage").then(m => ({ default: m.SettingsPage })));
 const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicyPage").then(m => ({ default: m.PrivacyPolicyPage })));
 
 import { WelcomeModal } from "@/components/WelcomeModal";
@@ -50,12 +51,14 @@ const ROUTE_TO_TAB: Record<string, TabId> = {
   "/": "home",
   "/search": "search",
   "/library": "library",
+  "/settings": "settings",
   "/about": "about",
 };
 const TAB_TO_ROUTE: Record<TabId, string> = {
   home: "/",
   search: "/search",
   library: "/library",
+  settings: "/settings",
   about: "/about",
 };
 
@@ -73,9 +76,13 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
     title: "Ma bibliothèque — RadioSphere.be",
     description: "Retrouvez vos stations radio favorites et récemment écoutées. Gérez votre collection sur RadioSphere.be.",
   },
+  settings: {
+    title: "Paramètres — RadioSphere.be",
+    description: "Langue, minuterie de sommeil, gestion des favoris et mode d'emploi. Personnalisez votre expérience sur RadioSphere.be.",
+  },
   about: {
     title: "À propos — RadioSphere.be",
-    description: "Paramètres, langue, minuterie de sommeil et informations sur RadioSphere.be, votre lecteur radio gratuit sans publicité.",
+    description: "Informations, vie privée et sources sur RadioSphere.be, votre lecteur radio gratuit sans publicité.",
   },
   privacy: {
     title: "Politique de confidentialité — RadioSphere.be",
@@ -154,6 +161,12 @@ const Index = () => {
     navigate("/privacy", { replace: true });
   }, [navigate]);
 
+  const handleNavigateSettings = useCallback(() => {
+    setShowPrivacy(false);
+    setActiveTab("settings");
+    navigate("/settings", { replace: true });
+  }, [navigate]);
+
   useBackButton({
     onBack: () => {
       if (showWelcome) return;
@@ -181,8 +194,10 @@ const Index = () => {
         return <SearchPage isFavorite={isFavorite} onToggleFavorite={toggleFavorite} initialGenre={selectedGenre} />;
       case "library":
         return <LibraryPage favorites={favorites} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />;
+      case "settings":
+        return <SettingsPage onReopenWelcome={handleReopenWelcome} />;
       case "about":
-        return <AboutPage onReopenWelcome={handleReopenWelcome} onResetApp={handleResetApp} onNavigatePrivacy={handleNavigatePrivacy} />;
+        return <AboutPage onReopenWelcome={handleReopenWelcome} onResetApp={handleResetApp} onNavigatePrivacy={handleNavigatePrivacy} onNavigateSettings={handleNavigateSettings} />;
       default:
         return null;
     }
