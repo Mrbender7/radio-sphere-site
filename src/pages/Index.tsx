@@ -19,7 +19,7 @@ const LibraryPage = lazy(() => import("@/pages/LibraryPage").then(m => ({ defaul
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
 const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicyPage").then(m => ({ default: m.PrivacyPolicyPage })));
 
-import { WelcomePage } from "@/pages/WelcomePage";
+import { WelcomeModal } from "@/components/WelcomeModal";
 import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
 import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
@@ -120,6 +120,14 @@ const Index = () => {
     setShowWelcome(false);
   }, [setLanguage]);
 
+  const handleWelcomeOpenChange = useCallback((open: boolean) => {
+    setShowWelcome(open);
+    if (!open) {
+      // Mark onboarding complete even if dismissed via X / overlay / Escape
+      try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch {}
+    }
+  }, []);
+
   const handleReopenWelcome = useCallback(() => {
     setShowWelcome(true);
   }, []);
@@ -156,10 +164,6 @@ const Index = () => {
     isHome: activeTab === "home",
     isFullScreen,
   });
-
-  if (showWelcome) {
-    return <WelcomePage onComplete={handleWelcomeComplete} />;
-  }
 
   const renderContent = () => {
     if (showPrivacy) {
@@ -221,6 +225,11 @@ const Index = () => {
 
         <FullScreenPlayer onTagClick={handleTagClick} />
         <ExitConfirmDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
+        <WelcomeModal
+          open={showWelcome}
+          onOpenChange={handleWelcomeOpenChange}
+          onComplete={handleWelcomeComplete}
+        />
       </SleepTimerProvider>
   );
 };
