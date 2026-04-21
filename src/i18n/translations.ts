@@ -716,6 +716,7 @@ const translations: Record<Language, Record<string, string>> = {
     "home.exploreByGenre": "Explorar por género",
     "home.yourFavorites": "Tus favoritos",
     "home.weeklyDiscoveries": "Descubrimientos de la semana",
+    "home.popularNearYou": "Populares cerca de ti",
     "home.noFavorites": "Añade favoritos para verlos aquí",
     "search.title": "Buscar",
     "search.placeholder": "Buscar una estación...",
