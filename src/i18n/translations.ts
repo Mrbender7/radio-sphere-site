@@ -342,7 +342,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.premium": "Premium",
     "nav.settings": "Settings",
     "nav.about": "About",
-    "sidebar.stationCount": "Over 50,000 radio stations across 230+ countries, free, no sign-up required.",
+    "sidebar.stationCount": "Over 50,000 radio stations across 230+ countries, free, no sign-up required, no added ads.",
     "sidebar.tbmTeaser": "Our exclusive feature: the TimeBack Machine — rewind live radio, relisten to the last 5 minutes, record your shows as MP3. The online radio player that lets you turn back time.",
     "sidebar.tbmHowItWorks": "How does it work?",
     "sidebar.podcastTeaser": "In the mood for a podcast?",
