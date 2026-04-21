@@ -2,19 +2,8 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
-import { Globe, ChevronDown, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Trash2, Settings as SettingsIcon } from "lucide-react";
+import { Globe, ChevronDown, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Settings as SettingsIcon } from "lucide-react";
 import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { AboutFooter } from "@/components/AboutFooter";
 
 
@@ -46,12 +35,11 @@ function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: Reac
 
 interface AboutPageProps {
   onReopenWelcome?: () => void;
-  onResetApp?: () => void;
   onNavigatePrivacy?: () => void;
   onNavigateSettings?: () => void;
 }
 
-export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy, onNavigateSettings }: AboutPageProps) {
+export function AboutPage({ onReopenWelcome, onNavigatePrivacy, onNavigateSettings }: AboutPageProps) {
   const { t } = useTranslation();
   const [radioBrowserOpen, setRadioBrowserOpen] = useState(false);
 
@@ -213,29 +201,8 @@ export function AboutPage({ onReopenWelcome, onResetApp, onNavigatePrivacy, onNa
           </button>
         )}
 
-        {/* Reset app */}
-        {onResetApp && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="flex items-center justify-center gap-1.5 text-xs text-destructive hover:underline mb-4 w-full">
-                <Trash2 className="w-3.5 h-3.5" />
-                {t("settings.resetApp")}
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("settings.resetApp")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("settings.resetConfirm")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={onResetApp} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  {t("settings.resetButton")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+
+
 
         {/* Shared footer */}
         <AboutFooter />

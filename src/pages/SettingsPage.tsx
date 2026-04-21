@@ -3,7 +3,7 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { useSleepTimer, SLEEP_TIMER_OPTIONS } from "@/contexts/SleepTimerContext";
 import { useFavoritesContext } from "@/contexts/FavoritesContext";
 import { cn } from "@/lib/utils";
-import { Settings as SettingsIcon, Moon, ChevronDown, TimerOff, Heart, Download, Upload, RefreshCw, Wifi } from "lucide-react";
+import { Settings as SettingsIcon, Moon, ChevronDown, TimerOff, Heart, Download, Upload, RefreshCw, Wifi, Trash2 } from "lucide-react";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import {
   Select,
@@ -28,6 +28,17 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { RadioStation } from "@/types/radio";
@@ -61,9 +72,10 @@ function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: Reac
 
 interface SettingsPageProps {
   onReopenWelcome?: () => void;
+  onResetApp?: () => void;
 }
 
-export function SettingsPage({ onReopenWelcome }: SettingsPageProps) {
+export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps) {
   const { language, setLanguage, t } = useTranslation();
   const { isActive, formattedTime, startTimer, cancelTimer } = useSleepTimer();
   const { favorites, importFavorites } = useFavoritesContext();
@@ -343,6 +355,30 @@ export function SettingsPage({ onReopenWelcome }: SettingsPageProps) {
 
         {/* User Guide */}
         <UserGuideModal onReopenWelcome={onReopenWelcome} />
+
+        {/* Reset app */}
+        {onResetApp && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="flex items-center justify-center gap-1.5 text-xs text-destructive hover:underline mb-4 mt-2 w-full">
+                <Trash2 className="w-3.5 h-3.5" />
+                {t("settings.resetApp")}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("settings.resetApp")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("settings.resetConfirm")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={onResetApp} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {t("settings.resetButton")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
 
         {/* Shared footer */}
         <AboutFooter />
