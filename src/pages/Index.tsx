@@ -134,10 +134,15 @@ const Index = () => {
 
   const handleResetApp = useCallback(async () => {
     try { localStorage.clear(); sessionStorage.clear(); } catch {}
+    // indexedDB.databases() is non-standard and missing on Chrome WebView/Firefox.
+    // Guard with feature detection so the reset never throws.
     try {
-      const dbs = await window.indexedDB.databases();
-      for (const db of dbs) {
-        if (db.name) window.indexedDB.deleteDatabase(db.name);
+      const idb = window.indexedDB as IDBFactory & { databases?: () => Promise<{ name?: string }[]> };
+      if (typeof idb?.databases === "function") {
+        const dbs = await idb.databases();
+        for (const db of dbs) {
+          if (db.name) window.indexedDB.deleteDatabase(db.name);
+        }
       }
     } catch {}
     window.location.reload();
