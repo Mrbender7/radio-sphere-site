@@ -152,7 +152,8 @@ const Index = () => {
         }
       }
     } catch {}
-    window.location.reload();
+    // Redirect to home page after reset
+    window.location.replace("/");
   }, []);
 
   const handleNavigatePrivacy = useCallback(() => {
