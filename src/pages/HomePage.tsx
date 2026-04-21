@@ -9,6 +9,7 @@ import { Heart, Sparkles, RefreshCw, ChevronRight, ArrowUp } from "lucide-react"
 import { GenreAnimation } from "@/components/GenreAnimations";
 import { CastButton } from "@/components/CastButton";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
+import { SuggestedLocalStations } from "@/components/SuggestedLocalStations";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 
 const GENRES = ["60s", "70s", "80s", "90s", "ambient", "blues", "chillout", "classical", "country", "electronic", "funk", "hiphop", "jazz", "latin", "metal", "mousemusic", "news", "pop", "r&b", "reggae", "rock", "soul", "techno", "trance", "world"];
