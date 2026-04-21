@@ -36,7 +36,8 @@ function blacklistMirror(mirror: string) {
   blacklistedMirrors.set(mirror, Date.now() + BLACKLIST_DURATION_MS);
 }
 
-/** Safe JSON fetch: validates content-type, detects HTML error pages, ensures array response */
+/** Safe JSON fetch: always reads as text first, detects HTML error pages, parses with try/catch.
+ *  Bulletproof against poisoned Service Worker caches that return HTML/truncated bodies with a JSON content-type. */
 async function fetchJsonArray<T = any>(url: string, options?: RequestInit): Promise<T[]> {
   const res = await fetch(url, options);
 
@@ -44,27 +45,33 @@ async function fetchJsonArray<T = any>(url: string, options?: RequestInit): Prom
     throw new Error(`HTTP ${res.status} from ${url}`);
   }
 
-  const contentType = res.headers.get("content-type") || "";
-
-  if (!contentType.includes("application/json") && !contentType.includes("text/json")) {
-    const text = await res.text();
-    if (text.trim().startsWith("<!") || text.includes("<html")) {
-      throw new Error(`[RadioService] HTML response instead of JSON from ${url} (Cloudflare/auth wall)`);
-    }
-    try {
-      const parsed = JSON.parse(text);
-      if (!Array.isArray(parsed)) throw new Error("Not an array");
-      return parsed;
-    } catch {
-      throw new Error(`[RadioService] Unexpected format from ${url}: ${contentType}`);
-    }
+  // Always read as text first — never trust content-type alone (caches can lie).
+  let text: string;
+  try {
+    text = await res.text();
+  } catch (e) {
+    throw new Error(`[RadioService] Failed to read body from ${url}: ${e instanceof Error ? e.message : String(e)}`);
   }
 
-  const data = await res.json();
-  if (!Array.isArray(data)) {
-    throw new Error(`[RadioService] Expected array but got ${typeof data} from ${url}`);
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error(`[RadioService] Empty body from ${url}`);
   }
-  return data;
+  if (trimmed.startsWith("<!") || trimmed.startsWith("<html") || trimmed.startsWith("<HTML")) {
+    throw new Error(`[RadioService] HTML response instead of JSON from ${url} (Cloudflare/auth wall/poisoned cache)`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (e) {
+    throw new Error(`[RadioService] JSON parse failed for ${url}: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error(`[RadioService] Expected array but got ${typeof parsed} from ${url}`);
+  }
+  return parsed as T[];
 }
 
 /** Create a timeout-compatible AbortSignal, merging with an optional external signal */
