@@ -4409,6 +4409,7 @@ const translations: Record<Language, Record<string, string>> = {
     "aria.close": "إغلاق",
     "aria.refresh": "تحديث",
   },
+  th: {} as Record<string, string>,
 };
 
 // Bahasa Malaysia & Bahasa Indonesia share strong mutual intelligibility.
