@@ -4103,7 +4103,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.premium": "بريميوم",
     "nav.settings": "الإعدادات",
     "nav.about": "حول",
-    "sidebar.stationCount": "أكثر من 50,000 محطة إذاعية في 230+ دولة، مجاناً، بدون تسجيل.",
+    "sidebar.stationCount": "أكثر من 50,000 محطة إذاعية في 230+ دولة، مجاناً، بدون تسجيل، بدون إعلانات إضافية.",
     "sidebar.tbmTeaser": "ميزتنا الحصرية: آلة الزمن — أعد البث المباشر إلى الوراء، استمع إلى آخر 5 دقائق، سجّل برامجك بصيغة MP3. مشغّل الراديو عبر الإنترنت الذي يتيح لك العودة بالزمن.",
     "sidebar.tbmHowItWorks": "كيف تعمل؟",
     "sidebar.podcastTeaser": "هل تريد بودكاست؟",
