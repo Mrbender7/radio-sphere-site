@@ -4,6 +4,7 @@ import { StationCard } from "@/components/StationCard";
 import { ScrollableRow } from "@/components/ScrollableRow";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { radioBrowserProvider } from "@/services/RadioService";
+import { fetchWithMirrors } from "@/services/radio/mirrors";
 import { MapPin } from "lucide-react";
 
 interface SuggestedLocalStationsProps {
@@ -12,7 +13,7 @@ interface SuggestedLocalStationsProps {
 }
 
 interface GeoData {
-  country?: string;
+  country?: string; // ISO-3166-1 alpha-2 (e.g. "BE")
   name?: string;
 }
 
@@ -41,6 +42,25 @@ function saveCachedGeo(data: GeoData) {
   }
 }
 
+/** Normalize a raw Radio Browser station object into our RadioStation shape. */
+function normalizeRaw(raw: any): RadioStation {
+  return {
+    id: raw.stationuuid,
+    name: raw.name,
+    streamUrl: raw.url_resolved || raw.url,
+    logo: raw.favicon || "",
+    tags: raw.tags ? raw.tags.split(",").filter(Boolean) : [],
+    country: raw.country || "",
+    countryCode: raw.countrycode || "",
+    language: raw.language || "",
+    codec: raw.codec || "",
+    bitrate: raw.bitrate || 0,
+    votes: raw.votes || 0,
+    clickcount: raw.clickcount || 0,
+    homepage: raw.homepage || "",
+  };
+}
+
 export function SuggestedLocalStations({ isFavorite, onToggleFavorite }: SuggestedLocalStationsProps) {
   const { t } = useTranslation();
   const [stations, setStations] = useState<RadioStation[]>([]);
@@ -63,24 +83,30 @@ export function SuggestedLocalStations({ isFavorite, onToggleFavorite }: Suggest
           if (!cancelled) setLoading(false);
           return;
         }
-        if (!cancelled) setCountryName(geo.name || geo.country);
+        const code = geo.country.toUpperCase();
+        if (!cancelled) setCountryName(geo.name || code);
 
-        // Use existing provider — handles mirrors + fallback gracefully
-        const data = await radioBrowserProvider.searchStations({
-          limit: 10,
-          order: "clickcount",
-          reverse: "true",
-        } as any);
-        // Filter by country code client-side as safety net
-        const filtered = (
-          await radioBrowserProvider.searchStations({
-            limit: 30,
-            order: "clickcount",
-            reverse: "true",
-          } as any)
-        ).filter((s) => s.countryCode?.toUpperCase() === geo!.country!.toUpperCase());
+        // STRICT country filter via bycountrycodeexact + clickcount ordering.
+        // This is the correct endpoint — `searchStations` with no filter would
+        // return worldwide popular stations (BBC, SWR3...) which is exactly
+        // what we want to avoid here.
+        let result: RadioStation[] = [];
+        try {
+          const raw = await fetchWithMirrors(
+            `stations/bycountrycodeexact/${encodeURIComponent(code)}`,
+            { limit: "10", order: "clickcount", reverse: "true", hidebroken: "true" },
+          );
+          result = raw.map(normalizeRaw).filter((s) => s.streamUrl && s.name);
+        } catch (apiErr) {
+          // Fallback: provider with country name + client-side filter on code,
+          // so users still see local stations if all mirrors are down.
+          console.warn("[SuggestedLocalStations] API failed, falling back", apiErr);
+          if (geo.name) {
+            const data = await radioBrowserProvider.getStationsByCountry(geo.name, 30);
+            result = data.filter((s) => s.countryCode?.toUpperCase() === code).slice(0, 10);
+          }
+        }
 
-        const result = (filtered.length >= 5 ? filtered : data).slice(0, 10);
         if (!cancelled) setStations(result);
       } catch (e) {
         console.warn("[SuggestedLocalStations] failed", e);
