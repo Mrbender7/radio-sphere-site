@@ -56,10 +56,15 @@ export default defineConfig(({ mode }) => ({
             options: { cacheName: "images-cache", expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 } },
           },
           {
-            // Radio Browser API calls
+            // Radio Browser API calls — only cache 200s, short TTL to avoid poisoned caches
             urlPattern: /^https:\/\/.*\.radio-browser\.info\/.*/i,
             handler: "NetworkFirst",
-            options: { cacheName: "api-cache", expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 }, networkTimeoutSeconds: 5 },
+            options: {
+              cacheName: "api-cache",
+              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+              networkTimeoutSeconds: 5,
+              cacheableResponse: { statuses: [200] },
+            },
           },
         ],
         // Don't cache audio streams
