@@ -195,9 +195,9 @@ const Index = () => {
       case "library":
         return <LibraryPage favorites={favorites} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} />;
       case "settings":
-        return <SettingsPage onReopenWelcome={handleReopenWelcome} />;
+        return <SettingsPage onReopenWelcome={handleReopenWelcome} onResetApp={handleResetApp} />;
       case "about":
-        return <AboutPage onReopenWelcome={handleReopenWelcome} onResetApp={handleResetApp} onNavigatePrivacy={handleNavigatePrivacy} onNavigateSettings={handleNavigateSettings} />;
+        return <AboutPage onReopenWelcome={handleReopenWelcome} onNavigatePrivacy={handleNavigatePrivacy} onNavigateSettings={handleNavigateSettings} />;
       default:
         return null;
     }
