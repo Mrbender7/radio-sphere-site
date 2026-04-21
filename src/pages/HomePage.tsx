@@ -128,6 +128,11 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
         </section>
       )}
 
+      {/* Cold start: show local popular stations only when no favorites & no recent */}
+      {favorites.length === 0 && recent.length === 0 && (
+        <SuggestedLocalStations isFavorite={isFavorite} onToggleFavorite={onToggleFavorite} />
+      )}
+
       <section className="mb-3">
         <h2 className="text-lg font-heading font-semibold mb-2 bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">{t("home.exploreByGenre")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
