@@ -1598,7 +1598,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.premium": "Premium",
     "nav.settings": "Impostazioni",
     "nav.about": "Info",
-    "sidebar.stationCount": "Oltre 50.000 stazioni radio in più di 230 paesi, gratis, senza registrazione.",
+    "sidebar.stationCount": "Oltre 50.000 stazioni radio in più di 230 paesi, gratis, senza registrazione, senza pubblicità aggiunte.",
     "sidebar.tbmTeaser": "La nostra esclusiva: la TimeBack Machine — riavvolgi la radio in diretta, riascolta gli ultimi 5 minuti, registra i tuoi programmi in MP3. Il lettore radio online che ti permette di tornare indietro nel tempo.",
     "sidebar.tbmHowItWorks": "Come funziona?",
     "sidebar.podcastTeaser": "Voglia di un podcast?",
