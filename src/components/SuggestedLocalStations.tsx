@@ -7,6 +7,38 @@ import { radioBrowserProvider } from "@/services/RadioService";
 import { fetchWithMirrors } from "@/services/radio/mirrors";
 import { MapPin } from "lucide-react";
 
+/**
+ * Map UI language codes to the language strings used by the Radio Browser API
+ * (lowercase, English names). Multiple aliases per UI lang are supported so
+ * stations tagged in either English or the local form still match.
+ */
+const LANG_MATCH: Record<string, string[]> = {
+  fr: ["french", "français", "francais"],
+  en: ["english", "anglais"],
+  es: ["spanish", "español", "espanol", "castellano"],
+  de: ["german", "deutsch", "allemand"],
+  it: ["italian", "italiano"],
+  nl: ["dutch", "nederlands", "flemish", "vlaams", "néerlandais", "neerlandais"],
+  pt: ["portuguese", "português", "portugues"],
+  pl: ["polish", "polski"],
+  ru: ["russian", "русский"],
+  tr: ["turkish", "türkçe", "turkce"],
+  ja: ["japanese", "日本語"],
+  zh: ["chinese", "mandarin", "中文"],
+  ar: ["arabic", "العربية"],
+  id: ["indonesian", "bahasa indonesia"],
+  ms: ["malay", "bahasa melayu"],
+  th: ["thai", "ภาษาไทย"],
+};
+
+function matchesUILanguage(stationLanguage: string, uiLang: string): boolean {
+  if (!stationLanguage) return false;
+  const aliases = LANG_MATCH[uiLang];
+  if (!aliases) return false;
+  const langLower = stationLanguage.toLowerCase();
+  return aliases.some((a) => langLower.includes(a));
+}
+
 interface SuggestedLocalStationsProps {
   isFavorite: (id: string) => boolean;
   onToggleFavorite: (station: RadioStation) => void;
@@ -62,7 +94,7 @@ function normalizeRaw(raw: any): RadioStation {
 }
 
 export function SuggestedLocalStations({ isFavorite, onToggleFavorite }: SuggestedLocalStationsProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [stations, setStations] = useState<RadioStation[]>([]);
   const [countryName, setCountryName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -86,28 +118,46 @@ export function SuggestedLocalStations({ isFavorite, onToggleFavorite }: Suggest
         const code = geo.country.toUpperCase();
         if (!cancelled) setCountryName(geo.name || code);
 
-        // STRICT country filter via bycountrycodeexact + clickcount ordering.
-        // This is the correct endpoint — `searchStations` with no filter would
-        // return worldwide popular stations (BBC, SWR3...) which is exactly
-        // what we want to avoid here.
-        let result: RadioStation[] = [];
+        // Fetch a wider pool (40) so we can prioritize stations matching the
+        // user's UI language (useful for multilingual countries like BE/CH/CA).
+        let pool: RadioStation[] = [];
         try {
           const raw = await fetchWithMirrors(
             `stations/bycountrycodeexact/${encodeURIComponent(code)}`,
-            { limit: "10", order: "clickcount", reverse: "true", hidebroken: "true" },
+            { limit: "40", order: "clickcount", reverse: "true", hidebroken: "true" },
           );
-          result = raw.map(normalizeRaw).filter((s) => s.streamUrl && s.name);
+          pool = raw.map(normalizeRaw).filter((s) => s.streamUrl && s.name);
         } catch (apiErr) {
-          // Fallback: provider with country name + client-side filter on code,
-          // so users still see local stations if all mirrors are down.
           console.warn("[SuggestedLocalStations] API failed, falling back", apiErr);
           if (geo.name) {
-            const data = await radioBrowserProvider.getStationsByCountry(geo.name, 30);
-            result = data.filter((s) => s.countryCode?.toUpperCase() === code).slice(0, 10);
+            const data = await radioBrowserProvider.getStationsByCountry(geo.name, 40);
+            pool = data.filter((s) => s.countryCode?.toUpperCase() === code);
           }
         }
 
-        if (!cancelled) setStations(result);
+        // Prioritize stations matching the UI language, then fill with the
+        // rest (already ordered by clickcount). Dedupe by id.
+        const matched = pool.filter((s) => matchesUILanguage(s.language, language));
+        const seen = new Set<string>();
+        const ordered = [...matched, ...pool].filter((s) => {
+          if (seen.has(s.id)) return false;
+          seen.add(s.id);
+          return true;
+        }).slice(0, 10);
+
+        if (!cancelled) setStations(ordered);
+      } catch (e) {
+        console.warn("[SuggestedLocalStations] failed", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
       } catch (e) {
         console.warn("[SuggestedLocalStations] failed", e);
       } finally {
