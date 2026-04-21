@@ -1,4 +1,4 @@
-export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pl" | "zh" | "tr" | "ru" | "id" | "ms" | "ar";
+export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pl" | "zh" | "tr" | "ru" | "id" | "ms" | "th" | "ar";
 
 export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string; label: string }[] = [
   { value: "fr", flag: "🇫🇷", flagUrl: "https://flagcdn.com/w40/fr.png", label: "Français" },
