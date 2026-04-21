@@ -1,4 +1,4 @@
-export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pl" | "zh" | "tr" | "ru" | "id" | "ms" | "ar";
+export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pl" | "zh" | "tr" | "ru" | "id" | "ms" | "th" | "ar";
 
 export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string; label: string }[] = [
   { value: "fr", flag: "🇫🇷", flagUrl: "https://flagcdn.com/w40/fr.png", label: "Français" },
@@ -15,6 +15,7 @@ export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string;
   { value: "ru", flag: "🇷🇺", flagUrl: "https://flagcdn.com/w40/ru.png", label: "Русский" },
   { value: "id", flag: "🇮🇩", flagUrl: "https://flagcdn.com/w40/id.png", label: "Bahasa Indonesia" },
   { value: "ms", flag: "🇲🇾", flagUrl: "https://flagcdn.com/w40/my.png", label: "Bahasa Malaysia" },
+  { value: "th", flag: "🇹🇭", flagUrl: "https://flagcdn.com/w40/th.png", label: "ภาษาไทย" },
   { value: "ar", flag: "🇸🇦", flagUrl: "https://flagcdn.com/w40/sa.png", label: "العربية" },
 ];
 
@@ -4414,5 +4415,8 @@ const translations: Record<Language, Record<string, string>> = {
 // We seed `ms` with `id` translations as a high-quality fallback until
 // dedicated Malay strings are added.
 translations.ms = { ...translations.id };
+
+// Thai translation - temporary fallback from Indonesian (pending proper Thai translations)
+translations.th = { ...translations.id };
 
 export default translations;
