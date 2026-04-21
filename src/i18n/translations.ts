@@ -3789,7 +3789,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.premium": "Premium",
     "nav.settings": "Pengaturan",
     "nav.about": "Tentang",
-    "sidebar.stationCount": "Lebih dari 50.000 stasiun radio di 230+ negara, gratis, tanpa pendaftaran.",
+    "sidebar.stationCount": "Lebih dari 50.000 stasiun radio di 230+ negara, gratis, tanpa pendaftaran, tanpa iklan tambahan.",
     "sidebar.tbmTeaser": "Fitur eksklusif kami: TimeBack Machine — putar ulang radio langsung, dengarkan kembali 5 menit terakhir, rekam acara Anda dalam MP3.",
     "sidebar.tbmHowItWorks": "Bagaimana cara kerjanya?",
     "sidebar.podcastTeaser": "Ingin mendengarkan podcast?",
