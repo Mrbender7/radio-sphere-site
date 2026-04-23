@@ -165,16 +165,18 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
           <ChevronDown className="w-5 h-5" />
         </button>
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("player.nowPlaying")}</span>
-        <div className="flex items-center gap-1 -mr-2">
-          {currentStation.homepage && (
-            <button onClick={handleOpenWebsite} className="w-9 h-9 rounded-full bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] flex items-center justify-center text-[10px] font-extrabold text-white shadow-md shadow-primary/30 hover:opacity-90 transition-opacity">
-              www
-            </button>
-          )}
+        <div className="flex items-start gap-1 -mr-2">
           <CastButton />
-          <button onClick={handleShare} className="p-2">
-            <Share2 className="w-5 h-5 text-muted-foreground" />
-          </button>
+          <div className="flex flex-col items-center gap-1">
+            <button onClick={handleShare} className="p-2">
+              <Share2 className="w-5 h-5 text-muted-foreground" />
+            </button>
+            {currentStation.homepage && (
+              <button onClick={handleOpenWebsite} className="w-9 h-9 rounded-full bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] flex items-center justify-center text-[10px] font-extrabold text-white shadow-md shadow-primary/30 hover:opacity-90 transition-opacity">
+                www
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
