@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface AudioVisualizerProps {
   size?: "small" | "medium" | "large";
@@ -27,9 +27,22 @@ const barAnimations = [
 
 export function AudioVisualizer({ size = "small", active = true, className }: AudioVisualizerProps) {
   const { bars, height, gap, barWidth } = sizeConfig[size];
-  const totalWidth = bars * barWidth + (bars - 1) * gap;
+  const [isMobile, setIsMobile] = useState(false);
+  const visibleBars = isMobile ? 5 : bars;
+  const totalWidth = visibleBars * barWidth + (visibleBars - 1) * gap;
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 639px)");
+    const updateMobileState = () => setIsMobile(query.matches);
+
+    updateMobileState();
+    query.addEventListener("change", updateMobileState);
+
+    return () => query.removeEventListener("change", updateMobileState);
+  }, []);
+
   const instanceAnimations = useMemo(
-    () => Array.from({ length: bars }, (_, i) => {
+    () => Array.from({ length: visibleBars }, (_, i) => {
       const base = barAnimations[i % barAnimations.length];
       const variance = Math.random() * 0.28 - 0.14;
       const duration = `${Math.max(0.28, parseFloat(base.duration) + variance).toFixed(2)}s`;
@@ -38,12 +51,12 @@ export function AudioVisualizer({ size = "small", active = true, className }: Au
 
       return { duration, delay, minScale };
     }),
-    [bars]
+    [visibleBars]
   );
 
   return (
     <div className={cn("flex items-end justify-center", className)} style={{ height, width: totalWidth, gap }}>
-      {Array.from({ length: bars }).map((_, i) => (
+      {Array.from({ length: visibleBars }).map((_, i) => (
         <span
           key={i}
           className="rounded-full transition-transform duration-200"
