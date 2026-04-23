@@ -224,16 +224,15 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         <div className="flex items-start gap-3">
           {/* Left: title + tags + controls */}
           <div className="flex-1 min-w-0 space-y-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
+            <div className="relative">
+              <div className="min-w-0 text-center px-12">
                 {/* Station name with visualizer + marquee */}
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {isPlaying && <AudioVisualizer size="medium" />}
+                <div className="flex flex-col items-center gap-2 min-w-0">
                   {/* Hidden measurer */}
                   <span ref={measureRef} className="text-3xl sm:text-4xl font-heading font-bold whitespace-nowrap absolute invisible pointer-events-none">{currentStation.name}</span>
-                  <div ref={textContainerRef} className="overflow-hidden flex-1 min-w-0">
+                  <div ref={textContainerRef} className="overflow-hidden w-full min-w-0">
                     <p
-                      className={`text-3xl sm:text-4xl font-heading font-bold bg-gradient-to-r from-[hsl(220,90%,60%)] to-[hsl(280,80%,60%)] bg-clip-text text-transparent whitespace-nowrap ${needsMarquee ? "w-fit animate-marquee" : ""}`}
+                      className={`text-3xl sm:text-4xl font-heading font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent whitespace-nowrap mx-auto ${needsMarquee ? "w-fit animate-marquee" : ""}`}
                       style={needsMarquee ? { animationDuration: `${marqueeDuration}s` } : undefined}
                     >
                       {needsMarquee
@@ -242,6 +241,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
                       }
                     </p>
                   </div>
+                  {isPlaying && <AudioVisualizer size="medium" />}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   {currentStation.tags.length > 0 ? currentStation.tags.slice(0, 2).join(' • ') : currentStation.country}
@@ -249,7 +249,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
               </div>
               <button
                 onClick={() => toggleFavorite(currentStation)}
-                className="flex-shrink-0 p-2 rounded-full hover:bg-accent transition-colors"
+                className="absolute right-0 top-0 p-2 rounded-full hover:bg-accent transition-colors"
               >
                 <Heart className={`w-6 h-6 ${fav ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-muted-foreground"}`} />
               </button>
