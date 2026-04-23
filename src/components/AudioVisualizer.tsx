@@ -7,9 +7,9 @@ interface AudioVisualizerProps {
 }
 
 const sizeConfig = {
-  small: { bars: 4, height: 16, gap: 2, barWidth: 9 },
-  medium: { bars: 5, height: 24, gap: 2, barWidth: 9 },
-  large: { bars: 9, height: 40, gap: 3, barWidth: 12 },
+  small: { bars: 10, height: 16, gap: 2, barWidth: 6 },
+  medium: { bars: 10, height: 24, gap: 2, barWidth: 6 },
+  large: { bars: 10, height: 40, gap: 3, barWidth: 8 },
 };
 
 const barAnimations = [
@@ -49,7 +49,7 @@ export function AudioVisualizer({ size = "small", className }: AudioVisualizerPr
           style={{
             width: barWidth,
             height: "100%",
-            background: "linear-gradient(to top, hsl(var(--primary)), hsl(var(--accent-foreground)))",
+            background: "linear-gradient(to top, hsl(var(--primary)), hsl(var(--primary-glow)))",
             animation: `equalizer-bar ${instanceAnimations[i].duration} ease-in-out ${instanceAnimations[i].delay} infinite alternate`,
             transformOrigin: "bottom",
             ["--bar-min-scale" as string]: instanceAnimations[i].minScale,
