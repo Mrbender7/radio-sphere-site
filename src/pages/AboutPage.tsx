@@ -108,7 +108,7 @@ export function AboutPage({ onReopenWelcome, onNavigatePrivacy, onNavigateSettin
           className="w-full rounded-xl border border-border bg-accent/50 p-4 mb-4 text-left transition-all"
         >
           <div className="flex items-center gap-3">
-            <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Globe className="w-4 h-4 text-primary shrink-0" />
             <h3 className="text-sm font-semibold text-foreground flex-1">{t("settings.radioSource")}</h3>
             <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", radioBrowserOpen && "rotate-180")} />
           </div>
