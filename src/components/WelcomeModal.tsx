@@ -59,7 +59,7 @@ export function WelcomeModal({ open, onOpenChange, onComplete }: WelcomeModalPro
             <img
               src={radioSphereLogo}
               alt="RadioSphere.be"
-              className="w-24 h-24 rounded-2xl relative z-10 mix-blend-screen animate-logo-glow"
+              className="w-24 h-24 object-contain rounded-2xl relative z-10 mix-blend-screen animate-logo-glow"
             />
           </div>
 
