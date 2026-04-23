@@ -5,6 +5,11 @@ import { BookOpen, Home, Search, Heart, Settings, ChevronDown, Moon, Cast, Shiel
 import { cn } from "@/lib/utils";
 import { requestAllPermissions } from "@/utils/permissions";
 import { useIsMobile } from "@/hooks/use-mobile";
+import radioSphereLogo from "@/assets/new-radio-logo.png";
+
+function WelcomeLogoIcon({ className }: { className?: string }) {
+  return <img src={radioSphereLogo} alt="RadioSphere.be" className={cn("object-contain rounded-md mix-blend-screen animate-logo-glow", className)} />;
+}
 
 const SECTIONS = [
   { id: "home", icon: Home, titleKey: "guide.home", contentKey: "guide.homeContent" },
@@ -13,7 +18,7 @@ const SECTIONS = [
   { id: "settings", icon: Settings, titleKey: "guide.settings", contentKey: "guide.settingsContent" },
   { id: "permissions", icon: ShieldAlert, titleKey: "guide.permissions", contentKey: "guide.permissionsContent" },
   { id: "sleepTimer", icon: Moon, titleKey: "guide.sleepTimer", contentKey: "guide.sleepTimerContent" },
-  { id: "recorder", icon: Disc, titleKey: "guide.recorder", contentKey: "guide.recorderContent" },
+  { id: "recorder", icon: WelcomeLogoIcon, titleKey: "guide.recorder", contentKey: "guide.recorderContent" },
   { id: "chromecast", icon: Cast, titleKey: "guide.chromecast", contentKey: "guide.chromecastContent" },
 ] as const;
 

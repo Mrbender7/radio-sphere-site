@@ -33,6 +33,10 @@ function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: Reac
   );
 }
 
+function WelcomeLogoIcon({ className }: { className?: string }) {
+  return <img src={radioSphereLogo} alt="RadioSphere.be" className={cn("object-contain rounded-md mix-blend-screen animate-logo-glow", className)} />;
+}
+
 interface AboutPageProps {
   onReopenWelcome?: () => void;
   onNavigatePrivacy?: () => void;
@@ -71,7 +75,7 @@ export function AboutPage({ onReopenWelcome, onNavigatePrivacy, onNavigateSettin
         )}
 
         {/* TimeBack Machine */}
-        <CollapsibleSection icon={RotateCcw} title="TimeBack Machine">
+        <CollapsibleSection icon={WelcomeLogoIcon} title="TimeBack Machine">
           <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">
             <p>{t("tbmModal.intro")}</p>
             <div className="space-y-2">
