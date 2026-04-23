@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 interface AudioVisualizerProps {
   size?: "small" | "medium" | "large";
@@ -6,9 +7,9 @@ interface AudioVisualizerProps {
 }
 
 const sizeConfig = {
-  small: { bars: 4, height: 16, gap: 2, barWidth: 3 },
-  medium: { bars: 5, height: 24, gap: 2, barWidth: 3 },
-  large: { bars: 9, height: 40, gap: 3, barWidth: 4 },
+  small: { bars: 4, height: 48, gap: 2, barWidth: 3 },
+  medium: { bars: 5, height: 72, gap: 2, barWidth: 3 },
+  large: { bars: 9, height: 120, gap: 3, barWidth: 4 },
 };
 
 const barAnimations = [
@@ -26,6 +27,18 @@ const barAnimations = [
 export function AudioVisualizer({ size = "small", className }: AudioVisualizerProps) {
   const { bars, height, gap, barWidth } = sizeConfig[size];
   const totalWidth = bars * barWidth + (bars - 1) * gap;
+  const instanceAnimations = useMemo(
+    () => Array.from({ length: bars }, (_, i) => {
+      const base = barAnimations[i % barAnimations.length];
+      const variance = Math.random() * 0.28 - 0.14;
+      const duration = `${Math.max(0.28, parseFloat(base.duration) + variance).toFixed(2)}s`;
+      const delay = `${(Math.random() * 0.36).toFixed(2)}s`;
+      const minScale = (0.12 + Math.random() * 0.36).toFixed(2);
+
+      return { duration, delay, minScale };
+    }),
+    [bars]
+  );
 
   return (
     <div className={cn("flex items-end justify-center", className)} style={{ height, width: totalWidth, gap }}>
@@ -36,14 +49,16 @@ export function AudioVisualizer({ size = "small", className }: AudioVisualizerPr
           style={{
             width: barWidth,
             height: "100%",
-            background: "linear-gradient(to top, hsl(225, 90%, 58%), hsl(280, 80%, 60%))",
-            animation: `equalizer-bar ${barAnimations[i % barAnimations.length].duration} ease-in-out ${barAnimations[i % barAnimations.length].delay} infinite alternate`,
+            background: "linear-gradient(to top, hsl(var(--primary)), hsl(var(--accent-foreground)))",
+            animation: `equalizer-bar ${instanceAnimations[i].duration} ease-in-out ${instanceAnimations[i].delay} infinite alternate`,
+            transformOrigin: "bottom",
+            ["--bar-min-scale" as string]: instanceAnimations[i].minScale,
           }}
         />
       ))}
       <style>{`
         @keyframes equalizer-bar {
-          0% { transform: scaleY(0.2); }
+          0% { transform: scaleY(var(--bar-min-scale)); }
           100% { transform: scaleY(1); }
         }
       `}</style>
