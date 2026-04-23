@@ -155,7 +155,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-y-auto animate-in slide-in-from-bottom duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pb-2" style={{ paddingTop: "max(env(safe-area-inset-top, 24px), 1.5rem)" }}>
+      <div className="relative flex items-start justify-between px-4 pb-2" style={{ paddingTop: "max(env(safe-area-inset-top, 24px), 1.5rem)" }}>
         <button
           onClick={closeFullScreen}
           aria-label={t("aria.close") || "Close"}
@@ -164,7 +164,9 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
         >
           <ChevronDown className="w-5 h-5" />
         </button>
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("player.nowPlaying")}</span>
+        <span className="absolute left-1/2 top-[calc(max(env(safe-area-inset-top,24px),1.5rem)+0.75rem)] -translate-x-1/2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {t("player.nowPlaying")}
+        </span>
         <div className="flex items-start gap-1 -mr-2">
           <CastButton />
           <div className="flex flex-col items-center gap-1">
