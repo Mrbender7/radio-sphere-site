@@ -297,7 +297,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
                     : '0 0 6px hsla(0,0%,45%,0.1), 0 0 14px hsla(0,0%,40%,0.06), 0 2px 8px rgba(0,0,0,0.5)',
                 }}
               >
-                <img src={tbmLogo} alt="Timeback Machine" className="w-full h-full object-cover rounded-full" />
+                <img src={tbmLogo} alt="Timeback Machine" className="w-[92%] h-[92%] object-cover rounded-full" />
               </button>
 
               {/* Play/Pause */}
