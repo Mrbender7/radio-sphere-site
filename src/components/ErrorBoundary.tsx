@@ -77,7 +77,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-8 text-center gap-6">
-          <img src={radioSphereLogo} alt="RadioSphere.be" className="w-16 h-16 rounded-2xl opacity-80" />
+          <img src={radioSphereLogo} alt="RadioSphere.be" className="w-16 h-16 object-contain rounded-2xl opacity-80" />
           <h1 className="text-xl font-heading font-bold">Something went wrong</h1>
           <p className="text-sm text-muted-foreground max-w-sm">
             An unexpected error occurred. Please reload the page to continue.
