@@ -86,7 +86,7 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
 
   return (
     <div className="flex-1 overflow-y-auto px-4 lg:px-8 pb-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto min-h-full flex flex-col">
         <div className="flex items-center gap-3 mt-6 mb-6">
           <SettingsIcon className="w-9 h-9 text-primary" />
           <h1 className="text-2xl lg:text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent drop-shadow-[0_0_12px_hsla(250,80%,60%,0.4)]">
@@ -356,32 +356,34 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
         {/* User Guide */}
         <UserGuideModal onReopenWelcome={onReopenWelcome} />
 
-        {/* Reset app */}
-        {onResetApp && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="flex items-center justify-center gap-1.5 text-xs text-destructive hover:underline mb-4 mt-2 w-full">
-                <Trash2 className="w-3.5 h-3.5" />
-                {t("settings.resetApp")}
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("settings.resetApp")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("settings.resetConfirm")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={onResetApp} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  {t("settings.resetButton")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+        <div className="mt-auto pt-8">
+          {/* Reset app */}
+          {onResetApp && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="flex items-center justify-center gap-1.5 text-xs text-destructive hover:underline mb-4 mt-2 w-full">
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {t("settings.resetApp")}
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("settings.resetApp")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("settings.resetConfirm")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={onResetApp} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    {t("settings.resetButton")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
 
-        {/* Shared footer */}
-        <AboutFooter />
+          {/* Shared footer */}
+          <AboutFooter />
+        </div>
 
         {/* Unavailable stations dialog */}
         <Dialog open={showUnavailableDialog} onOpenChange={setShowUnavailableDialog}>
