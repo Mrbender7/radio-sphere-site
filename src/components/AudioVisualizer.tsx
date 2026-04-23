@@ -3,6 +3,7 @@ import { useMemo } from "react";
 
 interface AudioVisualizerProps {
   size?: "small" | "medium" | "large";
+  active?: boolean;
   className?: string;
 }
 
@@ -24,7 +25,7 @@ const barAnimations = [
   { duration: "0.48s", delay: "0.18s" },
 ];
 
-export function AudioVisualizer({ size = "small", className }: AudioVisualizerProps) {
+export function AudioVisualizer({ size = "small", active = true, className }: AudioVisualizerProps) {
   const { bars, height, gap, barWidth } = sizeConfig[size];
   const totalWidth = bars * barWidth + (bars - 1) * gap;
   const instanceAnimations = useMemo(
@@ -45,12 +46,14 @@ export function AudioVisualizer({ size = "small", className }: AudioVisualizerPr
       {Array.from({ length: bars }).map((_, i) => (
         <span
           key={i}
-          className="rounded-full"
+          className="rounded-full transition-transform duration-200"
           style={{
             width: barWidth,
             height: "100%",
             background: "linear-gradient(to top, hsl(var(--primary)), hsl(var(--primary-glow)))",
-            animation: `equalizer-bar ${instanceAnimations[i].duration} ease-in-out ${instanceAnimations[i].delay} infinite alternate`,
+            animation: active ? `equalizer-bar ${instanceAnimations[i].duration} ease-in-out ${instanceAnimations[i].delay} infinite alternate` : "none",
+            opacity: active ? 1 : 0.55,
+            transform: active ? undefined : "scaleY(0.12)",
             transformOrigin: "bottom",
             ["--bar-min-scale" as string]: instanceAnimations[i].minScale,
           }}
