@@ -7,9 +7,9 @@ interface AudioVisualizerProps {
 }
 
 const sizeConfig = {
-  small: { bars: 4, height: 48, gap: 2, barWidth: 3 },
-  medium: { bars: 5, height: 72, gap: 2, barWidth: 3 },
-  large: { bars: 9, height: 120, gap: 3, barWidth: 4 },
+  small: { bars: 4, height: 16, gap: 2, barWidth: 9 },
+  medium: { bars: 5, height: 24, gap: 2, barWidth: 9 },
+  large: { bars: 9, height: 40, gap: 3, barWidth: 12 },
 };
 
 const barAnimations = [
