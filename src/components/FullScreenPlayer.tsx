@@ -359,9 +359,9 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
             aria-label="Télécharger RadioSphere.be sur Google Play"
           >
             <img
-              src="https://play.google.com/intl/en_us/badges/static/images/badges/fr_badge_web_generic.png"
-              alt="Disponible sur Google Play"
-              className="h-12 w-auto"
+              src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+              alt="Get it on Google Play"
+              className="h-24 w-auto"
               loading="lazy"
             />
           </a>
