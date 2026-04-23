@@ -245,7 +245,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
                       }
                     </p>
                   </div>
-                  {isPlaying && <AudioVisualizer size="medium" />}
+                  <AudioVisualizer size="medium" active={isPlaying} />
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   {currentStation.tags.length > 0 ? currentStation.tags.slice(0, 2).join(' • ') : currentStation.country}
