@@ -91,7 +91,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
           <img
             src={radioSphereLogo}
             alt="RadioSphere.be"
-            className={cn("rounded-xl mix-blend-screen animate-logo-glow flex-shrink-0 object-contain", collapsed ? "w-10 h-auto" : "w-11 h-11")}
+            className={cn("rounded-xl mix-blend-screen animate-logo-glow flex-shrink-0 object-contain", collapsed ? "w-10 h-10" : "w-11 h-11")}
           />
           {!collapsed && (
             <h1 className="text-xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
