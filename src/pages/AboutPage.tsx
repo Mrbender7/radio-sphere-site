@@ -2,7 +2,7 @@ import { useTranslation } from "@/contexts/LanguageContext";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { cn } from "@/lib/utils";
-import { Globe, ChevronDown, ExternalLink, ShieldCheck, RotateCcw, Sparkles, Settings as SettingsIcon } from "lucide-react";
+import { Globe, ChevronDown, ExternalLink, ShieldCheck, Rewind, Sparkles, Settings as SettingsIcon } from "lucide-react";
 import { useState } from "react";
 import { AboutFooter } from "@/components/AboutFooter";
 
@@ -31,10 +31,6 @@ function CollapsibleSection({ icon: Icon, title, badge, children }: { icon: Reac
       </div>
     </div>
   );
-}
-
-function WelcomeLogoIcon({ className }: { className?: string }) {
-  return <img src={radioSphereLogo} alt="RadioSphere.be" className={cn("object-contain rounded-md mix-blend-screen animate-logo-glow", className)} />;
 }
 
 interface AboutPageProps {
@@ -75,7 +71,7 @@ export function AboutPage({ onReopenWelcome, onNavigatePrivacy, onNavigateSettin
         )}
 
         {/* TimeBack Machine */}
-        <CollapsibleSection icon={WelcomeLogoIcon} title="TimeBack Machine">
+        <CollapsibleSection icon={Rewind} title="TimeBack Machine">
           <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">
             <p>{t("tbmModal.intro")}</p>
             <div className="space-y-2">
