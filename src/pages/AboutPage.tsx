@@ -45,7 +45,7 @@ export function AboutPage({ onReopenWelcome, onNavigatePrivacy, onNavigateSettin
 
   return (
     <div className="flex-1 overflow-y-auto px-4 lg:px-8 pb-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto min-h-full flex flex-col">
         <div className="flex items-center gap-3 mt-6 mb-6">
           <img src={radioSphereLogo} alt="RadioSphere.be" className="w-10 h-10 object-contain rounded-xl mix-blend-screen animate-logo-glow" />
           <h1 className="text-2xl lg:text-3xl font-heading font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(280,80%,60%)] bg-clip-text text-transparent drop-shadow-[0_0_12px_hsla(250,80%,60%,0.4)]">{t("nav.about")}</h1>
@@ -181,31 +181,30 @@ export function AboutPage({ onReopenWelcome, onNavigatePrivacy, onNavigateSettin
           </div>
         </CollapsibleSection>
 
-        {/* Privacy Policy link */}
-        <button
-          onClick={onNavigatePrivacy}
-          className="flex items-center justify-center gap-1.5 text-xs text-primary hover:underline mb-3 w-full"
-        >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          {t("settings.privacyPolicy")}
-        </button>
-
-        {/* Reopen welcome */}
-        {onReopenWelcome && (
+        <div className="mt-auto pt-8">
+          {/* Privacy Policy link */}
           <button
-            onClick={onReopenWelcome}
+            onClick={onNavigatePrivacy}
             className="flex items-center justify-center gap-1.5 text-xs text-primary hover:underline mb-3 w-full"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            {t("settings.reopenWelcome")}
+            <ShieldCheck className="w-3.5 h-3.5" />
+            {t("settings.privacyPolicy")}
           </button>
-        )}
 
+          {/* Reopen welcome */}
+          {onReopenWelcome && (
+            <button
+              onClick={onReopenWelcome}
+              className="flex items-center justify-center gap-1.5 text-xs text-primary hover:underline mb-3 w-full"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {t("settings.reopenWelcome")}
+            </button>
+          )}
 
-
-
-        {/* Shared footer */}
-        <AboutFooter />
+          {/* Shared footer */}
+          <AboutFooter />
+        </div>
       </div>
     </div>
   );
