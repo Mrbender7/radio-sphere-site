@@ -349,6 +349,23 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
             </>
           )}
         </div>
+        <div className="flex justify-center">
+          <a
+            href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-umami-event="google-play-clicked"
+            className="inline-flex items-center justify-center rounded-lg transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label="Télécharger RadioSphere.be sur Google Play"
+          >
+            <img
+              src="https://play.google.com/intl/en_us/badges/static/images/badges/fr_badge_web_generic.png"
+              alt="Disponible sur Google Play"
+              className="h-12 w-auto"
+              loading="lazy"
+            />
+          </a>
+        </div>
       </div>
 
       {/* Timeback Machine overlay */}
