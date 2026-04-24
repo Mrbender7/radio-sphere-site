@@ -95,7 +95,7 @@ export function InAppBrowserBanner() {
               data-umami-event="inapp-banner-copy-link"
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              <span>{copied ? "✓" : t("inAppBrowser.copyLink") || "Copy link"}</span>
+              <span>{copied ? "✓" : "Copy link"}</span>
             </button>
           </div>
         </div>
