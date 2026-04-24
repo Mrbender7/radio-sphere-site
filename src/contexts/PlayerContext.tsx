@@ -21,22 +21,30 @@ if (isBrowser) {
   globalAudio.preload = "auto";
 }
 
-// Silent 1-second WAV as base64 data URI (~1KB) — keeps Android WebView process alive
+// Silent 1-second WAV as base64 data URI (~1KB) — keeps Android WebView process alive.
+// Wrapped in try/catch because some in-app browser WebViews (Facebook/Instagram) reject
+// data: audio URIs at construction time and would crash module import otherwise.
 const SILENCE_DATA_URI = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 const silentAudio = isBrowser ? new Audio() : ({} as HTMLAudioElement);
 if (isBrowser) {
-  silentAudio.loop = true;
-  silentAudio.volume = 0.01;
-  silentAudio.src = SILENCE_DATA_URI;
+  try {
+    silentAudio.loop = true;
+    silentAudio.volume = 0.01;
+    silentAudio.src = SILENCE_DATA_URI;
+  } catch (e) {
+    console.warn("[RadioSphere] silentAudio init failed (likely WebView restriction):", e);
+  }
 }
 
 function startSilentLoop() {
-  silentAudio.play().catch(() => {});
+  try { silentAudio.play().catch(() => {}); } catch { /* noop */ }
 }
 
 function stopSilentLoop() {
-  silentAudio.pause();
-  silentAudio.currentTime = 0;
+  try {
+    silentAudio.pause();
+    silentAudio.currentTime = 0;
+  } catch { /* noop */ }
 }
 
 interface PlayerState {

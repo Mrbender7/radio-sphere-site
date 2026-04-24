@@ -25,6 +25,7 @@ import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
 import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
 import { useBackButton } from "@/hooks/useBackButton";
+import { isInAppBrowser, isLocalStorageWorking } from "@/utils/inAppBrowser";
 import type { Language } from "@/i18n/translations";
 
 const ONBOARDING_KEY = "radiosphere_onboarded";
@@ -33,9 +34,13 @@ function hasCompletedOnboarding(): boolean {
   try {
     // During SSG build, skip welcome page to render real content for SEO
     if (import.meta.env.SSR) return true;
+    // In WebViews where localStorage is broken/partitioned, the welcome modal
+    // would re-open on every load and (since persistence fails) potentially
+    // never close — blocking ALL clicks under its overlay. Skip it entirely.
+    if (isInAppBrowser() && !isLocalStorageWorking()) return true;
     return localStorage.getItem(ONBOARDING_KEY) === "true";
   } catch {
-    return false;
+    return true;
   }
 }
 

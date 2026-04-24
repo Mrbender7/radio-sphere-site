@@ -1,5 +1,6 @@
 import { ViteReactSSG } from "vite-react-ssg";
 import { routes } from "./routes";
+import { isInAppBrowser } from "./utils/inAppBrowser";
 import "./index.css";
 
 export const createRoot = ViteReactSSG({ routes });
@@ -61,37 +62,59 @@ if (typeof window !== "undefined") {
   });
 }
 
-// Register PWA service worker with auto-update (client-side only)
+// Register PWA service worker with auto-update (client-side only).
+// IMPORTANT: Skip SW registration entirely inside in-app browser WebViews
+// (Facebook, Instagram, TikTok…). On those platforms the SW often caches
+// corrupted chunks that then break navigation/JSON parsing on next load.
 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  // If the previous session crashed on JSON.parse, purge the api-cache before
-  // anything tries to read from it again.
-  try {
-    if (sessionStorage.getItem(CRASH_FLAG_KEY) === "1" && "caches" in window) {
-      sessionStorage.removeItem(CRASH_FLAG_KEY);
-      caches
-        .delete("api-cache")
-        .then((deleted) => {
-          console.log(`[RadioSphere] api-cache purge after crash: ${deleted ? "ok" : "no entry"}`);
-        })
-        .catch(() => {
-          /* noop */
-        });
+  if (isInAppBrowser()) {
+    console.log("[RadioSphere] In-app WebView detected — skipping SW registration and purging caches");
+    // Proactively unregister any previously installed SW and wipe its caches.
+    try {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.unregister().catch(() => false));
+      }).catch(() => {});
+    } catch { /* noop */ }
+    try {
+      if ("caches" in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((k) => caches.delete(k).catch(() => false));
+        }).catch(() => {});
+      }
+    } catch { /* noop */ }
+  } else {
+    // If the previous session crashed on JSON.parse, purge the api-cache before
+    // anything tries to read from it again.
+    try {
+      if (sessionStorage.getItem(CRASH_FLAG_KEY) === "1" && "caches" in window) {
+        sessionStorage.removeItem(CRASH_FLAG_KEY);
+        caches
+          .delete("api-cache")
+          .then((deleted) => {
+            console.log(`[RadioSphere] api-cache purge after crash: ${deleted ? "ok" : "no entry"}`);
+          })
+          .catch(() => {
+            /* noop */
+          });
+      }
+    } catch {
+      /* sessionStorage may be unavailable in private mode */
     }
-  } catch {
-    /* sessionStorage may be unavailable in private mode */
-  }
 
-  import("virtual:pwa-register").then(({ registerSW }) => {
-    registerSW({
-      immediate: true,
-      onNeedRefresh() {
-        if (confirm("Une nouvelle version de RadioSphere.be est disponible. Recharger ?")) {
-          window.location.reload();
-        }
-      },
-      onOfflineReady() {
-        console.log("[RadioSphere] App prête pour le mode hors ligne");
-      },
+    import("virtual:pwa-register").then(({ registerSW }) => {
+      registerSW({
+        immediate: true,
+        onNeedRefresh() {
+          if (confirm("Une nouvelle version de RadioSphere.be est disponible. Recharger ?")) {
+            window.location.reload();
+          }
+        },
+        onOfflineReady() {
+          console.log("[RadioSphere] App prête pour le mode hors ligne");
+        },
+      });
+    }).catch((e) => {
+      console.warn("[RadioSphere] PWA register failed:", e);
     });
-  });
+  }
 }
