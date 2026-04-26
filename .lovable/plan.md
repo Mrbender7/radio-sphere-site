@@ -1,91 +1,88 @@
-# Audit WebView (Facebook / Instagram / TikTok…) — corrections navigation
+## Diagnostic rapide
 
-## Diagnostic
+Le symptôme “visites Facebook de 1 seconde” correspond très probablement à un écran d’erreur/cache affiché au chargement ou à un blocage JavaScript avant interaction.
 
-Après lecture du code, j'ai identifié **plusieurs causes cumulées** qui empêchent la navigation dans les WebViews intégrés (Facebook en priorité). Les onglets (Accueil, Explorer, Favoris, etc.) ne réagissent pas aux clics, ou la page semble figée.
+J’ai identifié plusieurs points encore risqués pour les WebViews Facebook/Instagram :
 
-### Cause #1 — Piège `history.pushState` dans `useBackButton`
-Dans `src/hooks/useBackButton.ts`, le fallback web (utilisé quand `@capacitor/app` n'est pas natif) :
-1. Pousse une entrée bidon dans l'historique au montage : `window.history.pushState(null, "", window.location.href)`.
-2. À chaque `popstate`, **repousse** une nouvelle entrée. Résultat : l'utilisateur est piégé sur la page courante.
+1. **Le Service Worker peut encore casser les visiteurs qui avaient déjà un cache corrompu** : on le désactive dans l’app React, mais si le bundle React ne démarre pas, le visiteur peut rester bloqué avant que le nettoyage ne s’exécute.
+2. **L’écran d’erreur actuel demande encore “Clear cache & reload”** : c’est utile pour nous, mais mauvais pour un visiteur Facebook qui part immédiatement.
+3. **`localStorage.setItem(...)` non protégé dans certains hooks** peut faire tomber l’app dans une WebView restrictive : favoris, récents, onboarding banner, découvertes, quota TBM.
+4. **Chromecast SDK est chargé pour tout le monde dès `index.html`**. Dans les WebViews Facebook, c’est inutile et peut ajouter des erreurs/latences au tout premier chargement.
+5. **`navigator.mediaSession` et `new Audio()` restent partiellement non protégés** dans `PlayerContext`, donc certaines WebViews peuvent encore déclencher un crash au démarrage ou à la première lecture.
 
-Or, **`@capacitor/app` est installé comme dépendance npm** (`package.json`), donc `await import('@capacitor/app')` **réussit silencieusement** dans le WebView Facebook (le module se charge, mais `App.addListener('backButton', …)` ne reçoit jamais d'évènement car ce n'est pas un environnement natif Capacitor). Conséquence : ni le natif ne fonctionne, ni le fallback popstate ne s'active. Le bouton retour du WebView est inopérant et, plus grave, certains WebViews interprètent la combinaison « pushState + listener mort » comme une page bloquante.
+## Plan de correction
 
-### Cause #2 — Détection d'environnement Capacitor erronée
-Le code suppose qu'on est en natif dès que `@capacitor/app` peut être importé. Il faut explicitement tester `window.Capacitor?.isNativePlatform()` (ce que fait déjà `RadioAutoPlugin.ts`) avant d'utiliser l'API native.
+### 1. Nettoyage cache/Service Worker avant React
+Ajouter dans `index.html` un petit script inline exécuté très tôt :
+- détecter les WebViews Facebook/Instagram/TikTok/etc. via user-agent ;
+- unregister les Service Workers existants ;
+- vider les caches applicatifs ;
+- poser un flag mémoire pour éviter une boucle ;
+- continuer le chargement normalement.
 
-### Cause #3 — `WelcomeModal` bloquante au premier lancement
-Dans le WebView Facebook, `localStorage` peut être :
-- partitionné (chaque ouverture crée un nouveau stockage),
-- carrément désactivé (mode privé / restrictions ITP).
+Objectif : même si le cache précédent est corrompu, le visiteur Facebook n’atterrit plus sur un écran demandant de vider le cache.
 
-Donc `hasCompletedOnboarding()` renvoie toujours `false` → la `WelcomeModal` s'ouvre à chaque chargement. Or cette modale (Radix Dialog) pose un overlay plein écran avec `pointer-events: auto` qui **bloque tous les clics** sous-jacents tant qu'elle n'est pas explicitement fermée. Si le « Continue » échoue (parce que `setLanguage` essaie d'écrire dans localStorage qui throw), la modale ne se ferme jamais → app figée.
+### 2. Ne plus charger Chromecast dans les WebViews
+Modifier `index.html` pour ne charger `cast_sender.js` que hors WebView in-app.
 
-### Cause #4 — `InAppBrowserBanner` correctement détecté mais sans véritable solution
-Le bandeau s'affiche bien (regex couvre FBAN/FBAV/Instagram/etc.) mais propose `window.open(url, "_blank")` qui, dans un WebView Facebook, **est bloqué** ou ouvre dans la même WebView (no-op). Il faut proposer le « copier le lien » et ouvrir via `intent://` / `x-safari-https://` quand possible.
+Dans `useCast.ts`, ajouter aussi un court-circuit : si WebView détectée, passer directement en mode fallback/unavailable sans tenter d’initialiser le Cast SDK.
 
-### Cause #5 — Service Worker dans un WebView
-`registerSW` est appelé même dans Facebook WebView. Sur certains WebViews, l'enregistrement échoue silencieusement, sur d'autres il met en cache des chunks qui plantent ensuite. Il faut **désactiver le SW dans les WebViews détectés**.
+Objectif : réduire les scripts tiers inutiles et les risques de crash sur Facebook WebView.
 
-### Cause #6 — `WakeLock` / `MediaSession` non gardés
-Plusieurs `navigator.wakeLock.request` et `navigator.mediaSession.setActionHandler` sont appelés sans try/catch suffisant. Un throw non géré dans un `useEffect` peut casser le rendu React entier dans certains WebViews stricts.
+### 3. Remplacer l’écran d’erreur par une récupération automatique silencieuse
+Modifier `ErrorBoundary.tsx` et `routes.tsx` :
+- en WebView : tenter automatiquement “clear caches + hard reload” une seule fois ;
+- si l’erreur persiste : afficher un message simple en français/anglais avec deux actions visibles : “Recharger” et “Ouvrir dans le navigateur” / “Copier le lien”, au lieu de “Clear cache & reload” ;
+- garder le bouton technique “Clear cache” uniquement hors WebView si nécessaire.
 
----
+Objectif : ne plus faire fuir les visiteurs avec un message technique.
 
-## Plan de corrections
+### 4. Sécuriser tous les accès storage restants
+Créer/utiliser des helpers sûrs dans `src/utils/inAppBrowser.ts` ou un petit `safeStorage.ts` :
+- `safeGetItem`, `safeSetItem`, `safeRemoveItem`, `safeClearStorage` ;
+- remplacer les `localStorage.setItem/removeItem/clear` non protégés dans :
+  - `useFavorites.ts`
+  - `useWeeklyDiscoveries.ts`
+  - `useTBMQuota.ts`
+  - `OnboardingBanner.tsx`
+  - reset app dans `Index.tsx`
 
-### 1. Réécrire `src/hooks/useBackButton.ts`
-- Ajouter un helper `isCapacitorNative()` qui retourne `window.Capacitor?.isNativePlatform() === true`.
-- Si **pas natif** → ne **jamais** importer `@capacitor/app`, ne **jamais** pousser dans `history`. Se contenter d'écouter `popstate` passivement (sans re-push).
-- Si natif → garder le comportement actuel.
-- Résultat : la nav fonctionne normalement dans tous les navigateurs (y compris WebViews), et le double-tap pour quitter reste une fonctionnalité native uniquement.
+Objectif : aucune restriction storage Facebook ne doit pouvoir crasher l’app.
 
-### 2. Robustifier `src/pages/Index.tsx` — onboarding non-bloquant
-- Si `localStorage` est inaccessible (try/catch échoue), considérer l'onboarding comme **complété par défaut** dans les WebViews détectés, pour éviter d'ouvrir la modale à chaque chargement.
-- Ajouter une garde : si la modale est ouverte mais que `localStorage` ne fonctionne pas, montrer un bouton « Continuer » qui se contente de fermer la modale en mémoire (sans persistance).
-- Détecter le WebView via le même utilitaire que `InAppBrowserBanner` (extrait dans un fichier partagé `src/utils/inAppBrowser.ts`).
+### 5. Durcir `PlayerContext` et le préchargement audio
+- Wrapper la création de `globalAudio` dans `try/catch`.
+- Créer des helpers sûrs pour `mediaSession.playbackState`, `metadata`, `setActionHandler`.
+- Wrapper les appels `audio.load()`, `audio.pause()`, `audio.src = ...` les plus sensibles.
+- Dans `useStreamPrefetch.ts`, désactiver le prefetch dans les WebViews in-app et wrapper `new Audio()`.
 
-### 3. Améliorer `src/components/InAppBrowserBanner.tsx`
-- Extraire la détection dans `src/utils/inAppBrowser.ts` (réutilisable).
-- Ajouter trois actions : **Copier le lien** (clipboard), **Ouvrir dans Chrome** (Android via `intent://…#Intent;end`), **Ouvrir dans Safari** (iOS via `x-safari-https://`).
-- Rendre le bandeau plus visible (icône d'avertissement, fond ambre/rouge) pour inciter à sortir du WebView.
-- Ne plus auto-cacher si l'utilisateur clique « Plus tard » : juste replier le bandeau en une petite pastille flottante.
+Objectif : éviter les crashes liés à audio/media APIs dans les navigateurs intégrés.
 
-### 4. Désactiver le Service Worker dans les WebViews — `src/main.tsx`
-- Avant `registerSW`, vérifier `isInAppBrowser()` → si oui, **skip** l'enregistrement et purger toutes les caches existantes (`caches.keys()` puis `delete`).
-- Évite les chunks corrompus en cache et les boucles JSON.parse déjà gérées.
+### 6. Adapter le bandeau WebView pour rassurer plutôt que faire peur
+Conserver le bandeau, mais rendre le message plus clair :
+- “Vous êtes dans le navigateur intégré Facebook. Si la lecture ne démarre pas, ouvrez dans Chrome/Safari.”
+- garder “Ouvrir dans le navigateur” et “Copier le lien”.
+- traduire aussi “Copy link” au lieu du texte hardcodé actuel.
 
-### 5. Garder les API « pointues » sous try/catch dans `PlayerContext`
-- Wrapper `navigator.mediaSession.setActionHandler` dans des try/catch individuels (déjà partiellement fait, à compléter).
-- Idem pour `wakeLock.request` (déjà fait) et la création de `silentAudio` (la lecture de `data:audio/wav` peut throw dans certains WebViews stricts → wrapper dans try/catch).
+Objectif : proposer une sortie sans bloquer la navigation ni donner l’impression que le site est cassé.
 
-### 6. CSP — autoriser `blob:` pour les workers (si Vite split en dynamique)
-- Vérifier au build si Vite produit des workers `blob:`. Si oui, ajouter `worker-src 'self' blob:` dans la `Content-Security-Policy` de `index.html` et de `public/_headers`.
-- Sinon, laisser tel quel.
+### 7. Ajouter une télémétrie minimale des crashes WebView
+Utiliser Umami si disponible pour tracer :
+- `webview-detected`
+- `webview-cache-purge-attempted`
+- `webview-error-boundary`
+- `webview-open-external`
+- `webview-copy-link`
 
-### 7. Tester / valider
-- Lancer `npm run build` pour s'assurer qu'aucune régression TypeScript.
-- Documenter dans `mem://` une nouvelle entrée `tech/webview-compat` listant les bonnes pratiques (jamais `pushState` au mount, jamais `localStorage` sans fallback, SW désactivé dans WebView).
+Objectif : confirmer ensuite si les visites Facebook dépassent enfin 1 seconde et si des erreurs persistent.
 
----
+## Vérifications prévues
 
-## Fichiers touchés
+Après implémentation :
+- lancer le build TypeScript/Vite ;
+- vérifier qu’il n’y a plus d’accès storage non protégé dans les fichiers critiques ;
+- vérifier que le Service Worker reste actif hors WebView mais est neutralisé en WebView ;
+- vérifier que le flux normal navigateur desktop/mobile reste inchangé.
 
-| Fichier | Changement |
-|---|---|
-| `src/hooks/useBackButton.ts` | Réécriture : détection Capacitor stricte, popstate passif |
-| `src/utils/inAppBrowser.ts` (nouveau) | Helpers `isInAppBrowser()`, `openInExternalBrowser(url)` |
-| `src/components/InAppBrowserBanner.tsx` | Utilise les helpers, propose copy + intent + safari |
-| `src/pages/Index.tsx` | Onboarding non-bloquant si localStorage KO |
-| `src/main.tsx` | Skip SW + purge cache dans WebView |
-| `src/contexts/PlayerContext.tsx` | Try/catch supplémentaires (silentAudio, mediaSession) |
-| `index.html` + `public/_headers` | Ajout `worker-src` si nécessaire |
-| `mem://tech/webview-compat.md` (nouveau) | Documentation des règles |
+## Résultat attendu
 
-## Notes techniques (lecture optionnelle)
-
-- **Pourquoi `@capacitor/app` se charge dans Facebook WebView ?** Vite bundle le module dans le chunk principal ou en dynamique. L'import dynamique réussit côté JS (le code est là), mais l'API `App.addListener` est en réalité un **proxy** qui appelle le bridge natif `Capacitor.toNative()` — qui n'existe pas hors app native, donc l'appel est silencieusement ignoré.
-- **Pourquoi `window.history.pushState` casse ?** Dans Facebook WebView, le bouton retour du WebView (la flèche en haut à gauche) déclenche `history.back()`. Si le seul historique est l'entrée bidon poussée par nous, l'utilisateur est piégé jusqu'à fermer la WebView entière.
-- **Pourquoi pas de session replay ?** Les WebViews bloquent souvent les iframes externes (`umami`, `replay`), donc on n'a pas de logs côté plateforme. La détection se fait à 100% via UA.
-
-Aucune dépendance npm supplémentaire requise. Tout est en JS pur natif.
+Les visiteurs venant de `l.facebook.com` / `lm.facebook.com` ne devraient plus voir l’écran “vider le cache et reloader”. Si Facebook WebView reste limitée, ils verront au pire un bandeau clair avec une action simple pour ouvrir dans Chrome/Safari, tout en pouvant naviguer dans l’app.
