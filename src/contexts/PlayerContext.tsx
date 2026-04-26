@@ -13,19 +13,31 @@ import { SSLWarningDialog } from "@/components/SSLWarningDialog";
 
 // Global audio instance — survives React lifecycle, never destroyed by re-renders
 // Exported so StreamBufferContext can swap src for seek-back
-// Guarded for SSG: Audio is not available in Node
+// Guarded for SSG and restrictive WebViews that throw on `new Audio()`.
 const isBrowser = typeof window !== "undefined";
-export const globalAudio = isBrowser ? new Audio() : ({} as HTMLAudioElement);
+
+function safeNewAudio(): HTMLAudioElement {
+  try {
+    return new Audio();
+  } catch (e) {
+    console.warn("[RadioSphere] new Audio() failed (likely WebView restriction):", e);
+    return ({} as HTMLAudioElement);
+  }
+}
+
+export const globalAudio = isBrowser ? safeNewAudio() : ({} as HTMLAudioElement);
 if (isBrowser) {
-  (globalAudio as any).playsInline = true;
-  globalAudio.preload = "auto";
+  try {
+    (globalAudio as any).playsInline = true;
+    globalAudio.preload = "auto";
+  } catch { /* noop */ }
 }
 
 // Silent 1-second WAV as base64 data URI (~1KB) — keeps Android WebView process alive.
 // Wrapped in try/catch because some in-app browser WebViews (Facebook/Instagram) reject
 // data: audio URIs at construction time and would crash module import otherwise.
 const SILENCE_DATA_URI = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
-const silentAudio = isBrowser ? new Audio() : ({} as HTMLAudioElement);
+const silentAudio = isBrowser ? safeNewAudio() : ({} as HTMLAudioElement);
 if (isBrowser) {
   try {
     silentAudio.loop = true;
@@ -37,12 +49,12 @@ if (isBrowser) {
 }
 
 function startSilentLoop() {
-  try { silentAudio.play().catch(() => {}); } catch { /* noop */ }
+  try { silentAudio.play?.().catch?.(() => {}); } catch { /* noop */ }
 }
 
 function stopSilentLoop() {
   try {
-    silentAudio.pause();
+    silentAudio.pause?.();
     silentAudio.currentTime = 0;
   } catch { /* noop */ }
 }
