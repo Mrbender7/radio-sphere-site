@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { RadioStation } from "@/types/radio";
 import { registerPlugin } from "@capacitor/core";
+import { isInAppBrowser } from "@/utils/inAppBrowser";
 
 // v2.4.7: Use Google Default Media Receiver for universal compatibility
 const CAST_APP_ID = "CC1AD845";
@@ -70,6 +71,16 @@ export function useCast() {
     if (initDoneRef.current) return;
     initDoneRef.current = true;
     setCastInitState("initializing");
+
+    // In-app browsers (Facebook, Instagram, …) cannot Cast and the SDK
+    // adds noise/errors there. Skip immediately so the rest of the app stays snappy.
+    if (!isNative && isInAppBrowser()) {
+      console.log("[RadioSphere][Cast] In-app WebView detected → skipping Cast init");
+      setCastUiMode("fallback");
+      setCastInitState("unavailable");
+      setIsCastAvailable(false);
+      return;
+    }
 
     if (isNative) {
       // ─── NATIVE PATH ─────────────────────────────────────────

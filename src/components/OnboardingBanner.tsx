@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Gift, ShieldOff, Clock, X } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { safeGetItem, safeSetItem } from "@/utils/safeStorage";
 
 const STORAGE_KEY = "radiosphere_onboarding_banner_dismissed";
 
@@ -10,13 +11,13 @@ export function OnboardingBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
+    if (!safeGetItem(STORAGE_KEY)) setVisible(true);
   }, []);
 
   if (!visible) return null;
 
   const dismiss = () => {
-    localStorage.setItem(STORAGE_KEY, "true");
+    safeSetItem(STORAGE_KEY, "true");
     setVisible(false);
   };
 

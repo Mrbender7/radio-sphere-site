@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
 import { RadioStation } from "@/types/radio";
+import { safeGetItem, safeSetItem } from "@/utils/safeStorage";
 
 const FAVORITES_KEY = "radioflow_favorites";
 const RECENT_KEY = "radioflow_recent";
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = safeGetItem(key);
     return raw ? JSON.parse(raw) : fallback;
   } catch {
     return fallback;
@@ -19,7 +20,7 @@ export function useFavorites() {
   );
 
   useEffect(() => {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    safeSetItem(FAVORITES_KEY, JSON.stringify(favorites));
   }, [favorites]);
 
   const toggleFavorite = useCallback((station: RadioStation) => {
@@ -63,7 +64,7 @@ export function useRecentStations() {
   const [recent, setRecent] = useState<RadioStation[]>(() => loadFromStorage(RECENT_KEY, []));
 
   useEffect(() => {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
+    safeSetItem(RECENT_KEY, JSON.stringify(recent));
   }, [recent]);
 
   const addRecent = useCallback((station: RadioStation) => {

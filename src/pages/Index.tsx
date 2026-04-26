@@ -26,6 +26,7 @@ import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
 import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
 import { useBackButton } from "@/hooks/useBackButton";
 import { isInAppBrowser, isLocalStorageWorking } from "@/utils/inAppBrowser";
+import { safeGetItem, safeSetItem, safeClearAll } from "@/utils/safeStorage";
 import type { Language } from "@/i18n/translations";
 
 const ONBOARDING_KEY = "radiosphere_onboarded";
@@ -38,7 +39,7 @@ function hasCompletedOnboarding(): boolean {
     // would re-open on every load and (since persistence fails) potentially
     // never close — blocking ALL clicks under its overlay. Skip it entirely.
     if (isInAppBrowser() && !isLocalStorageWorking()) return true;
-    return localStorage.getItem(ONBOARDING_KEY) === "true";
+    return safeGetItem(ONBOARDING_KEY) === "true";
   } catch {
     return true;
   }
@@ -128,7 +129,7 @@ const Index = () => {
 
   const handleWelcomeComplete = useCallback((lang: Language) => {
     setLanguage(lang);
-    try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch {}
+    safeSetItem(ONBOARDING_KEY, "true");
     setShowWelcome(false);
   }, [setLanguage]);
 
@@ -136,7 +137,7 @@ const Index = () => {
     setShowWelcome(open);
     if (!open) {
       // Mark onboarding complete even if dismissed via X / overlay / Escape
-      try { localStorage.setItem(ONBOARDING_KEY, "true"); } catch {}
+      safeSetItem(ONBOARDING_KEY, "true");
     }
   }, []);
 
@@ -145,7 +146,7 @@ const Index = () => {
   }, []);
 
   const handleResetApp = useCallback(async () => {
-    try { localStorage.clear(); sessionStorage.clear(); } catch {}
+    safeClearAll();
     // indexedDB.databases() is non-standard and missing on Chrome WebView/Firefox.
     // Guard with feature detection so the reset never throws.
     try {

@@ -1,6 +1,7 @@
 import type { RouteRecord } from "vite-react-ssg";
 import App from "./App";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
+import { isInAppBrowser, openInExternalBrowser, copyToClipboard } from "@/utils/inAppBrowser";
 
 async function clearAllCachesAndReload() {
   try {
@@ -22,10 +23,49 @@ async function clearAllCachesAndReload() {
   window.location.reload();
 }
 
-/** Direct visual fallback rendered by react-router when a route throws.
- *  No re-throw — avoids any chance of cycling and guarantees the user
- *  never sees the raw "Unexpected Application Error" screen. */
 function RouteErrorFallback() {
+  const inApp = typeof window !== "undefined" && isInAppBrowser();
+
+  if (inApp) {
+    const url = "https://radiosphere.be" + (typeof window !== "undefined" ? window.location.pathname : "");
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-6 text-center gap-5">
+        <img src={radioSphereLogo} alt="RadioSphere.be" className="w-16 h-16 object-contain rounded-2xl opacity-90" />
+        <div className="space-y-1.5 max-w-sm">
+          <h1 className="text-lg font-heading font-bold">RadioSphere.be</h1>
+          <p className="text-sm text-muted-foreground">
+            Le navigateur intégré ne supporte pas tout le site. Ouvrez‑le dans votre navigateur habituel.
+          </p>
+          <p className="text-xs text-muted-foreground/80">
+            This in-app browser is limited. Open the site in your regular browser.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 w-full max-w-xs">
+          <button
+            onClick={() => openInExternalBrowser(url)}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
+            data-umami-event="route-error-open-external"
+          >
+            Ouvrir dans le navigateur
+          </button>
+          <button
+            onClick={() => { void copyToClipboard(url); }}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-semibold border border-border hover:opacity-90 transition-opacity"
+            data-umami-event="route-error-copy-link"
+          >
+            Copier le lien
+          </button>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+        >
+          Réessayer / Try again
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-8 text-center gap-6">
       <img src={radioSphereLogo} alt="RadioSphere.be" className="w-16 h-16 object-contain rounded-2xl opacity-80" />
