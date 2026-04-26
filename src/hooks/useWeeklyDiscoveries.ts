@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RadioStation } from "@/types/radio";
 import { radioBrowserProvider } from "@/services/RadioService";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/utils/safeStorage";
 
 const DISCOVERIES_KEY = "radioshere_weekly_discoveries";
 const DISCOVERIES_HISTORY_KEY = "radioshere_discoveries_history";
@@ -22,17 +23,17 @@ interface StoredDiscoveries {
 
 function loadHistory(): string[] {
   try {
-    return JSON.parse(localStorage.getItem(DISCOVERIES_HISTORY_KEY) || "[]");
+    return JSON.parse(safeGetItem(DISCOVERIES_HISTORY_KEY) || "[]");
   } catch { return []; }
 }
 
 function saveHistory(ids: string[]) {
-  localStorage.setItem(DISCOVERIES_HISTORY_KEY, JSON.stringify(ids.slice(0, 10)));
+  safeSetItem(DISCOVERIES_HISTORY_KEY, JSON.stringify(ids.slice(0, 10)));
 }
 
 function loadCached(): StoredDiscoveries | null {
   try {
-    const raw = localStorage.getItem(DISCOVERIES_KEY);
+    const raw = safeGetItem(DISCOVERIES_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
 }
@@ -113,7 +114,7 @@ export function useWeeklyDiscoveries(favorites: RadioStation[]) {
   useEffect(() => {
     if (data && data.length > 0) {
       setDiscoveries(data);
-      localStorage.setItem(DISCOVERIES_KEY, JSON.stringify({ weekKey, stations: data }));
+      safeSetItem(DISCOVERIES_KEY, JSON.stringify({ weekKey, stations: data }));
       const history = loadHistory();
       const newIds = data.map(s => s.id);
       saveHistory([...newIds, ...history]);
@@ -121,7 +122,7 @@ export function useWeeklyDiscoveries(favorites: RadioStation[]) {
   }, [data, weekKey]);
 
   const refresh = useCallback(() => {
-    localStorage.removeItem(DISCOVERIES_KEY);
+    safeRemoveItem(DISCOVERIES_KEY);
     setForceRefresh(n => n + 1);
   }, []);
 
