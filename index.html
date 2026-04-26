@@ -58,8 +58,38 @@
     <!-- Umami Analytics -->
     <script defer src="https://cloud.umami.is/script.js" data-website-id="73a30cfd-4d45-43c2-b296-c4d3a39cd898"></script>
 
+    <!-- WebView early sanitizer: runs BEFORE the React bundle to purge any
+         corrupted Service Worker / Cache Storage entries inside Facebook,
+         Instagram, TikTok, etc. in-app browsers. Visitors must NEVER land
+         on a "clear cache & reload" screen — we do it for them silently. -->
     <script>
-      // Cast SDK bridge — captures early availability before React mounts
+      (function () {
+        try {
+          var ua = (navigator && navigator.userAgent) || "";
+          var isInApp = /FBAN|FBAV|FB_IAB|FB4A|Instagram|Line\//i.test(ua) ||
+                        /MicroMessenger|Twitter|TikTok|Snapchat|Pinterest|LinkedInApp|KAKAOTALK/i.test(ua);
+          window.__rsIsInAppBrowser = isInApp;
+          if (!isInApp) return;
+          // 1. Unregister any previously installed Service Workers
+          if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              regs.forEach(function (r) { try { r.unregister(); } catch (e) {} });
+            }).catch(function () {});
+          }
+          // 2. Wipe all Cache Storage entries (poisoned chunks)
+          if (window.caches && caches.keys) {
+            caches.keys().then(function (keys) {
+              keys.forEach(function (k) { try { caches.delete(k); } catch (e) {} });
+            }).catch(function () {});
+          }
+        } catch (e) { /* never block the page */ }
+      })();
+    </script>
+
+    <script>
+      // Cast SDK bridge — captures early availability before React mounts.
+      // Skip entirely in in-app browsers: Cast is unsupported there and the
+      // SDK adds noise/latency that makes Facebook WebViews feel broken.
       window.__castSdkReady = false;
       window['__onGCastApiAvailable'] = function(isAvailable) {
         console.log('[RadioSphere][Cast] Bridge: SDK available =', isAvailable);
@@ -68,8 +98,14 @@
           window.dispatchEvent(new Event('castSdkReady'));
         }
       };
+      (function () {
+        if (window.__rsIsInAppBrowser) return;
+        var s = document.createElement('script');
+        s.src = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
+        s.async = true;
+        document.head.appendChild(s);
+      })();
     </script>
-    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
 </head>
   <body>
     <div id="root"></div>
