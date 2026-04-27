@@ -637,7 +637,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
       toast({ title: t("player.unexpectedError"), description: t("player.unexpectedErrorDesc"), variant: "destructive" });
     }
-  }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, isCasting, castLoadMedia]);
+  }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, isCasting, castLoadMedia, armPlayTracking, cancelPlayTracking]);
 
   const play = useCallback((station: RadioStation) => {
     playInternal(station, false);
@@ -710,7 +710,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         reloadStream();
       });
     }
-  }, [state.isPlaying, state.currentStation, releaseWakeLock, requestWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, reloadStream, isCasting, toggleCastPlayPause]);
+  }, [state.isPlaying, state.currentStation, releaseWakeLock, requestWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, reloadStream, isCasting, toggleCastPlayPause, armPlayTracking, cancelPlayTracking]);
 
   const setVolume = useCallback((v: number) => {
     if (audioRef.current) audioRef.current.volume = v;
