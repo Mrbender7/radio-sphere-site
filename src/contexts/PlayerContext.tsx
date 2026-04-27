@@ -489,6 +489,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       stopHeartbeat();
       releaseWakeLock();
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      if (playTrackTimerRef.current) clearTimeout(playTrackTimerRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
