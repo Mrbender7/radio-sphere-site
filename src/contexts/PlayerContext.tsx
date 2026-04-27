@@ -111,6 +111,9 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const currentStationRef = useRef<RadioStation | null>(null);
   const streamDeadRef = useRef(false);
   const reloadStreamRef = useRef<() => void>(() => {});
+  // Umami "station-played" anti-zapping timer (only fires after PLAY_TRACK_DELAY_MS continuous playback)
+  const playTrackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playTrackStationRef = useRef<RadioStation | null>(null);
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
     isPlaying: false,
