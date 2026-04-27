@@ -1,88 +1,68 @@
-## Diagnostic rapide
+# Suivi Umami "Station Played" avec délai anti-zapping de 30s
 
-Le symptôme “visites Facebook de 1 seconde” correspond très probablement à un écran d’erreur/cache affiché au chargement ou à un blocage JavaScript avant interaction.
+## Objectif
+Envoyer l'événement Umami `station-played` uniquement quand une station est écoutée **30 secondes en continu**, afin de préserver le quota mensuel de Umami Cloud (gratuit) en n'enregistrant pas les zappeurs.
 
-J’ai identifié plusieurs points encore risqués pour les WebViews Facebook/Instagram :
+## Comportement
+- Quand une station démarre (transition vers `isPlaying = true` avec une station donnée), on arme un minuteur de 30 s.
+- Si pendant ces 30 s :
+  - l'utilisateur **change de station**,
+  - met **en pause** (manuel ou via lock screen / cast),
+  - le **flux meurt / erreur SSL / stalled** sans reprise,
+  - l'utilisateur **ferme l'onglet** ou met l'app en arrière-plan suffisamment longtemps pour que la lecture s'arrête,
+  → le minuteur est annulé, **aucun event n'est envoyé**.
+- Au bout de 30 s continues, on appelle `window.umami.track("station-played", { name, genre, country })` **une seule fois** pour cette session de lecture.
+- Une seconde session sur la même station (après pause/reprise) → nouveau minuteur, nouveau comptage (sinon on sous-estime les vraies écoutes).
 
-1. **Le Service Worker peut encore casser les visiteurs qui avaient déjà un cache corrompu** : on le désactive dans l’app React, mais si le bundle React ne démarre pas, le visiteur peut rester bloqué avant que le nettoyage ne s’exécute.
-2. **L’écran d’erreur actuel demande encore “Clear cache & reload”** : c’est utile pour nous, mais mauvais pour un visiteur Facebook qui part immédiatement.
-3. **`localStorage.setItem(...)` non protégé dans certains hooks** peut faire tomber l’app dans une WebView restrictive : favoris, récents, onboarding banner, découvertes, quota TBM.
-4. **Chromecast SDK est chargé pour tout le monde dès `index.html`**. Dans les WebViews Facebook, c’est inutile et peut ajouter des erreurs/latences au tout premier chargement.
-5. **`navigator.mediaSession` et `new Audio()` restent partiellement non protégés** dans `PlayerContext`, donc certaines WebViews peuvent encore déclencher un crash au démarrage ou à la première lecture.
+## Détails techniques
 
-## Plan de correction
+### Fichier : nouvel utilitaire `src/utils/umamiTracking.ts`
+Petit helper qui :
+- vérifie que `window.umami?.track` existe (sinon noop, important pour Brave / bloqueurs / WebViews),
+- enveloppe l'appel dans un `try/catch` (cohérent avec la politique safeStorage / WebView hardening),
+- expose `trackStationPlayed(station)` qui envoie `{ name, genre, country }` avec `genre = station.tags?.[0] ?? "unknown"` (premier tag, en minuscules, tronqué à ~40 chars pour rester lisible dans Umami).
 
-### 1. Nettoyage cache/Service Worker avant React
-Ajouter dans `index.html` un petit script inline exécuté très tôt :
-- détecter les WebViews Facebook/Instagram/TikTok/etc. via user-agent ;
-- unregister les Service Workers existants ;
-- vider les caches applicatifs ;
-- poser un flag mémoire pour éviter une boucle ;
-- continuer le chargement normalement.
+### Fichier : `src/contexts/PlayerContext.tsx`
+Ajouter un mécanisme de minuteur attaché au cycle de vie de la lecture :
 
-Objectif : même si le cache précédent est corrompu, le visiteur Facebook n’atterrit plus sur un écran demandant de vider le cache.
+1. Nouveaux refs :
+   ```ts
+   const playTrackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   const trackedStationUuidRef = useRef<string | null>(null); // évite double-envoi pour la même session
+   ```
 
-### 2. Ne plus charger Chromecast dans les WebViews
-Modifier `index.html` pour ne charger `cast_sender.js` que hors WebView in-app.
+2. Helpers internes :
+   - `armPlayTracking(station)` : annule tout minuteur précédent puis `setTimeout(() => trackStationPlayed(station), 30_000)`. Mémorise `station.stationuuid` dans une variable locale capturée pour comparer au moment du tir.
+   - `cancelPlayTracking()` : `clearTimeout` + reset ref.
 
-Dans `useCast.ts`, ajouter aussi un court-circuit : si WebView détectée, passer directement en mode fallback/unavailable sans tenter d’initialiser le Cast SDK.
+3. Points d'appel :
+   - **Armer** dans `playInternal` juste après que la lecture a effectivement démarré (dans le `.then()` du `audio.play()` qui passe `isPlaying = true`, là où `retryCountRef.current = 0` est mis à 0 — c'est l'équivalent du moment "lecture confirmée"). Avant d'armer, on annule le précédent (changement de station).
+   - **Annuler** dans :
+     - `handlePause` (pause manuelle, lock screen, cast toggle pause),
+     - `handleError` (erreur de stream / SSL),
+     - le bloc qui marque `streamDeadRef.current = true`,
+     - le `cleanup` du `useEffect` principal (démontage / fermeture d'onglet : React appelle le cleanup, et de toute façon le timer mourra avec la page),
+     - au début de `playInternal` quand on lance une **nouvelle** station (changement = annulation de l'ancien + armement du nouveau).
 
-Objectif : réduire les scripts tiers inutiles et les risques de crash sur Facebook WebView.
+4. Pas de modification du `reloadStream` : si le flux est récupéré silencieusement (heartbeat / stalled retry), on **garde** le minuteur en cours puisque l'utilisateur n'a pas zappé. C'est le comportement souhaité (sinon les flux fragiles ne seraient jamais comptabilisés).
 
-### 3. Remplacer l’écran d’erreur par une récupération automatique silencieuse
-Modifier `ErrorBoundary.tsx` et `routes.tsx` :
-- en WebView : tenter automatiquement “clear caches + hard reload” une seule fois ;
-- si l’erreur persiste : afficher un message simple en français/anglais avec deux actions visibles : “Recharger” et “Ouvrir dans le navigateur” / “Copier le lien”, au lieu de “Clear cache & reload” ;
-- garder le bouton technique “Clear cache” uniquement hors WebView si nécessaire.
+### Aucun changement
+- `index.html` : Umami est déjà chargé.
+- Pas de nouveau `data-umami-event` à ajouter sur des boutons : ce suivi est piloté par le contexte audio, pas par un clic.
+- CSP : `cloud.umami.is` est déjà autorisé.
 
-Objectif : ne plus faire fuir les visiteurs avec un message technique.
+## Données envoyées à Umami
+```
+event: "station-played"
+data: {
+  name: "Radio Nova",
+  genre: "jazz",        // premier tag, ou "unknown"
+  country: "FR"
+}
+```
+Volume estimé : ≪ que les pageviews actuels grâce au filtre 30 s → quota préservé.
 
-### 4. Sécuriser tous les accès storage restants
-Créer/utiliser des helpers sûrs dans `src/utils/inAppBrowser.ts` ou un petit `safeStorage.ts` :
-- `safeGetItem`, `safeSetItem`, `safeRemoveItem`, `safeClearStorage` ;
-- remplacer les `localStorage.setItem/removeItem/clear` non protégés dans :
-  - `useFavorites.ts`
-  - `useWeeklyDiscoveries.ts`
-  - `useTBMQuota.ts`
-  - `OnboardingBanner.tsx`
-  - reset app dans `Index.tsx`
-
-Objectif : aucune restriction storage Facebook ne doit pouvoir crasher l’app.
-
-### 5. Durcir `PlayerContext` et le préchargement audio
-- Wrapper la création de `globalAudio` dans `try/catch`.
-- Créer des helpers sûrs pour `mediaSession.playbackState`, `metadata`, `setActionHandler`.
-- Wrapper les appels `audio.load()`, `audio.pause()`, `audio.src = ...` les plus sensibles.
-- Dans `useStreamPrefetch.ts`, désactiver le prefetch dans les WebViews in-app et wrapper `new Audio()`.
-
-Objectif : éviter les crashes liés à audio/media APIs dans les navigateurs intégrés.
-
-### 6. Adapter le bandeau WebView pour rassurer plutôt que faire peur
-Conserver le bandeau, mais rendre le message plus clair :
-- “Vous êtes dans le navigateur intégré Facebook. Si la lecture ne démarre pas, ouvrez dans Chrome/Safari.”
-- garder “Ouvrir dans le navigateur” et “Copier le lien”.
-- traduire aussi “Copy link” au lieu du texte hardcodé actuel.
-
-Objectif : proposer une sortie sans bloquer la navigation ni donner l’impression que le site est cassé.
-
-### 7. Ajouter une télémétrie minimale des crashes WebView
-Utiliser Umami si disponible pour tracer :
-- `webview-detected`
-- `webview-cache-purge-attempted`
-- `webview-error-boundary`
-- `webview-open-external`
-- `webview-copy-link`
-
-Objectif : confirmer ensuite si les visites Facebook dépassent enfin 1 seconde et si des erreurs persistent.
-
-## Vérifications prévues
-
-Après implémentation :
-- lancer le build TypeScript/Vite ;
-- vérifier qu’il n’y a plus d’accès storage non protégé dans les fichiers critiques ;
-- vérifier que le Service Worker reste actif hors WebView mais est neutralisé en WebView ;
-- vérifier que le flux normal navigateur desktop/mobile reste inchangé.
-
-## Résultat attendu
-
-Les visiteurs venant de `l.facebook.com` / `lm.facebook.com` ne devraient plus voir l’écran “vider le cache et reloader”. Si Facebook WebView reste limitée, ils verront au pire un bandeau clair avec une action simple pour ouvrir dans Chrome/Safari, tout en pouvant naviguer dans l’app.
+## Hors scope
+- Pas de batching / dédup côté serveur.
+- Pas de tracking de la durée totale d'écoute (seul l'événement "écoute qualifiée" est compté).
+- Pas de modifications UI / traduction.

@@ -6,6 +6,10 @@ import { notifyNativePlaybackState } from "@/plugins/RadioAutoPlugin";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useCast } from "@/hooks/useCast";
 import { SSLWarningDialog } from "@/components/SSLWarningDialog";
+import { trackStationPlayed } from "@/utils/umamiTracking";
+
+/** Anti-zapping delay before sending the Umami "station-played" event (ms). */
+const PLAY_TRACK_DELAY_MS = 30_000;
 
 // Note: The old Capawesome foreground service has been removed in v2.2.9.
 // Lock screen / notification controls are now handled by the native MediaPlaybackService
@@ -107,6 +111,9 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
   const currentStationRef = useRef<RadioStation | null>(null);
   const streamDeadRef = useRef(false);
   const reloadStreamRef = useRef<() => void>(() => {});
+  // Umami "station-played" anti-zapping timer (only fires after PLAY_TRACK_DELAY_MS continuous playback)
+  const playTrackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playTrackStationRef = useRef<RadioStation | null>(null);
   const [state, setState] = useState<PlayerState>({
     currentStation: null,
     isPlaying: false,
@@ -125,6 +132,34 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     currentStationRef.current = state.currentStation;
   }, [state.currentStation]);
 
+  // ---- Umami "station-played" anti-zapping helpers ----
+  const cancelPlayTracking = useCallback(() => {
+    if (playTrackTimerRef.current) {
+      clearTimeout(playTrackTimerRef.current);
+      playTrackTimerRef.current = null;
+    }
+    playTrackStationRef.current = null;
+  }, []);
+
+  const armPlayTracking = useCallback((station: RadioStation) => {
+    // Always cancel any previous timer (station change, restart, etc.)
+    if (playTrackTimerRef.current) {
+      clearTimeout(playTrackTimerRef.current);
+      playTrackTimerRef.current = null;
+    }
+    playTrackStationRef.current = station;
+    playTrackTimerRef.current = setTimeout(() => {
+      playTrackTimerRef.current = null;
+      // Only track if the user is still on the same station and still playing
+      if (
+        isPlayingRef.current &&
+        currentStationRef.current?.id === station.id
+      ) {
+        trackStationPlayed(station);
+      }
+      playTrackStationRef.current = null;
+    }, PLAY_TRACK_DELAY_MS);
+  }, []);
 
   const requestWakeLock = useCallback(async () => {
     if ('wakeLock' in navigator) {
@@ -306,7 +341,9 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       clearTimeout(retryTimerRef.current);
       retryTimerRef.current = null;
     }
-  }, [releaseWakeLock, stopHeartbeat, updateMediaSession]);
+    // Cancel "station-played" timer: pause within 30s = no Umami event sent
+    cancelPlayTracking();
+  }, [releaseWakeLock, stopHeartbeat, updateMediaSession, cancelPlayTracking]);
 
   // Register Media Session action handlers
   useEffect(() => {
@@ -394,6 +431,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
       stopSilentLoop();
       stopHeartbeat();
+      cancelPlayTracking();
       notifyNativePlaybackState(null, false);
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
       toast({ title: t("player.streamError"), description: t("player.streamErrorDesc"), variant: "destructive" });
@@ -451,6 +489,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       stopHeartbeat();
       releaseWakeLock();
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      if (playTrackTimerRef.current) clearTimeout(playTrackTimerRef.current);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -491,6 +530,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         onStationPlay?.(station);
         reportStationClick(station.id);
         requestWakeLock();
+        // Arm 30s anti-zapping Umami tracker (cast playback also counts)
+        armPlayTracking(station);
 
         castLoadMedia(station);
         return; // CRUCIAL: Stop execution here to prevent local streaming
@@ -542,6 +583,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
             startSilentLoop();
             startHeartbeat();
             notifyNativePlaybackState(station, true);
+            // Arm 30s anti-zapping Umami tracker — only fires if still playing this station after 30s
+            armPlayTracking(station);
           })
           .catch((e) => {
             console.error("[RadioSphere] Playback failed", e);
@@ -549,6 +592,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
             stopSilentLoop();
             stopHeartbeat();
             releaseWakeLock();
+            cancelPlayTracking();
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
             isPlayingRef.current = false;
             setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
@@ -594,7 +638,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
       toast({ title: t("player.unexpectedError"), description: t("player.unexpectedErrorDesc"), variant: "destructive" });
     }
-  }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, isCasting, castLoadMedia]);
+  }, [onStationPlay, requestWakeLock, releaseWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, isCasting, castLoadMedia, armPlayTracking, cancelPlayTracking]);
 
   const play = useCallback((station: RadioStation) => {
     playInternal(station, false);
@@ -640,6 +684,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       stopSilentLoop();
       stopHeartbeat();
       releaseWakeLock();
+      cancelPlayTracking();
       retryCountRef.current = 0;
       notifyNativePlaybackState(state.currentStation, false);
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -657,6 +702,8 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         requestWakeLock();
         notifyNativePlaybackState(state.currentStation!, true);
         updateMediaSession(state.currentStation!, true);
+        // Resuming after pause = new listening session, re-arm 30s tracker
+        if (state.currentStation) armPlayTracking(state.currentStation);
       }).catch(() => {
         console.log("[RadioSphere] togglePlay: play() failed, reloading stream");
         retryCountRef.current = 0;
@@ -664,7 +711,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         reloadStream();
       });
     }
-  }, [state.isPlaying, state.currentStation, releaseWakeLock, requestWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, reloadStream, isCasting, toggleCastPlayPause]);
+  }, [state.isPlaying, state.currentStation, releaseWakeLock, requestWakeLock, updateMediaSession, startHeartbeat, stopHeartbeat, reloadStream, isCasting, toggleCastPlayPause, armPlayTracking, cancelPlayTracking]);
 
   const setVolume = useCallback((v: number) => {
     if (audioRef.current) audioRef.current.volume = v;
