@@ -132,6 +132,34 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     currentStationRef.current = state.currentStation;
   }, [state.currentStation]);
 
+  // ---- Umami "station-played" anti-zapping helpers ----
+  const cancelPlayTracking = useCallback(() => {
+    if (playTrackTimerRef.current) {
+      clearTimeout(playTrackTimerRef.current);
+      playTrackTimerRef.current = null;
+    }
+    playTrackStationRef.current = null;
+  }, []);
+
+  const armPlayTracking = useCallback((station: RadioStation) => {
+    // Always cancel any previous timer (station change, restart, etc.)
+    if (playTrackTimerRef.current) {
+      clearTimeout(playTrackTimerRef.current);
+      playTrackTimerRef.current = null;
+    }
+    playTrackStationRef.current = station;
+    playTrackTimerRef.current = setTimeout(() => {
+      playTrackTimerRef.current = null;
+      // Only track if the user is still on the same station and still playing
+      if (
+        isPlayingRef.current &&
+        currentStationRef.current?.id === station.id
+      ) {
+        trackStationPlayed(station);
+      }
+      playTrackStationRef.current = null;
+    }, PLAY_TRACK_DELAY_MS);
+  }, []);
 
   const requestWakeLock = useCallback(async () => {
     if ('wakeLock' in navigator) {
