@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { RadioStation } from "@/types/radio";
-import { registerPlugin } from "@capacitor/core";
 import { isInAppBrowser } from "@/utils/inAppBrowser";
+import { isNative as isCapacitorNativeEnv, loadCapacitorPlugin } from "@/utils/nativeBridge";
 
 // v2.4.7: Use Google Default Media Receiver for universal compatibility
 const CAST_APP_ID = "CC1AD845";
@@ -36,21 +36,20 @@ interface CastPluginInterface {
 }
 
 let CastPluginInstance: CastPluginInterface | null = null;
-function getCastPlugin(): CastPluginInterface {
-  if (!CastPluginInstance) {
-    CastPluginInstance = registerPlugin<CastPluginInterface>("CastPlugin");
+let CastPluginPromise: Promise<CastPluginInterface | null> | null = null;
+async function getCastPlugin(): Promise<CastPluginInterface | null> {
+  if (CastPluginInstance) return CastPluginInstance;
+  if (!CastPluginPromise) {
+    CastPluginPromise = loadCapacitorPlugin<CastPluginInterface>("CastPlugin").then((p) => {
+      CastPluginInstance = p;
+      return p;
+    });
   }
-  return CastPluginInstance;
+  return CastPluginPromise;
 }
 
 // ─── Platform detection ─────────────────────────────────────────────
-function isCapacitorNative(): boolean {
-  try {
-    return !!(window as any).Capacitor?.isNativePlatform?.();
-  } catch {
-    return false;
-  }
-}
+const isCapacitorNative = isCapacitorNativeEnv;
 
 export type CastUiMode = "launcher" | "native" | "fallback";
 export type CastInitState = "idle" | "initializing" | "ready" | "unavailable";
