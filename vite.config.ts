@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => ({
         "apple-touch-icon.png",
         "android-chrome-192x192.png",
         "android-chrome-512x512.png",
-        "og-image.png",
+        "og-image.jpg",
       ],
       manifest: false, // use existing public/manifest.json
       workbox: {
