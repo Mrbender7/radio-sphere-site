@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useRef, useCallback, useEff
 import { RadioStation } from "@/types/radio";
 import { toast } from "@/hooks/use-toast";
 import { reportStationClick } from "@/services/RadioService";
-import { notifyNativePlaybackState } from "@/plugins/RadioAutoPlugin";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useCast } from "@/hooks/useCast";
 import { SSLWarningDialog } from "@/components/SSLWarningDialog";
@@ -11,9 +10,7 @@ import { trackStationPlayed } from "@/utils/umamiTracking";
 /** Anti-zapping delay before sending the Umami "station-played" event (ms). */
 const PLAY_TRACK_DELAY_MS = 30_000;
 
-// Note: The old Capawesome foreground service has been removed in v2.2.9.
-// Lock screen / notification controls are now handled by the native MediaPlaybackService
-// via notifyNativePlaybackState() which creates a proper MediaStyle notification.
+// Web Player only: lock screen / notification controls are handled by the browser MediaSession API.
 
 // Global audio instance — survives React lifecycle, never destroyed by re-renders
 // Exported so StreamBufferContext can swap src for seek-back
@@ -249,9 +246,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         startSilentLoop();
         startHeartbeat();
         requestWakeLock();
-        if (station) {
-          notifyNativePlaybackState(station, true);
-        }
         console.log("[RadioSphere] Stream reloaded successfully");
       }).catch(() => {
         setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
@@ -300,7 +294,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
   }, []);
 
-  // Shared play/pause handlers used by MediaSession + native MediaStyle notification
+  // Shared play/pause handlers used by MediaSession controls
   const handlePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !audio.src) return;
@@ -310,7 +304,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     setState(s => {
       if (s.currentStation) {
-        notifyNativePlaybackState(s.currentStation, true);
         updateMediaSession(s.currentStation, true);
       }
       return { ...s, isPlaying: true };
@@ -329,7 +322,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     setState(s => {
       if (s.currentStation) {
-        notifyNativePlaybackState(s.currentStation, false);
         updateMediaSession(s.currentStation, false);
       }
       return { ...s, isPlaying: false };
@@ -368,38 +360,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
     };
   }, [handlePlay, handlePause]);
 
-  // v2.2.9: Listen for MediaStyle notification toggle (native MediaPlaybackService)
-  useEffect(() => {
-    let mediaToggleRemove: (() => void) | null = null;
-    const isNativeAndroid = !!(window as any).Capacitor?.isNativePlatform?.() &&
-      (window as any).Capacitor?.getPlatform?.() === 'android';
-
-    if (!isNativeAndroid) {
-      return;
-    }
-
-    import('@/plugins/RadioAutoPlugin')
-      .then(({ RadioAutoPlugin }) => {
-        // Reuse the already-registered plugin instance (avoid double registration)
-        return RadioAutoPlugin.addListener('mediaToggle', () => {
-          console.log("[RadioSphere] mediaToggle event from native notification");
-          if (isPlayingRef.current) {
-            handlePause();
-          } else {
-            handlePlay();
-          }
-        });
-      })
-      .then((listener: { remove: () => void }) => {
-        mediaToggleRemove = () => listener.remove();
-      })
-      .catch(() => {});
-
-    return () => {
-      if (mediaToggleRemove) mediaToggleRemove();
-    };
-  }, [handlePlay, handlePause]);
-
   useEffect(() => {
     const audio = audioRef.current;
     audio.volume = state.volume;
@@ -419,7 +379,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
         stopSilentLoop();
         stopHeartbeat();
-        notifyNativePlaybackState(null, false);
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
         setSslWarning({ station });
         return;
@@ -525,7 +484,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
         const secureLogo = station.logo?.replace('http://', 'https://');
         updateMediaSession({ ...station, logo: secureLogo }, true);
-        notifyNativePlaybackState(station, true);
 
         onStationPlay?.(station);
         reportStationClick(station.id);
@@ -579,17 +537,14 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
             isPlayingRef.current = true;
             setState(s => ({ ...s, isPlaying: true, isBuffering: false }));
-            notifyNativePlaybackState(station, true);
-            startSilentLoop();
+                startSilentLoop();
             startHeartbeat();
-            notifyNativePlaybackState(station, true);
-            // Arm 30s anti-zapping Umami tracker — only fires if still playing this station after 30s
+                // Arm 30s anti-zapping Umami tracker — only fires if still playing this station after 30s
             armPlayTracking(station);
           })
           .catch((e) => {
             console.error("[RadioSphere] Playback failed", e);
-            notifyNativePlaybackState(null, false);
-            stopSilentLoop();
+                stopSilentLoop();
             stopHeartbeat();
             releaseWakeLock();
             cancelPlayTracking();
@@ -612,8 +567,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
           console.warn("[RadioSphere] Stream timeout — no canplay after 15s");
           audio.pause();
           audio.removeAttribute('src');
-          notifyNativePlaybackState(null, false);
-          if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
           setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
           toast({ title: t("player.timeout"), description: t("player.timeoutDesc"), variant: "destructive" });
         }
@@ -664,12 +618,10 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       // When casting: only control Chromecast, don't touch local audio
       toggleCastPlayPause();
       if (state.isPlaying) {
-        notifyNativePlaybackState(state.currentStation, false);
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
         setState(s => ({ ...s, isPlaying: false }));
         updateMediaSession(state.currentStation, false);
       } else {
-        notifyNativePlaybackState(state.currentStation, true);
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         setState(s => ({ ...s, isPlaying: true }));
         updateMediaSession(state.currentStation, true);
@@ -686,7 +638,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       releaseWakeLock();
       cancelPlayTracking();
       retryCountRef.current = 0;
-      notifyNativePlaybackState(state.currentStation, false);
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       setState(s => ({ ...s, isPlaying: false }));
       updateMediaSession(state.currentStation, false);
@@ -700,7 +651,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
         startSilentLoop();
         startHeartbeat();
         requestWakeLock();
-        notifyNativePlaybackState(state.currentStation!, true);
         updateMediaSession(state.currentStation!, true);
         // Resuming after pause = new listening session, re-arm 30s tracker
         if (state.currentStation) armPlayTracking(state.currentStation);
