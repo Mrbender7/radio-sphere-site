@@ -12,9 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Capacitor } from "@capacitor/core";
-import { Filesystem, Directory } from "@capacitor/filesystem";
-import { Share } from "@capacitor/share";
+import { isNative } from "@/utils/nativeBridge";
 import { UserGuideModal } from "@/components/UserGuideModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -197,8 +195,12 @@ export function SettingsPage({ onReopenWelcome, onResetApp }: SettingsPageProps)
                     .join(",")
                 );
                 const csv = [header, ...rows].join("\n");
-                if (Capacitor.isNativePlatform()) {
+                if (isNative()) {
                   try {
+                    const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+                      import("@capacitor/filesystem"),
+                      import("@capacitor/share"),
+                    ]);
                     const result = await Filesystem.writeFile({
                       path: "radiosphere_favorites.csv",
                       data: btoa(unescape(encodeURIComponent(csv))),
