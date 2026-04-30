@@ -86,10 +86,16 @@ export function useCast() {
       console.log("[RadioSphere][Cast] Native platform, initializing CastPlugin...");
       setCastUiMode("native");
 
-      const plugin = getCastPlugin();
-
       const initNativeCast = async () => {
         try {
+          const plugin = await getCastPlugin();
+          if (!plugin) {
+            console.warn("[RadioSphere][Cast] CastPlugin unavailable on this platform");
+            setCastInitState("unavailable");
+            setIsCastAvailable(false);
+            return;
+          }
+
           const permStatus = await plugin.checkDiscoveryPermissions();
           console.log("[RadioSphere][Cast] checkDiscoveryPermissions:", JSON.stringify(permStatus));
 
@@ -122,6 +128,24 @@ export function useCast() {
           if (!initialized) {
             console.warn("[RadioSphere][Cast] initialize() n'a pas retourné initialized=true");
           }
+
+          plugin.addListener("castDevicesAvailable", (data: any) => {
+            console.log("[RadioSphere][Cast] castDevicesAvailable event:", JSON.stringify(data));
+            setIsCastAvailable(data.available);
+          });
+
+          plugin.addListener("castStateChanged", (data: any) => {
+            console.log("[RadioSphere][Cast] castStateChanged event:", JSON.stringify(data));
+            if (!data.connected && data.errorCode !== undefined) {
+              console.error(`[RadioSphere][Cast] ❌ Session failed — errorCode=${data.errorCode}, reason=${data.reason || "unknown"}`);
+            }
+            setIsCasting(data.connected);
+            setCastDeviceName(data.connected ? data.deviceName : null);
+          });
+
+          plugin.addListener("localAudioControl", (data: any) => {
+            console.log("[RadioSphere][Cast] localAudioControl event:", JSON.stringify(data));
+          });
         } catch (err) {
           console.warn("[RadioSphere][Cast] CastPlugin init error:", err);
           setCastInitState("unavailable");
@@ -130,26 +154,6 @@ export function useCast() {
       };
 
       void initNativeCast();
-
-      plugin.addListener("castDevicesAvailable", (data: any) => {
-        console.log("[RadioSphere][Cast] castDevicesAvailable event:", JSON.stringify(data));
-        setIsCastAvailable(data.available);
-      });
-
-      plugin.addListener("castStateChanged", (data: any) => {
-        console.log("[RadioSphere][Cast] castStateChanged event:", JSON.stringify(data));
-        if (!data.connected && data.errorCode !== undefined) {
-          console.error(`[RadioSphere][Cast] ❌ Session failed — errorCode=${data.errorCode}, reason=${data.reason || "unknown"}`);
-        }
-        setIsCasting(data.connected);
-        setCastDeviceName(data.connected ? data.deviceName : null);
-      });
-
-      // v2.4.6: Listen for localAudioControl events from native plugin
-      plugin.addListener("localAudioControl", (data: any) => {
-        console.log("[RadioSphere][Cast] localAudioControl event:", JSON.stringify(data));
-        // This event is handled by PlayerContext via isCasting state change
-      });
 
       return;
     }
@@ -261,7 +265,8 @@ export function useCast() {
 
   const startCast = useCallback(async () => {
     if (isNative) {
-      const plugin = getCastPlugin();
+      const plugin = await getCastPlugin();
+      if (!plugin) return;
       try {
         await plugin.requestSession();
       } catch (e) {
@@ -278,9 +283,13 @@ export function useCast() {
 
   const stopCast = useCallback(() => {
     if (isNative) {
-      getCastPlugin().endSession().catch((e) =>
-        console.warn("[RadioSphere][Cast] endSession error:", e)
-      );
+      void (async () => {
+        const plugin = await getCastPlugin();
+        if (!plugin) return;
+        plugin.endSession().catch((e) =>
+          console.warn("[RadioSphere][Cast] endSession error:", e)
+        );
+      })();
     } else {
       try {
         window.cast?.framework?.CastContext?.getInstance()?.getCurrentSession()?.endSession(true);
@@ -293,25 +302,28 @@ export function useCast() {
   const loadMedia = useCallback(
     (station: RadioStation) => {
       if (isNative) {
-        // v2.4.6: Send streamUrl without modification — plugin handles content type
         console.log("[RadioSphere][Cast] loadMedia (native):", station.name, "URL:", station.streamUrl);
-        getCastPlugin().loadMedia({
-          streamUrl: station.streamUrl,
-          title: station.name,
-          logo: station.logo || "",
-          tags: (station.tags || []).join(","),
-          stationId: station.id,
-        }).catch((e) =>
-          console.warn("[RadioSphere][Cast] loadMedia error:", e)
-        );
+        void (async () => {
+          const plugin = await getCastPlugin();
+          if (!plugin) return;
+          plugin.loadMedia({
+            streamUrl: station.streamUrl,
+            title: station.name,
+            logo: station.logo || "",
+            tags: (station.tags || []).join(","),
+            stationId: station.id,
+          }).catch((e) =>
+            console.warn("[RadioSphere][Cast] loadMedia error:", e)
+          );
+        })();
       } else {
         try {
           const session = window.cast?.framework?.CastContext?.getInstance()?.getCurrentSession();
           if (!session) return;
 
           const chr = window.chrome;
-                          // v2.5.4: Send stream URL as-is (no HTTPS forcing — was breaking HTTP-only streams)
-                          const mediaInfo = new chr.cast.media.MediaInfo(station.streamUrl, "audio/*");
+          // v2.5.4: Send stream URL as-is (no HTTPS forcing — was breaking HTTP-only streams)
+          const mediaInfo = new chr.cast.media.MediaInfo(station.streamUrl, "audio/*");
           mediaInfo.streamType = chr.cast.media.StreamType.LIVE;
           mediaInfo.metadata = new chr.cast.media.MusicTrackMediaMetadata();
           mediaInfo.metadata.title = station.name;
@@ -342,9 +354,13 @@ export function useCast() {
 
   const toggleCastPlayPause = useCallback(() => {
     if (isNative) {
-      getCastPlugin().togglePlayPause().catch((e) =>
-        console.warn("[RadioSphere][Cast] togglePlayPause error:", e)
-      );
+      void (async () => {
+        const plugin = await getCastPlugin();
+        if (!plugin) return;
+        plugin.togglePlayPause().catch((e) =>
+          console.warn("[RadioSphere][Cast] togglePlayPause error:", e)
+        );
+      })();
     } else {
       if (remotePlayerControllerRef.current) {
         remotePlayerControllerRef.current.playOrPause();
