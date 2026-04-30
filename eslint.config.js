@@ -21,6 +21,20 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Keep native (Capacitor / Android) packages out of the static web bundle.
+      // Use `await import("@capacitor/...")` inside an `isNative()` guard instead.
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@capacitor/*", "@capawesome-team/*", "@capawesome/*"],
+              message:
+                "Do not statically import native modules. Use a dynamic `await import(...)` inside an `isNative()` guard (see src/utils/nativeBridge.ts).",
+            },
+          ],
+        },
+      ],
     },
   },
 );
