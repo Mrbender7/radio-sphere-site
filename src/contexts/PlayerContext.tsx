@@ -391,7 +391,6 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       stopSilentLoop();
       stopHeartbeat();
       cancelPlayTracking();
-      notifyNativePlaybackState(null, false);
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
       toast({ title: t("player.streamError"), description: t("player.streamErrorDesc"), variant: "destructive" });
     };
