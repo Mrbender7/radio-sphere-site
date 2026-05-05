@@ -170,6 +170,9 @@ export function WelcomeModal({ open, onOpenChange, onComplete }: WelcomeModalPro
             <a href="https://bsky.app/profile/radiospherebe.bsky.social" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors" title="Bluesky">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.785 2.627 3.603 3.496 6.159 3.18-4.397.645-7.945 2.267-4.453 7.803C4.6 24.457 9.456 20.78 12 17.036c2.544 3.744 7.063 7.088 9.67 4.194 3.492-5.536-.056-7.158-4.453-7.803 2.556.316 5.374-.553 6.159-3.18.246-.828.624-5.788.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.3-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg>
             </a>
+            <a href="https://www.tiktok.com/@radiosphere.be" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors" title="TikTok">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.65a8.16 8.16 0 0 0 4.77 1.52V6.73a4.85 4.85 0 0 1-1.84-.04Z"/></svg>
+            </a>
           </div>
 
           <a
