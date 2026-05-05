@@ -203,7 +203,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             className="flex justify-center"
             title="PodcastSphere"
           >
-            <img src={podcastLogo} alt="PodcastSphere" className="w-8 h-8 rounded-lg" loading="lazy" width={32} height={32} />
+            <img src={podcastLogo} alt="PodcastSphere" className="w-10 h-10 rounded-lg" loading="lazy" width={40} height={40} />
           </a>
         )}
 
