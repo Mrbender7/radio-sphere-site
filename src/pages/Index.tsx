@@ -31,25 +31,10 @@ import type { Language } from "@/i18n/translations";
 
 const ONBOARDING_KEY = "radiosphere_onboarded";
 
-function isInsideIframe(): boolean {
-  try {
-    return typeof window !== "undefined" && window.top !== window.self;
-  } catch {
-    // Cross-origin access throws → we ARE in an iframe (e.g. Lovable preview)
-    return true;
-  }
-}
-
 function hasCompletedOnboarding(): boolean {
   try {
     // During SSG build, skip welcome page to render real content for SEO
     if (import.meta.env.SSR) return true;
-    // Skip the welcome modal whenever the app is embedded in an iframe
-    // (Lovable preview, social embeds, …). In those contexts localStorage is
-    // often partitioned or cleared between loads, so the modal would re-open
-    // on every reload and feel broken. The real radiosphere.be domain is not
-    // iframed and still shows the onboarding for first-time visitors.
-    if (isInsideIframe()) return true;
     // In WebViews where localStorage is broken/partitioned, the welcome modal
     // would re-open on every load and (since persistence fails) potentially
     // never close — blocking ALL clicks under its overlay. Skip it entirely.

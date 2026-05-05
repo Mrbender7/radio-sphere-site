@@ -7,6 +7,32 @@ export const createRoot = ViteReactSSG({ routes });
 
 const CRASH_FLAG_KEY = "radiosphere_crash_purge_pending";
 
+function isPreviewHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return host.endsWith(".lovableproject.com") || host.endsWith(".lovable.app") || host.includes("localhost");
+}
+
+async function purgeServiceWorkersAndCaches(reason: string): Promise<void> {
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+    }
+  } catch {
+    /* noop */
+  }
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+    }
+  } catch {
+    /* noop */
+  }
+  console.log(`[RadioSphere] ${reason} — service workers and caches cleared`);
+}
+
 /** Detect JSON-parse style crash messages so we can purge the SW cache on next boot. */
 function isJsonParseCrash(message: string | undefined | null): boolean {
   if (!message) return false;
@@ -67,21 +93,12 @@ if (typeof window !== "undefined") {
 // (Facebook, Instagram, TikTok…). On those platforms the SW often caches
 // corrupted chunks that then break navigation/JSON parsing on next load.
 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  if (isInAppBrowser()) {
+  if (isPreviewHost()) {
+    void purgeServiceWorkersAndCaches("Preview environment detected");
+  } else if (isInAppBrowser()) {
     console.log("[RadioSphere] In-app WebView detected — skipping SW registration and purging caches");
     // Proactively unregister any previously installed SW and wipe its caches.
-    try {
-      navigator.serviceWorker.getRegistrations().then((regs) => {
-        regs.forEach((r) => r.unregister().catch(() => false));
-      }).catch(() => {});
-    } catch { /* noop */ }
-    try {
-      if ("caches" in window) {
-        caches.keys().then((keys) => {
-          keys.forEach((k) => caches.delete(k).catch(() => false));
-        }).catch(() => {});
-      }
-    } catch { /* noop */ }
+    void purgeServiceWorkersAndCaches("In-app WebView detected");
   } else {
     // If the previous session crashed on JSON.parse, purge the api-cache before
     // anything tries to read from it again.
