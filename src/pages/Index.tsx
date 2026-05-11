@@ -27,6 +27,7 @@ import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
 import { useBackButton } from "@/hooks/useBackButton";
 import { isInAppBrowser, isLocalStorageWorking } from "@/utils/inAppBrowser";
 import { safeGetItem, safeSetItem, safeClearAll } from "@/utils/safeStorage";
+import { trackAdLandingOnce } from "@/utils/adLandingTracking";
 import type { Language } from "@/i18n/translations";
 
 const ONBOARDING_KEY = "radiosphere_onboarded";
@@ -35,13 +36,20 @@ function hasCompletedOnboarding(): boolean {
   try {
     // During SSG build, skip welcome page to render real content for SEO
     if (import.meta.env.SSR) return true;
-    // In WebViews where localStorage is broken/partitioned, the welcome modal
-    // would re-open on every load and (since persistence fails) potentially
-    // never close — blocking ALL clicks under its overlay. Skip it entirely.
-    if (isInAppBrowser() && !isLocalStorageWorking()) return true;
+    // In WebViews where localStorage is broken/partitioned, fall back to
+    // sessionStorage so the modal still closes after the user clicks Continue
+    // within the same visit (FB Ads campaign — modal is the value pitch,
+    // we MUST show it on first arrival).
+    if (isInAppBrowser() && !isLocalStorageWorking()) {
+      try {
+        return sessionStorage.getItem(ONBOARDING_KEY) === "true";
+      } catch {
+        return false; // ALWAYS show modal in this edge case
+      }
+    }
     return safeGetItem(ONBOARDING_KEY) === "true";
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -112,6 +120,9 @@ const Index = () => {
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
   const { setLanguage } = useTranslation();
 
+  // Fire the FB-ads-campaign landing event once per tab.
+  useEffect(() => { trackAdLandingOnce(); }, []);
+
   const currentMetaKey = showPrivacy ? "privacy" : activeTab;
   const meta = PAGE_META[currentMetaKey] || PAGE_META.home;
 
@@ -130,6 +141,8 @@ const Index = () => {
   const handleWelcomeComplete = useCallback((lang: Language) => {
     setLanguage(lang);
     safeSetItem(ONBOARDING_KEY, "true");
+    // Session fallback for in-app browsers where localStorage is unreliable.
+    try { sessionStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* noop */ }
     setShowWelcome(false);
   }, [setLanguage]);
 
@@ -138,6 +151,7 @@ const Index = () => {
     if (!open) {
       // Mark onboarding complete even if dismissed via X / overlay / Escape
       safeSetItem(ONBOARDING_KEY, "true");
+      try { sessionStorage.setItem(ONBOARDING_KEY, "true"); } catch { /* noop */ }
     }
   }, []);
 

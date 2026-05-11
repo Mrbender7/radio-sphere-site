@@ -60,7 +60,7 @@ export function InAppBrowserBanner() {
       <button
         onClick={expand}
         aria-label={t("inAppBrowser.warning")}
-        className="fixed top-2 right-2 z-[100] inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-500 text-white shadow-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+        className="fixed top-2 right-2 z-40 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-500 text-white shadow-lg text-xs font-semibold hover:opacity-90 transition-opacity"
         style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
       >
         <AlertTriangle className="w-3.5 h-3.5" />
@@ -71,7 +71,7 @@ export function InAppBrowserBanner() {
   return (
     <div
       role="alert"
-      className="fixed top-0 inset-x-0 z-[100] bg-amber-500 text-white px-3 py-2.5 shadow-lg"
+      className="fixed top-0 inset-x-0 z-40 bg-amber-500 text-white px-3 py-2.5 shadow-lg"
       style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.5rem)" }}
     >
       <div className="flex items-start gap-2 max-w-3xl mx-auto">

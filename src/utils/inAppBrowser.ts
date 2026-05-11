@@ -12,7 +12,10 @@
  * Always feature-detect AND test storage before relying on browser APIs in these environments.
  */
 
-const IN_APP_BROWSER_REGEX = /FBAN|FBAV|FB_IAB|FB4A|Instagram|Line\/|MicroMessenger|Twitter|TikTok|Snapchat|Pinterest|LinkedInApp|KAKAOTALK/i;
+// Covers: Facebook (FBAN/FBAV/FB_IAB/FB4A/FBIOS/FBSV/FBDV/FBMD), Messenger (MessengerForiOS, Messenger Lite),
+// Instagram, Threads (Barcelona), TikTok (BytedanceWebview, musical_ly), Line, WeChat, Twitter/X,
+// Snapchat, Pinterest, LinkedIn, KakaoTalk, Naver, Whatsapp, GSA (Google App in-app), Reddit.
+const IN_APP_BROWSER_REGEX = /FBAN|FBAV|FB_IAB|FB4A|FBIOS|FBSV|FBDV|FBMD|Messenger|MessengerLite|Instagram|Threads|Barcelona|Line\/|MicroMessenger|Twitter|TikTok|musical_ly|BytedanceWebview|Snapchat|Pinterest|LinkedInApp|KAKAOTALK|NAVER|WhatsApp|GSA\/|Reddit/i;
 
 /** Returns true if the current UA looks like a known in-app browser WebView. */
 export function isInAppBrowser(): boolean {
