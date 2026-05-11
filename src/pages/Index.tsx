@@ -27,6 +27,7 @@ import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
 import { useBackButton } from "@/hooks/useBackButton";
 import { isInAppBrowser, isLocalStorageWorking } from "@/utils/inAppBrowser";
 import { safeGetItem, safeSetItem, safeClearAll } from "@/utils/safeStorage";
+import { trackAdLandingOnce } from "@/utils/adLandingTracking";
 import type { Language } from "@/i18n/translations";
 
 const ONBOARDING_KEY = "radiosphere_onboarded";
