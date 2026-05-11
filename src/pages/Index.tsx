@@ -120,6 +120,9 @@ const Index = () => {
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
   const { setLanguage } = useTranslation();
 
+  // Fire the FB-ads-campaign landing event once per tab.
+  useEffect(() => { trackAdLandingOnce(); }, []);
+
   const currentMetaKey = showPrivacy ? "privacy" : activeTab;
   const meta = PAGE_META[currentMetaKey] || PAGE_META.home;
 
