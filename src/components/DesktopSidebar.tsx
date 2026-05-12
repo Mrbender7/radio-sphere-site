@@ -194,6 +194,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             href="https://podcast.radiosphere.be/"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => umamiTrack("podcastsphere-click", { location: "sidebar-expanded" })}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-accent/60 hover:bg-accent transition-colors group"
           >
             <img src={podcastLogo} alt="PodcastSphere" className="w-9 h-9 rounded-lg flex-shrink-0" loading="lazy" width={36} height={36} />
@@ -211,6 +212,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             href="https://podcast.radiosphere.be/"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => umamiTrack("podcastsphere-click", { location: "sidebar-collapsed" })}
             className="flex justify-center"
             title="PodcastSphere"
           >
