@@ -10,6 +10,8 @@
  * ESM interop exposes a mutable namespace object.
  */
 import * as ReactDOM from "react-dom";
+import * as ReactDOMClient from "react-dom/client";
+import { isInAppBrowser } from "./inAppBrowser";
 
 type UmamiWin = { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
 
