@@ -15,13 +15,23 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 export function useFavorites() {
-  const [favorites, setFavorites] = useState<RadioStation[]>(() =>
-    loadFromStorage<RadioStation[]>(FAVORITES_KEY, []).sort((a, b) => a.name.localeCompare(b.name))
-  );
+  // Initialize empty to match SSG output and avoid React hydration mismatch
+  // (#418/#423) which freezes the app for returning visitors. Hydrate from
+  // storage post-mount.
+  const [favorites, setFavorites] = useState<RadioStation[]>([]);
+  const [favHydrated, setFavHydrated] = useState(false);
 
   useEffect(() => {
+    setFavorites(
+      loadFromStorage<RadioStation[]>(FAVORITES_KEY, []).sort((a, b) => a.name.localeCompare(b.name))
+    );
+    setFavHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!favHydrated) return;
     safeSetItem(FAVORITES_KEY, JSON.stringify(favorites));
-  }, [favorites]);
+  }, [favorites, favHydrated]);
 
   const toggleFavorite = useCallback((station: RadioStation) => {
     setFavorites(prev => {
@@ -61,11 +71,18 @@ export function useFavorites() {
 }
 
 export function useRecentStations() {
-  const [recent, setRecent] = useState<RadioStation[]>(() => loadFromStorage(RECENT_KEY, []));
+  const [recent, setRecent] = useState<RadioStation[]>([]);
+  const [recHydrated, setRecHydrated] = useState(false);
 
   useEffect(() => {
+    setRecent(loadFromStorage(RECENT_KEY, []));
+    setRecHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!recHydrated) return;
     safeSetItem(RECENT_KEY, JSON.stringify(recent));
-  }, [recent]);
+  }, [recent, recHydrated]);
 
   const addRecent = useCallback((station: RadioStation) => {
     setRecent(prev => {
