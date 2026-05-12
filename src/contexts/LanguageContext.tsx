@@ -35,7 +35,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const detected = detectInitialLanguage();
-    if (detected !== "en") setLanguageState(detected);
+    if (detected !== "en") {
+      // startTransition prevents React error #421 ("Suspense boundary
+      // received an update before it finished hydrating") on slow WebViews
+      // where the post-hydration setState would otherwise race the Suspense
+      // boundary still hydrating lazy chunks.
+      startTransition(() => setLanguageState(detected));
+    }
   }, []);
 
   const setLanguage = useCallback((lang: Language) => {
