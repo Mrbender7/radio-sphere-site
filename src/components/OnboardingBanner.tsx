@@ -68,7 +68,7 @@ export function OnboardingBanner() {
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
-            data-umami-event="google-play-clicked"
+            onClick={() => umamiTrack("play-store-click", { location: "onboarding-banner" })}
             className="inline-block hover:opacity-90 transition-opacity"
           >
             <img
