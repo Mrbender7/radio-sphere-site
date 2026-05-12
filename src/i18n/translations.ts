@@ -4486,4 +4486,4 @@ translations.th = { ...translations.id };
 // Hindi strings are added.
 (translations as Record<string, Record<string, string>>)["hi"] = { ...translations.en };
 
-export default translations as Record<Language, Record<string, string>>;
+export default translations as unknown as Record<Language, Record<string, string>>;
