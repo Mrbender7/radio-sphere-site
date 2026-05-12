@@ -37,12 +37,22 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
   const { t, language, setLanguage } = useTranslation();
   const currentLangOption = LANGUAGE_OPTIONS.find(o => o.value === language) ?? LANGUAGE_OPTIONS[0];
   const [tbmModalOpen, setTbmModalOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => readBool(SIDEBAR_COLLAPSED_KEY, false));
-  const [tbmDismissed, setTbmDismissed] = useState(() => readBool(TBM_TEASER_DISMISSED_KEY, false));
+  // Defaults must match SSG output (false) to avoid React hydration mismatch
+  // (#418/#423) which freezes the app. Restore from localStorage post-mount.
+  const [collapsed, setCollapsed] = useState(false);
+  const [tbmDismissed, setTbmDismissed] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    setCollapsed(readBool(SIDEBAR_COLLAPSED_KEY, false));
+    setTbmDismissed(readBool(TBM_TEASER_DISMISSED_KEY, false));
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
     try { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed)); } catch {}
-  }, [collapsed]);
+  }, [collapsed, hydrated]);
 
   const handleDismissTbm = () => {
     setTbmDismissed(true);

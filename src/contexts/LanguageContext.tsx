@@ -28,7 +28,15 @@ export function detectInitialLanguage(): Language {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(detectInitialLanguage);
+  // Initialize to "en" to match SSG output and avoid React hydration mismatch
+  // (#418/#423) which freezes the whole app. Real language is applied right
+  // after hydration in the effect below.
+  const [language, setLanguageState] = useState<Language>("en");
+
+  useEffect(() => {
+    const detected = detectInitialLanguage();
+    if (detected !== "en") setLanguageState(detected);
+  }, []);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
