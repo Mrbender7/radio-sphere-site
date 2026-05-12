@@ -24,6 +24,7 @@ import { WelcomeModal } from "@/components/WelcomeModal";
 import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
 import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
+import { ClientOnly } from "@/components/ClientOnly";
 import { useBackButton } from "@/hooks/useBackButton";
 import { isInAppBrowser, isLocalStorageWorking } from "@/utils/inAppBrowser";
 import { safeGetItem, safeSetItem, safeClearAll } from "@/utils/safeStorage";
