@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.fhm.radiosphere",
+      "sha256_cert_fingerprints": [
+        "D9:67:26:08:52:48:72:DF:DE:A7:C7:52:64:84:8C:0D:C8:90:0E:C2:97:6D:31:73:21:29:5A:81:50:29:D7:DA"
+      ]
+    }
+  }
+]

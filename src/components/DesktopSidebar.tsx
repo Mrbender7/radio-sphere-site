@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Home, Compass, Heart, Info, Mail, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { umamiTrack } from "@/utils/umamiTracking";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
@@ -114,7 +115,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
-            data-umami-event="google-play-sidebar"
+            onClick={() => umamiTrack("play-store-click", { location: "sidebar-expanded" })}
             className="block hover:opacity-90 transition-opacity mt-3 -ml-1"
             title="Google Play"
           >
@@ -223,6 +224,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => umamiTrack("play-store-click", { location: "sidebar-collapsed" })}
             className="flex justify-center"
             title="Google Play"
           >

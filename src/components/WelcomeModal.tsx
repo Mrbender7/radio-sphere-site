@@ -5,6 +5,7 @@ import type { Language } from "@/i18n/translations";
 import { detectInitialLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import translations from "@/i18n/translations";
+import { umamiTrack } from "@/utils/umamiTracking";
 import {
   Select,
   SelectContent,
@@ -76,7 +77,7 @@ export function WelcomeModal({ open, onOpenChange, onComplete }: WelcomeModalPro
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
-            data-umami-event="google-play-welcome"
+            onClick={() => umamiTrack("play-store-click", { location: "welcome-modal" })}
             className="block hover:opacity-90 transition-opacity mb-6"
           >
             <img

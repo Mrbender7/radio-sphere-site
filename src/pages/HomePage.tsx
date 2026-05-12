@@ -3,6 +3,7 @@ import { RadioStation } from "@/types/radio";
 import { StationCard } from "@/components/StationCard";
 import { ScrollableRow } from "@/components/ScrollableRow";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { umamiTrack } from "@/utils/umamiTracking";
 import { cn } from "@/lib/utils";
 import { useWeeklyDiscoveries } from "@/hooks/useWeeklyDiscoveries";
 import { Heart, Sparkles, RefreshCw, ChevronRight, ArrowUp } from "lucide-react";
@@ -156,7 +157,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
-            data-umami-event="google-play-clicked"
+            onClick={() => umamiTrack("play-store-click", { location: "homepage-cta" })}
             className="inline-block hover:opacity-90 transition-opacity"
           >
             <img
