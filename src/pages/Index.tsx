@@ -114,8 +114,15 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [selectedGenre, setSelectedGenre] = useState<string | undefined>();
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(!hasCompletedOnboarding());
+  // IMPORTANT: must match SSG output (false) at first client render to avoid
+  // React hydration mismatch (#418/#423) which freezes the whole app on desktop.
+  // We flip it on in a useEffect once hydration is done.
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(initialPrivacy);
+
+  useEffect(() => {
+    if (!hasCompletedOnboarding()) setShowWelcome(true);
+  }, []);
   const { favorites, toggleFavorite, isFavorite, recent } = useFavoritesContext();
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
   const { setLanguage } = useTranslation();
