@@ -51,7 +51,20 @@ function reportCrash(kind: "unhandledrejection" | "error", message: string) {
     sessionStorage.setItem(CRASH_FLAG_KEY, "1");
   } catch {
     /* noop */
-  }
+}
+
+/** Detect React hydration mismatch errors (#418, #423, #425, etc.) */
+function isHydrationError(message: string | undefined | null): boolean {
+  if (!message) return false;
+  const m = String(message);
+  return (
+    m.includes("Hydration failed") ||
+    m.includes("hydrating") ||
+    m.includes("did not match") ||
+    m.includes("Text content does not match") ||
+    /Minified React error #(418|423|425)/.test(m)
+  );
+}
   try {
     const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
     w.umami?.track("js-crash", {
