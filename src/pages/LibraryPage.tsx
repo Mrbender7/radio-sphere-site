@@ -4,6 +4,7 @@ import { StationCard, StationViewMode } from "@/components/StationCard";
 import { Heart, ArrowUp, List, Grid3x3, LayoutGrid, Grip } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import { safeGetItem, safeSetItem } from "@/utils/safeStorage";
 
 interface LibraryPageProps {
   favorites: RadioStation[];
@@ -15,21 +16,26 @@ export function LibraryPage({ favorites, isFavorite, onToggleFavorite }: Library
   const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">(() => {
-    try { const v = localStorage.getItem("radiosphere_sort_mode"); if (v === "name" || v === "country" || v === "genre") return v; } catch {}
-    return "name";
-  });
+  const [sortMode, setSortMode] = useState<"name" | "country" | "genre">("name");
+  const [viewMode, setViewMode] = useState<StationViewMode>("list");
+
+  useEffect(() => {
+    const storedSort = safeGetItem("radiosphere_sort_mode");
+    if (storedSort === "name" || storedSort === "country" || storedSort === "genre") {
+      setSortMode(storedSort);
+    }
+
+    const storedView = safeGetItem("radiosphere_view_mode") as StationViewMode | null;
+    if (storedView) setViewMode(storedView);
+  }, []);
+
   const updateSortMode = useCallback((mode: "name" | "country" | "genre") => {
     setSortMode(mode);
-    try { localStorage.setItem("radiosphere_sort_mode", mode); } catch {}
+    safeSetItem("radiosphere_sort_mode", mode);
   }, []);
-  const [viewMode, setViewMode] = useState<StationViewMode>(() => {
-    try { const v = localStorage.getItem("radiosphere_view_mode"); if (v) return v as StationViewMode; } catch {}
-    return "list";
-  });
   const updateViewMode = useCallback((mode: StationViewMode) => {
     setViewMode(mode);
-    try { localStorage.setItem("radiosphere_view_mode", mode); } catch {}
+    safeSetItem("radiosphere_view_mode", mode);
   }, []);
 
   const handleScroll = useCallback(() => {
