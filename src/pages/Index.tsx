@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, Suspense, lazy } from "react";
+import { useState, useCallback, useEffect, Suspense, lazy, startTransition } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Head } from "vite-react-ssg";
 import { usePlayer } from "@/contexts/PlayerContext";
