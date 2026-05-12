@@ -21,7 +21,7 @@ export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string;
   { value: "ar", flag: "🇸🇦", flagUrl: "https://flagcdn.com/w40/sa.png", label: "العربية" },
 ];
 
-const translations: Record<Language, Record<string, string>> = {
+const translations = {
   fr: {
     "nav.home": "Accueil",
     "nav.search": "Recherche",
