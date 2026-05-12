@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, X, ChevronDown, ChevronUp, Check, ArrowUpDown, ArrowUp, AlertTriangle, List, Grid3x3, LayoutGrid, Grip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { safeGetItem, safeSetItem } from "@/utils/safeStorage";
 
 const FALLBACK_COUNTRIES = [
   { label: "Argentina", value: "Argentina", code: "ar" },
@@ -118,13 +119,16 @@ export function SearchPage({ isFavorite, onToggleFavorite, initialGenre }: Searc
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [sortBy, setSortBy] = useState<"votes" | "name" | "clickcount">("votes");
-  const [viewMode, setViewMode] = useState<StationViewMode>(() => {
-    try { const v = localStorage.getItem("radiosphere_view_mode"); if (v) return v as StationViewMode; } catch {}
-    return "list";
-  });
+  const [viewMode, setViewMode] = useState<StationViewMode>("list");
+
+  useEffect(() => {
+    const stored = safeGetItem("radiosphere_view_mode") as StationViewMode | null;
+    if (stored) setViewMode(stored);
+  }, []);
+
   const updateViewMode = useCallback((mode: StationViewMode) => {
     setViewMode(mode);
-    try { localStorage.setItem("radiosphere_view_mode", mode); } catch {}
+    safeSetItem("radiosphere_view_mode", mode);
   }, []);
   const { t } = useTranslation();
   const PAGE_SIZE = 40;
