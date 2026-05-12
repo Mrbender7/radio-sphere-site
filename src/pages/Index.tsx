@@ -122,7 +122,12 @@ const Index = () => {
   const [showPrivacy, setShowPrivacy] = useState(initialPrivacy);
 
   useEffect(() => {
-    if (!hasCompletedOnboarding()) setShowWelcome(true);
+    if (!hasCompletedOnboarding()) {
+      // startTransition: avoid React #421 by marking this post-hydration
+      // state update as non-urgent so the Suspense boundary can finish
+      // hydrating first.
+      startTransition(() => setShowWelcome(true));
+    }
   }, []);
   const { favorites, toggleFavorite, isFavorite, recent } = useFavoritesContext();
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
