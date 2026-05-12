@@ -466,6 +466,7 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
     return () => {
       audio.removeEventListener("error", handleError);
+      audio.removeEventListener("playing", handlePlaying);
       audio.removeEventListener("stalled", handleStalled);
       audio.removeEventListener("ended", handleEnded);
       document.removeEventListener('visibilitychange', keepAlive);
