@@ -157,7 +157,7 @@ export function HomePage({ recent, favorites, isFavorite, onToggleFavorite, onGe
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
-            data-umami-event="google-play-clicked"
+            onClick={() => umamiTrack("play-store-click", { location: "homepage-cta" })}
             className="inline-block hover:opacity-90 transition-opacity"
           >
             <img
