@@ -4478,4 +4478,12 @@ translations.ms = { ...translations.id };
 // Thai translation - temporary fallback from Indonesian (pending proper Thai translations)
 translations.th = { ...translations.id };
 
-export default translations;
+// Brazilian Portuguese — seeded from European Portuguese as a high-quality
+// fallback until dedicated pt-BR strings are added.
+(translations as Record<string, Record<string, string>>)["pt-BR"] = { ...translations.pt };
+
+// Hindi — seeded from English as a temporary fallback until dedicated
+// Hindi strings are added.
+(translations as Record<string, Record<string, string>>)["hi"] = { ...translations.en };
+
+export default translations as Record<Language, Record<string, string>>;
