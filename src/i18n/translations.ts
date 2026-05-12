@@ -1,4 +1,4 @@
-export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pl" | "zh" | "tr" | "ru" | "id" | "ms" | "th" | "ar";
+export type Language = "fr" | "en" | "es" | "de" | "ja" | "it" | "nl" | "pt" | "pt-BR" | "pl" | "zh" | "tr" | "ru" | "id" | "ms" | "th" | "ar" | "hi";
 
 export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string; label: string }[] = [
   { value: "fr", flag: "🇫🇷", flagUrl: "https://flagcdn.com/w40/fr.png", label: "Français" },
@@ -8,6 +8,8 @@ export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string;
   { value: "it", flag: "🇮🇹", flagUrl: "https://flagcdn.com/w40/it.png", label: "Italiano" },
   { value: "nl", flag: "🇳🇱", flagUrl: "https://flagcdn.com/w40/nl.png", label: "Nederlands" },
   { value: "pt", flag: "🇵🇹", flagUrl: "https://flagcdn.com/w40/pt.png", label: "Português" },
+  { value: "pt-BR", flag: "🇧🇷", flagUrl: "https://flagcdn.com/w40/br.png", label: "Português (Brasil)" },
+  { value: "hi", flag: "🇮🇳", flagUrl: "https://flagcdn.com/w40/in.png", label: "हिन्दी" },
   { value: "pl", flag: "🇵🇱", flagUrl: "https://flagcdn.com/w40/pl.png", label: "Polski" },
   { value: "zh", flag: "🇨🇳", flagUrl: "https://flagcdn.com/w40/cn.png", label: "中文" },
   { value: "ja", flag: "🇯🇵", flagUrl: "https://flagcdn.com/w40/jp.png", label: "日本語" },
@@ -19,7 +21,7 @@ export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string;
   { value: "ar", flag: "🇸🇦", flagUrl: "https://flagcdn.com/w40/sa.png", label: "العربية" },
 ];
 
-const translations: Record<Language, Record<string, string>> = {
+const translations = {
   fr: {
     "nav.home": "Accueil",
     "nav.search": "Recherche",
@@ -4476,4 +4478,12 @@ translations.ms = { ...translations.id };
 // Thai translation - temporary fallback from Indonesian (pending proper Thai translations)
 translations.th = { ...translations.id };
 
-export default translations;
+// Brazilian Portuguese — seeded from European Portuguese as a high-quality
+// fallback until dedicated pt-BR strings are added.
+(translations as Record<string, Record<string, string>>)["pt-BR"] = { ...translations.pt };
+
+// Hindi — seeded from English as a temporary fallback until dedicated
+// Hindi strings are added.
+(translations as Record<string, Record<string, string>>)["hi"] = { ...translations.en };
+
+export default translations as unknown as Record<Language, Record<string, string>>;
