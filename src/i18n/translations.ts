@@ -8,6 +8,8 @@ export const LANGUAGE_OPTIONS: { value: Language; flag: string; flagUrl: string;
   { value: "it", flag: "🇮🇹", flagUrl: "https://flagcdn.com/w40/it.png", label: "Italiano" },
   { value: "nl", flag: "🇳🇱", flagUrl: "https://flagcdn.com/w40/nl.png", label: "Nederlands" },
   { value: "pt", flag: "🇵🇹", flagUrl: "https://flagcdn.com/w40/pt.png", label: "Português" },
+  { value: "pt-BR", flag: "🇧🇷", flagUrl: "https://flagcdn.com/w40/br.png", label: "Português (Brasil)" },
+  { value: "hi", flag: "🇮🇳", flagUrl: "https://flagcdn.com/w40/in.png", label: "हिन्दी" },
   { value: "pl", flag: "🇵🇱", flagUrl: "https://flagcdn.com/w40/pl.png", label: "Polski" },
   { value: "zh", flag: "🇨🇳", flagUrl: "https://flagcdn.com/w40/cn.png", label: "中文" },
   { value: "ja", flag: "🇯🇵", flagUrl: "https://flagcdn.com/w40/jp.png", label: "日本語" },
