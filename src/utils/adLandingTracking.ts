@@ -52,6 +52,31 @@ export function trackAdLandingOnce(): void {
     });
 
     try { sessionStorage.setItem(FLAG_KEY, "1"); } catch { /* noop */ }
+
+    // Strip tracking params from the URL after capture. Two reasons:
+    //  1. Breaks the reload-loop crash pattern observed in Umami: when
+    //     hydration fails inside a slow WebView, users reload — without this
+    //     cleanup the same `?fbclid=…` URL re-triggers the same crash.
+    //  2. Cleaner canonical URL if the user shares the page from the address
+    //     bar. Tracking has already been recorded in the umami event above,
+    //     so we lose nothing.
+    try {
+      const TRACKING_PARAMS = [
+        "fbclid", "gclid", "msclkid", "yclid", "ttclid", "twclid",
+        "utm_source", "utm_medium", "utm_campaign", "utm_term",
+        "utm_content", "utm_id", "utm_name", "utm_brand",
+        "mc_cid", "mc_eid", "_ga", "ref", "ref_src",
+      ];
+      const url = new URL(window.location.href);
+      let mutated = false;
+      for (const p of TRACKING_PARAMS) {
+        if (url.searchParams.has(p)) { url.searchParams.delete(p); mutated = true; }
+      }
+      if (mutated) {
+        const cleaned = url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : "") + url.hash;
+        window.history.replaceState(window.history.state, "", cleaned);
+      }
+    } catch { /* noop — replaceState may be blocked in some WebViews */ }
   } catch (e) {
     console.warn("[RadioSphere] ad-landing tracking failed:", e);
   }
