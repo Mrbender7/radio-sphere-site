@@ -49,7 +49,28 @@ if (typeof window !== "undefined") {
     hydrateRoot?: (container: Element | Document, children: unknown, options?: Record<string, unknown>) => unknown;
   };
   const original = RD.hydrateRoot;
-  if (typeof original === "function") {
+  // In in-app browser WebViews (Facebook, Instagram, TikTok…), the page DOM is
+  // often mutated by the host shell (script injection, meta rewrites, etc.)
+  // before React boots. Hydration then fails with #418/#423 and the whole app
+  // freezes. Force a pure client-side render in those environments: wipe the
+  // SSG markup and call createRoot — SEO doesn't matter inside a WebView.
+  if (isInAppBrowser()) {
+    RD.hydrateRoot = function csrFallbackHydrateRoot(container, children) {
+      try {
+        umamiTrack("hydration-skipped-inapp", {
+          ua: trunc(navigator.userAgent, 160),
+          route: window.location.pathname,
+        });
+      } catch { /* noop */ }
+      try {
+        if (container instanceof Element) container.innerHTML = "";
+      } catch { /* noop */ }
+      const root = ReactDOMClient.createRoot(container as Element);
+      root.render(children as Parameters<typeof root.render>[0]);
+      return root as unknown as ReturnType<NonNullable<typeof original>>;
+    };
+    console.log("[RadioSphere] In-app WebView: forcing CSR (no hydration)");
+  } else if (typeof original === "function") {
     RD.hydrateRoot = function patchedHydrateRoot(container, children, options) {
       const userOpts = (options ?? {}) as {
         onRecoverableError?: (error: unknown, errorInfo: { digest?: string; componentStack?: string }) => void;
