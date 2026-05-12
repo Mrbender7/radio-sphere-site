@@ -57,12 +57,20 @@ function analyzeFavorites(favorites: RadioStation[]): { tags: string[]; countrie
 }
 
 export function useWeeklyDiscoveries(favorites: RadioStation[]) {
-  const weekKey = useMemo(getMondayKey, []);
-  const cached = useMemo(loadCached, []);
+  // Keep the first render identical to the SSG HTML. Dates and localStorage can
+  // differ between build-time and the visitor's browser, so initialize them
+  // only after hydration.
+  const [weekKey, setWeekKey] = useState<string | null>(null);
+  const [cached, setCached] = useState<StoredDiscoveries | null>(null);
   const profile = useMemo(() => analyzeFavorites(favorites), [favorites]);
   const [forceRefresh, setForceRefresh] = useState(0);
 
-  const needsFetch = !cached || cached.weekKey !== weekKey || forceRefresh > 0;
+  useEffect(() => {
+    setWeekKey(getMondayKey());
+    setCached(loadCached());
+  }, []);
+
+  const needsFetch = !!weekKey && (!cached || cached.weekKey !== weekKey || forceRefresh > 0);
 
   const { data, isFetching } = useQuery({
     queryKey: ["weeklyDiscoveries", weekKey, profile.tags.join(","), profile.countries.join(","), forceRefresh],
@@ -109,10 +117,16 @@ export function useWeeklyDiscoveries(favorites: RadioStation[]) {
     staleTime: forceRefresh > 0 ? 0 : Infinity,
   });
 
-  const [discoveries, setDiscoveries] = useState<RadioStation[]>(cached?.weekKey === weekKey ? cached.stations : []);
+  const [discoveries, setDiscoveries] = useState<RadioStation[]>([]);
 
   useEffect(() => {
-    if (data && data.length > 0) {
+    if (cached && weekKey && cached.weekKey === weekKey) {
+      setDiscoveries(cached.stations);
+    }
+  }, [cached, weekKey]);
+
+  useEffect(() => {
+    if (weekKey && data && data.length > 0) {
       setDiscoveries(data);
       safeSetItem(DISCOVERIES_KEY, JSON.stringify({ weekKey, stations: data }));
       const history = loadHistory();
