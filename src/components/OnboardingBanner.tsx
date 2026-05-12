@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Gift, ShieldOff, Clock, X } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { umamiTrack } from "@/utils/umamiTracking";
 import { cn } from "@/lib/utils";
 import { safeGetItem, safeSetItem } from "@/utils/safeStorage";
 
