@@ -71,11 +71,18 @@ export function useFavorites() {
 }
 
 export function useRecentStations() {
-  const [recent, setRecent] = useState<RadioStation[]>(() => loadFromStorage(RECENT_KEY, []));
+  const [recent, setRecent] = useState<RadioStation[]>([]);
+  const [recHydrated, setRecHydrated] = useState(false);
 
   useEffect(() => {
+    setRecent(loadFromStorage(RECENT_KEY, []));
+    setRecHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!recHydrated) return;
     safeSetItem(RECENT_KEY, JSON.stringify(recent));
-  }, [recent]);
+  }, [recent, recHydrated]);
 
   const addRecent = useCallback((station: RadioStation) => {
     setRecent(prev => {
