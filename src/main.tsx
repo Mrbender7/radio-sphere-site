@@ -255,16 +255,17 @@ if (typeof window !== "undefined") {
   });
 
   // React 18 reports hydration mismatches via console.error. Wrap it once to
-  // forward those to Umami without changing console behaviour.
+  // forward those to Umami without changing console behaviour. We aggregate
+  // every chunk (string args + Error stacks + cause chains) so the URL/code
+  // can be fished out of secondary args even when the primary message is just
+  // "Uncaught Error: Minified React error #418".
   const origConsoleError = console.error;
   console.error = function patchedConsoleError(...args: unknown[]) {
     try {
-      const msg = args
-        .map((a) => (a instanceof Error ? `${a.message}\n${a.stack ?? ""}` : typeof a === "string" ? a : ""))
-        .join(" ");
+      const msg = collectErrorTextChunks(...args);
       if (isHydrationError(msg)) {
         const errArg = args.find((a) => a instanceof Error) as Error | undefined;
-        reportHydrationError(msg, "console-error", { stack: trunc(errArg?.stack, 600) });
+        reportHydrationError(msg, "console-error", { stack: trunc(errArg?.stack ?? msg, 600) });
       }
     } catch { /* noop */ }
     return origConsoleError.apply(console, args as []);
