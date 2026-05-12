@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Home, Compass, Heart, Info, Mail, HelpCircle, ExternalLink, X, ChevronLeft, ChevronRight, Globe, ChevronDown, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { umamiTrack } from "@/utils/umamiTracking";
 import { LANGUAGE_OPTIONS, type Language } from "@/i18n/translations";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
