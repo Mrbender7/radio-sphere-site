@@ -386,6 +386,16 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
 
       streamDeadRef.current = true;
       console.error("[RadioSphere] Stream marked as dead (error event)");
+      // Umami: track playback error with station name (no PII) to help DB cleanup
+      if (station) {
+        const mediaErr = audio.error;
+        umamiTrack("stream-playback-error", {
+          name: String(station.name ?? "unknown").slice(0, 80),
+          country: station.country ?? "unknown",
+          code: mediaErr?.code ?? 0,
+          insecure: !!isStreamInsecure,
+        });
+      }
       isPlayingRef.current = false;
       setState(s => ({ ...s, isPlaying: false, isBuffering: false }));
       stopSilentLoop();
@@ -395,6 +405,21 @@ export function PlayerProvider({ children, onStationPlay }: { children: React.Re
       toast({ title: t("player.streamError"), description: t("player.streamErrorDesc"), variant: "destructive" });
     };
     audio.addEventListener("error", handleError);
+
+    // Fires when audio actually starts playing (after canplay + play() resolves).
+    // Deduped per station so heartbeat reloads don't spam events.
+    let lastPlayTrackedId: string | null = null;
+    const handlePlaying = () => {
+      if (audio.src && audio.src.startsWith('blob:')) return; // time-shift, not a fresh stream start
+      const station = currentStationRef.current;
+      if (!station || station.id === lastPlayTrackedId) return;
+      lastPlayTrackedId = station.id;
+      umamiTrack("stream-play", {
+        name: String(station.name ?? "unknown").slice(0, 80),
+        country: station.country ?? "unknown",
+      });
+    };
+    audio.addEventListener("playing", handlePlaying);
 
     const handleStalled = () => {
       if (!isPlayingRef.current) return;
