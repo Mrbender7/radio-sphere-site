@@ -169,12 +169,22 @@ function reportOnce(event: string, dedupeKey: string, payload: Record<string, un
 
 function reportHydrationError(rawMessage: string, source: "error-event" | "console-error", extra?: Record<string, unknown>) {
   const code = extractReactErrorCode(rawMessage);
-  const url = extractReactErrorUrl(rawMessage);
+  // Try the original message first; fall back to extra.stack which often
+  // contains the full minified message with the react.dev URL.
+  let url = extractReactErrorUrl(rawMessage);
+  const stackText = typeof extra?.stack === "string" ? extra.stack : "";
+  if (!url && stackText) url = extractReactErrorUrl(stackText);
+  // Last resort: if we have the code, build the canonical URL ourselves so
+  // the dashboard always has a clickable link.
+  if (!url && code) url = `https://react.dev/errors/${code}`;
+
+  const args = extractReactErrorArgs(rawMessage) || extractReactErrorArgs(stackText);
   const eventName = code ? `hydration-error-${code}` : "hydration-error";
   const dedupeKey = `${eventName}|${url ?? trunc(rawMessage, 120)}|${window.location.pathname}`;
   const payload: Record<string, unknown> = {
     code: code ?? "unknown",
     url: url ?? "",
+    args: args.length ? args.join("|") : "",
     message: trunc(rawMessage, 300),
     route: window.location.pathname,
     source,
