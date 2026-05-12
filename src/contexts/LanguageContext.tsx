@@ -19,7 +19,7 @@ export function detectInitialLanguage(): Language {
     if (stored && SUPPORTED_LANGUAGES.includes(stored as Language)) return stored as Language;
     const nav = navigator.language?.toLowerCase();
     for (const lang of SUPPORTED_LANGUAGES) {
-      if (nav?.startsWith(lang)) return lang;
+      if (nav?.startsWith(lang.toLowerCase())) return lang;
     }
     return "en";
   } catch {
