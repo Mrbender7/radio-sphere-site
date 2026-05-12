@@ -109,21 +109,45 @@ function umamiTrack(event: string, data?: Record<string, unknown>) {
 }
 
 /** Track crash and report to Umami if available */
-function reportCrash(kind: "unhandledrejection" | "error", message: string) {
+function reportCrash(kind: "unhandledrejection" | "error", message: string, extra?: Record<string, unknown>) {
   try {
     sessionStorage.setItem(CRASH_FLAG_KEY, "1");
-  } catch {
-    /* noop */
-  }
-  try {
-    const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
-    w.umami?.track("js-crash", {
-      kind,
-      message: message.slice(0, 200),
-      route: window.location.pathname,
-    });
-  } catch {
-    /* noop */
+  } catch { /* noop */ }
+  umamiTrack("js-crash", {
+    kind,
+    message: trunc(message, 300),
+    route: window.location.pathname,
+    ...envInfo(),
+    ...(extra ?? {}),
+  });
+}
+
+/** De-duplicate identical events fired in the same session (React often emits twice). */
+const _seenEvents = new Set<string>();
+function reportOnce(event: string, dedupeKey: string, payload: Record<string, unknown>) {
+  if (_seenEvents.has(dedupeKey)) return;
+  _seenEvents.add(dedupeKey);
+  umamiTrack(event, payload);
+}
+
+function reportHydrationError(rawMessage: string, source: "error-event" | "console-error", extra?: Record<string, unknown>) {
+  const code = extractReactErrorCode(rawMessage);
+  const url = extractReactErrorUrl(rawMessage);
+  const eventName = code ? `hydration-error-${code}` : "hydration-error";
+  const dedupeKey = `${eventName}|${url ?? trunc(rawMessage, 120)}|${window.location.pathname}`;
+  const payload: Record<string, unknown> = {
+    code: code ?? "unknown",
+    url: url ?? "",
+    message: trunc(rawMessage, 300),
+    route: window.location.pathname,
+    source,
+    ...envInfo(),
+    ...(extra ?? {}),
+  };
+  reportOnce(eventName, dedupeKey, payload);
+  // Also emit the generic event so the existing dashboard keeps working.
+  if (eventName !== "hydration-error") {
+    reportOnce("hydration-error", `generic|${dedupeKey}`, payload);
   }
 }
 
@@ -134,31 +158,52 @@ if (typeof window !== "undefined") {
     const reason = event.reason;
     const message =
       reason instanceof Error ? reason.message : typeof reason === "string" ? reason : String(reason);
+    const stack = reason instanceof Error ? trunc(reason.stack, 600) : "";
     console.warn("[RadioSphere] Unhandled promise rejection:", reason);
-    if (isJsonParseCrash(message)) {
-      reportCrash("unhandledrejection", message);
+    if (isHydrationError(message)) {
+      reportHydrationError(message, "error-event", { stack, async: true });
+    } else if (isJsonParseCrash(message)) {
+      reportCrash("unhandledrejection", message, { stack });
+    } else {
+      // Catch-all so we can detect previously-invisible async crashes.
+      umamiTrack("unhandled-rejection", {
+        message: trunc(message, 300),
+        name: reason instanceof Error ? reason.name : typeof reason,
+        stack,
+        route: window.location.pathname,
+        ...envInfo(),
+      });
     }
     event.preventDefault();
   });
 
-  // Synchronous errors (timers, event handlers) — also flag JSON parse crashes
-  // and forward React hydration mismatches (#418/#423/#425) to Umami so we can
-  // detect SSR/CSR drift in production.
+  // Synchronous errors (timers, event handlers) — flag JSON parse crashes,
+  // forward React hydration mismatches with their precise code, and surface
+  // any other uncaught error so we have a real signal in production.
   window.addEventListener("error", (event) => {
-    const message = event.message || (event.error instanceof Error ? event.error.message : "");
-    if (isJsonParseCrash(message)) {
-      console.warn("[RadioSphere] Sync error (JSON parse):", message);
-      reportCrash("error", message);
-    }
+    const err = event.error;
+    const message = event.message || (err instanceof Error ? err.message : "");
+    const stack = err instanceof Error ? trunc(err.stack, 600) : "";
+    const location = `${event.filename || ""}:${event.lineno || 0}:${event.colno || 0}`;
     if (isHydrationError(message)) {
       console.warn("[RadioSphere] Hydration error detected:", message);
-      try {
-        const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
-        w.umami?.track("hydration-error", {
-          message: message.slice(0, 200),
-          route: window.location.pathname,
-        });
-      } catch { /* noop */ }
+      reportHydrationError(message, "error-event", { stack, location });
+      return;
+    }
+    if (isJsonParseCrash(message)) {
+      console.warn("[RadioSphere] Sync error (JSON parse):", message);
+      reportCrash("error", message, { stack, location });
+      return;
+    }
+    if (message) {
+      umamiTrack("js-error", {
+        name: err instanceof Error ? err.name : "Error",
+        message: trunc(message, 300),
+        location,
+        stack,
+        route: window.location.pathname,
+        ...envInfo(),
+      });
     }
   });
 
@@ -167,40 +212,60 @@ if (typeof window !== "undefined") {
   const origConsoleError = console.error;
   console.error = function patchedConsoleError(...args: unknown[]) {
     try {
-      const msg = args.map((a) => (a instanceof Error ? a.message : typeof a === "string" ? a : "")).join(" ");
+      const msg = args
+        .map((a) => (a instanceof Error ? `${a.message}\n${a.stack ?? ""}` : typeof a === "string" ? a : ""))
+        .join(" ");
       if (isHydrationError(msg)) {
-        const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
-        w.umami?.track("hydration-error", {
-          message: msg.slice(0, 200),
-          route: window.location.pathname,
-        });
+        const errArg = args.find((a) => a instanceof Error) as Error | undefined;
+        reportHydrationError(msg, "console-error", { stack: trunc(errArg?.stack, 600) });
       }
     } catch { /* noop */ }
     return origConsoleError.apply(console, args as []);
   };
 
+  // Detect chunk-load failures (stale SW serving an outdated bundle) — a known
+  // cause of mysterious white screens after a deploy.
+  window.addEventListener("error", (event) => {
+    const target = event.target as HTMLElement | null;
+    if (!target || target === window as unknown as HTMLElement) return;
+    const tag = (target.tagName || "").toLowerCase();
+    if (tag === "script" || tag === "link") {
+      const src = (target as HTMLScriptElement).src || (target as HTMLLinkElement).href || "";
+      umamiTrack("asset-load-error", {
+        tag,
+        src: trunc(src, 300),
+        route: window.location.pathname,
+        ...envInfo(),
+      });
+    }
+  }, true);
+
+  // Visibility into total session loss (long task on first paint, etc.)
+  // We only emit once per session, on first hidden after load.
+  let firstHiddenReported = false;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "hidden" || firstHiddenReported) return;
+    firstHiddenReported = true;
+    const t = performance.now();
+    if (t < 10_000) {
+      umamiTrack("early-bounce", {
+        ms: Math.round(t),
+        route: window.location.pathname,
+        ...envInfo(),
+      });
+    }
+  });
+
   // PWA install lifecycle — capture the native browser prompt outcome.
-  let deferredInstallPrompt: Event | null = null;
   window.addEventListener("beforeinstallprompt", (e) => {
-    deferredInstallPrompt = e;
-    try {
-      const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
-      w.umami?.track("pwa-install-available");
-      // Listen for the user's choice on the native prompt.
-      const promptEvt = e as Event & { userChoice?: Promise<{ outcome: "accepted" | "dismissed" }> };
-      promptEvt.userChoice?.then((choice) => {
-        w.umami?.track(
-          choice.outcome === "accepted" ? "pwa-install-accepted" : "pwa-install-rejected"
-        );
-      }).catch(() => { /* noop */ });
-    } catch { /* noop */ }
+    umamiTrack("pwa-install-available");
+    const promptEvt = e as Event & { userChoice?: Promise<{ outcome: "accepted" | "dismissed" }> };
+    promptEvt.userChoice?.then((choice) => {
+      umamiTrack(choice.outcome === "accepted" ? "pwa-install-accepted" : "pwa-install-rejected");
+    }).catch(() => { /* noop */ });
   });
   window.addEventListener("appinstalled", () => {
-    deferredInstallPrompt = null;
-    try {
-      const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
-      w.umami?.track("pwa-installed");
-    } catch { /* noop */ }
+    umamiTrack("pwa-installed");
   });
 }
 
