@@ -212,6 +212,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             href="https://podcast.radiosphere.be/"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => umamiTrack("podcastsphere-click", { location: "sidebar-collapsed" })}
             className="flex justify-center"
             title="PodcastSphere"
           >
