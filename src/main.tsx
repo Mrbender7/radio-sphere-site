@@ -62,6 +62,43 @@ function extractReactErrorUrl(message: string | undefined | null): string | null
   return m ? m[0] : null;
 }
 
+/** Parse `args[]=foo&args[]=bar` query into an array. */
+function extractReactErrorArgs(message: string | undefined | null): string[] {
+  if (!message) return [];
+  const out: string[] = [];
+  const re = /[?&]args(?:\[\])?=([^&\s"')]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(String(message))) !== null) {
+    try { out.push(decodeURIComponent(m[1])); } catch { out.push(m[1]); }
+  }
+  return out;
+}
+
+/**
+ * Aggregate every string-ish chunk of a console.error/error-event so we can
+ * fish out the React URL even when it's not in the primary message.
+ * Walks: message itself + Error.stack + Error.cause.
+ */
+function collectErrorTextChunks(...args: unknown[]): string {
+  const parts: string[] = [];
+  for (const a of args) {
+    if (a == null) continue;
+    if (typeof a === "string") parts.push(a);
+    else if (a instanceof Error) {
+      parts.push(a.message ?? "");
+      if (a.stack) parts.push(a.stack);
+      const cause = (a as { cause?: unknown }).cause;
+      if (cause instanceof Error) {
+        parts.push(cause.message ?? "");
+        if (cause.stack) parts.push(cause.stack);
+      } else if (typeof cause === "string") parts.push(cause);
+    } else {
+      try { parts.push(String(a)); } catch { /* noop */ }
+    }
+  }
+  return parts.join(" \n ");
+}
+
 /** Detect React hydration mismatch errors (#418, #423, #425, etc.) */
 function isHydrationError(message: string | undefined | null): boolean {
   if (!message) return false;
