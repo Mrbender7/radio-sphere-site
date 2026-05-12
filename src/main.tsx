@@ -1,3 +1,9 @@
+// IMPORTANT: must be the very first import. Patches ReactDOM.hydrateRoot to
+// inject onRecoverableError so we capture the React `componentStack` of any
+// hydration mismatch (#418/#421/#423/#425) — the only way to know the exact
+// component at fault in a production build. Must run BEFORE vite-react-ssg
+// snapshots the react-dom namespace.
+import "./utils/patchHydrateRoot";
 import { ViteReactSSG } from "vite-react-ssg";
 import { routes } from "./routes";
 import { isInAppBrowser } from "./utils/inAppBrowser";
