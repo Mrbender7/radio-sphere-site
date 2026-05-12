@@ -229,12 +229,18 @@ if (typeof window !== "undefined") {
   // any other uncaught error so we have a real signal in production.
   window.addEventListener("error", (event) => {
     const err = event.error;
-    const message = event.message || (err instanceof Error ? err.message : "");
+    // Use the full Error.message when available — browsers often truncate
+    // event.message for cross-origin scripts, hiding the react.dev URL.
+    const errMessage = err instanceof Error ? err.message : "";
+    const message = errMessage || event.message || "";
     const stack = err instanceof Error ? trunc(err.stack, 600) : "";
     const location = `${event.filename || ""}:${event.lineno || 0}:${event.colno || 0}`;
-    if (isHydrationError(message)) {
+    // Aggregate message + stack so the URL extractor can find the link even
+    // when only the stack contains it.
+    const fullText = `${message}\n${stack}`;
+    if (isHydrationError(fullText)) {
       console.warn("[RadioSphere] Hydration error detected:", message);
-      reportHydrationError(message, "error-event", { stack, location });
+      reportHydrationError(fullText, "error-event", { stack, location });
       return;
     }
     if (isJsonParseCrash(message)) {
