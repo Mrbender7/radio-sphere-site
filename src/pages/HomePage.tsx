@@ -3,6 +3,7 @@ import { RadioStation } from "@/types/radio";
 import { StationCard } from "@/components/StationCard";
 import { ScrollableRow } from "@/components/ScrollableRow";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { umamiTrack } from "@/utils/umamiTracking";
 import { cn } from "@/lib/utils";
 import { useWeeklyDiscoveries } from "@/hooks/useWeeklyDiscoveries";
 import { Heart, Sparkles, RefreshCw, ChevronRight, ArrowUp } from "lucide-react";
