@@ -5,7 +5,7 @@ import { reportStationClick } from "@/services/RadioService";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { useCast } from "@/hooks/useCast";
 import { SSLWarningDialog } from "@/components/SSLWarningDialog";
-import { trackStationPlayed } from "@/utils/umamiTracking";
+import { trackStationPlayed, umamiTrack } from "@/utils/umamiTracking";
 
 /** Anti-zapping delay before sending the Umami "station-played" event (ms). */
 const PLAY_TRACK_DELAY_MS = 30_000;
