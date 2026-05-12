@@ -291,6 +291,12 @@ if (typeof window !== "undefined") {
     const tag = (target.tagName || "").toLowerCase();
     if (tag === "script" || tag === "link") {
       const src = (target as HTMLScriptElement).src || (target as HTMLLinkElement).href || "";
+      // Ignore third-party scripts injected by in-app browser shells
+      // (Facebook pcm.js / fbevents, Instagram, Google tag, TikTok pixel, etc.).
+      // These are not OUR assets — they fail constantly inside WebViews and
+      // would otherwise drown the real chunk-load failures we want to detect.
+      const THIRD_PARTY_NOISE = /(?:connect\.facebook\.net|facebook\.com\/tr|fbcdn\.net|instagram\.com|googletagmanager\.com|google-analytics\.com|googlesyndication|doubleclick|tiktok\.com|bytedance|snapchat|pinterest|linkedin\.com|hotjar|clarity\.ms)/i;
+      if (src && THIRD_PARTY_NOISE.test(src)) return;
       umamiTrack("asset-load-error", {
         tag,
         src: trunc(src, 300),
