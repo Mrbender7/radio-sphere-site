@@ -45,14 +45,6 @@ function isJsonParseCrash(message: string | undefined | null): boolean {
   );
 }
 
-/** Track crash and report to Umami if available */
-function reportCrash(kind: "unhandledrejection" | "error", message: string) {
-  try {
-    sessionStorage.setItem(CRASH_FLAG_KEY, "1");
-  } catch {
-    /* noop */
-}
-
 /** Detect React hydration mismatch errors (#418, #423, #425, etc.) */
 function isHydrationError(message: string | undefined | null): boolean {
   if (!message) return false;
@@ -65,6 +57,14 @@ function isHydrationError(message: string | undefined | null): boolean {
     /Minified React error #(418|423|425)/.test(m)
   );
 }
+
+/** Track crash and report to Umami if available */
+function reportCrash(kind: "unhandledrejection" | "error", message: string) {
+  try {
+    sessionStorage.setItem(CRASH_FLAG_KEY, "1");
+  } catch {
+    /* noop */
+  }
   try {
     const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
     w.umami?.track("js-crash", {
