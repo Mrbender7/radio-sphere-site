@@ -5,6 +5,7 @@ import type { Language } from "@/i18n/translations";
 import { detectInitialLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS } from "@/i18n/translations";
 import translations from "@/i18n/translations";
+import { umamiTrack } from "@/utils/umamiTracking";
 import {
   Select,
   SelectContent,
