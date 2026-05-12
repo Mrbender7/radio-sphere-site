@@ -45,6 +45,19 @@ function isJsonParseCrash(message: string | undefined | null): boolean {
   );
 }
 
+/** Detect React hydration mismatch errors (#418, #423, #425, etc.) */
+function isHydrationError(message: string | undefined | null): boolean {
+  if (!message) return false;
+  const m = String(message);
+  return (
+    m.includes("Hydration failed") ||
+    m.includes("hydrating") ||
+    m.includes("did not match") ||
+    m.includes("Text content does not match") ||
+    /Minified React error #(418|423|425)/.test(m)
+  );
+}
+
 /** Track crash and report to Umami if available */
 function reportCrash(kind: "unhandledrejection" | "error", message: string) {
   try {
@@ -79,12 +92,65 @@ if (typeof window !== "undefined") {
   });
 
   // Synchronous errors (timers, event handlers) — also flag JSON parse crashes
+  // and forward React hydration mismatches (#418/#423/#425) to Umami so we can
+  // detect SSR/CSR drift in production.
   window.addEventListener("error", (event) => {
     const message = event.message || (event.error instanceof Error ? event.error.message : "");
     if (isJsonParseCrash(message)) {
       console.warn("[RadioSphere] Sync error (JSON parse):", message);
       reportCrash("error", message);
     }
+    if (isHydrationError(message)) {
+      console.warn("[RadioSphere] Hydration error detected:", message);
+      try {
+        const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
+        w.umami?.track("hydration-error", {
+          message: message.slice(0, 200),
+          route: window.location.pathname,
+        });
+      } catch { /* noop */ }
+    }
+  });
+
+  // React 18 reports hydration mismatches via console.error. Wrap it once to
+  // forward those to Umami without changing console behaviour.
+  const origConsoleError = console.error;
+  console.error = function patchedConsoleError(...args: unknown[]) {
+    try {
+      const msg = args.map((a) => (a instanceof Error ? a.message : typeof a === "string" ? a : "")).join(" ");
+      if (isHydrationError(msg)) {
+        const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
+        w.umami?.track("hydration-error", {
+          message: msg.slice(0, 200),
+          route: window.location.pathname,
+        });
+      }
+    } catch { /* noop */ }
+    return origConsoleError.apply(console, args as []);
+  };
+
+  // PWA install lifecycle — capture the native browser prompt outcome.
+  let deferredInstallPrompt: Event | null = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    deferredInstallPrompt = e;
+    try {
+      const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
+      w.umami?.track("pwa-install-available");
+      // Listen for the user's choice on the native prompt.
+      const promptEvt = e as Event & { userChoice?: Promise<{ outcome: "accepted" | "dismissed" }> };
+      promptEvt.userChoice?.then((choice) => {
+        w.umami?.track(
+          choice.outcome === "accepted" ? "pwa-install-accepted" : "pwa-install-rejected"
+        );
+      }).catch(() => { /* noop */ });
+    } catch { /* noop */ }
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    try {
+      const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
+      w.umami?.track("pwa-installed");
+    } catch { /* noop */ }
   });
 }
 
