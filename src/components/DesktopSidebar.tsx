@@ -224,6 +224,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => umamiTrack("play-store-click", { location: "sidebar-collapsed" })}
             className="flex justify-center"
             title="Google Play"
           >
