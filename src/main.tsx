@@ -62,6 +62,43 @@ function extractReactErrorUrl(message: string | undefined | null): string | null
   return m ? m[0] : null;
 }
 
+/** Parse `args[]=foo&args[]=bar` query into an array. */
+function extractReactErrorArgs(message: string | undefined | null): string[] {
+  if (!message) return [];
+  const out: string[] = [];
+  const re = /[?&]args(?:\[\])?=([^&\s"')]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(String(message))) !== null) {
+    try { out.push(decodeURIComponent(m[1])); } catch { out.push(m[1]); }
+  }
+  return out;
+}
+
+/**
+ * Aggregate every string-ish chunk of a console.error/error-event so we can
+ * fish out the React URL even when it's not in the primary message.
+ * Walks: message itself + Error.stack + Error.cause.
+ */
+function collectErrorTextChunks(...args: unknown[]): string {
+  const parts: string[] = [];
+  for (const a of args) {
+    if (a == null) continue;
+    if (typeof a === "string") parts.push(a);
+    else if (a instanceof Error) {
+      parts.push(a.message ?? "");
+      if (a.stack) parts.push(a.stack);
+      const cause = (a as { cause?: unknown }).cause;
+      if (cause instanceof Error) {
+        parts.push(cause.message ?? "");
+        if (cause.stack) parts.push(cause.stack);
+      } else if (typeof cause === "string") parts.push(cause);
+    } else {
+      try { parts.push(String(a)); } catch { /* noop */ }
+    }
+  }
+  return parts.join(" \n ");
+}
+
 /** Detect React hydration mismatch errors (#418, #423, #425, etc.) */
 function isHydrationError(message: string | undefined | null): boolean {
   if (!message) return false;
@@ -132,12 +169,22 @@ function reportOnce(event: string, dedupeKey: string, payload: Record<string, un
 
 function reportHydrationError(rawMessage: string, source: "error-event" | "console-error", extra?: Record<string, unknown>) {
   const code = extractReactErrorCode(rawMessage);
-  const url = extractReactErrorUrl(rawMessage);
+  // Try the original message first; fall back to extra.stack which often
+  // contains the full minified message with the react.dev URL.
+  let url = extractReactErrorUrl(rawMessage);
+  const stackText = typeof extra?.stack === "string" ? extra.stack : "";
+  if (!url && stackText) url = extractReactErrorUrl(stackText);
+  // Last resort: if we have the code, build the canonical URL ourselves so
+  // the dashboard always has a clickable link.
+  if (!url && code) url = `https://react.dev/errors/${code}`;
+
+  const args = extractReactErrorArgs(rawMessage) || extractReactErrorArgs(stackText);
   const eventName = code ? `hydration-error-${code}` : "hydration-error";
   const dedupeKey = `${eventName}|${url ?? trunc(rawMessage, 120)}|${window.location.pathname}`;
   const payload: Record<string, unknown> = {
     code: code ?? "unknown",
     url: url ?? "",
+    args: args.length ? args.join("|") : "",
     message: trunc(rawMessage, 300),
     route: window.location.pathname,
     source,
@@ -182,12 +229,18 @@ if (typeof window !== "undefined") {
   // any other uncaught error so we have a real signal in production.
   window.addEventListener("error", (event) => {
     const err = event.error;
-    const message = event.message || (err instanceof Error ? err.message : "");
+    // Use the full Error.message when available — browsers often truncate
+    // event.message for cross-origin scripts, hiding the react.dev URL.
+    const errMessage = err instanceof Error ? err.message : "";
+    const message = errMessage || event.message || "";
     const stack = err instanceof Error ? trunc(err.stack, 600) : "";
     const location = `${event.filename || ""}:${event.lineno || 0}:${event.colno || 0}`;
-    if (isHydrationError(message)) {
+    // Aggregate message + stack so the URL extractor can find the link even
+    // when only the stack contains it.
+    const fullText = `${message}\n${stack}`;
+    if (isHydrationError(fullText)) {
       console.warn("[RadioSphere] Hydration error detected:", message);
-      reportHydrationError(message, "error-event", { stack, location });
+      reportHydrationError(fullText, "error-event", { stack, location });
       return;
     }
     if (isJsonParseCrash(message)) {
@@ -208,16 +261,17 @@ if (typeof window !== "undefined") {
   });
 
   // React 18 reports hydration mismatches via console.error. Wrap it once to
-  // forward those to Umami without changing console behaviour.
+  // forward those to Umami without changing console behaviour. We aggregate
+  // every chunk (string args + Error stacks + cause chains) so the URL/code
+  // can be fished out of secondary args even when the primary message is just
+  // "Uncaught Error: Minified React error #418".
   const origConsoleError = console.error;
   console.error = function patchedConsoleError(...args: unknown[]) {
     try {
-      const msg = args
-        .map((a) => (a instanceof Error ? `${a.message}\n${a.stack ?? ""}` : typeof a === "string" ? a : ""))
-        .join(" ");
+      const msg = collectErrorTextChunks(...args);
       if (isHydrationError(msg)) {
         const errArg = args.find((a) => a instanceof Error) as Error | undefined;
-        reportHydrationError(msg, "console-error", { stack: trunc(errArg?.stack, 600) });
+        reportHydrationError(msg, "console-error", { stack: trunc(errArg?.stack ?? msg, 600) });
       }
     } catch { /* noop */ }
     return origConsoleError.apply(console, args as []);

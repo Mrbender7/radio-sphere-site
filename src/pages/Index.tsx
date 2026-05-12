@@ -24,6 +24,7 @@ import { WelcomeModal } from "@/components/WelcomeModal";
 import { ExitConfirmDialog } from "@/components/ExitConfirmDialog";
 import { SleepTimerIndicator } from "@/components/SleepTimerIndicator";
 import { InAppBrowserBanner } from "@/components/InAppBrowserBanner";
+import { ClientOnly } from "@/components/ClientOnly";
 import { useBackButton } from "@/hooks/useBackButton";
 import { isInAppBrowser, isLocalStorageWorking } from "@/utils/inAppBrowser";
 import { safeGetItem, safeSetItem, safeClearAll } from "@/utils/safeStorage";
@@ -243,11 +244,20 @@ const Index = () => {
           <meta name="twitter:title" content={meta.title} />
           <meta name="twitter:description" content={meta.description} />
         </Head>
-        <SleepTimerIndicator />
-        <InAppBrowserBanner />
+        {/* Dynamic, browser-only chrome — kept out of the SSG HTML so the
+            first client render matches the static markup byte-for-byte and
+            cannot trigger React hydration mismatches (#418/#421/#423/#425).
+            Hidden during SSG also has zero SEO impact (no textual content). */}
+        <ClientOnly>
+          <SleepTimerIndicator />
+          <InAppBrowserBanner />
+        </ClientOnly>
         <div className="flex h-full bg-background">
-          {/* Desktop sidebar */}
-          <DesktopSidebar activeTab={activeTab} onTabChange={handleTabChange} />
+          {/* Desktop sidebar — uses Radix Popover (portals, useId), localStorage
+              and language-dependent labels: isolate to client. */}
+          <ClientOnly>
+            <DesktopSidebar activeTab={activeTab} onTabChange={handleTabChange} />
+          </ClientOnly>
 
           {/* Main area */}
           <div className="flex-1 flex flex-col min-w-0">
@@ -261,23 +271,27 @@ const Index = () => {
               </Suspense>
             </div>
 
-            {/* Mobile: MiniPlayer + BottomNav */}
-            <MiniPlayer />
-            <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-
-            {/* Desktop: Player bar + Footer */}
-            <DesktopPlayerBar />
-            <Footer />
+            {/* Player chrome — entirely client-driven (audio, MediaSession,
+                Cast). Excluding it from SSG eliminates any future hydration
+                drift and has no SEO cost. */}
+            <ClientOnly>
+              <MiniPlayer />
+              <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+              <DesktopPlayerBar />
+              <Footer />
+            </ClientOnly>
           </div>
         </div>
 
-        <FullScreenPlayer onTagClick={handleTagClick} />
-        <ExitConfirmDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
-        <WelcomeModal
-          open={showWelcome}
-          onOpenChange={handleWelcomeOpenChange}
-          onComplete={handleWelcomeComplete}
-        />
+        <ClientOnly>
+          <FullScreenPlayer onTagClick={handleTagClick} />
+          <ExitConfirmDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
+          <WelcomeModal
+            open={showWelcome}
+            onOpenChange={handleWelcomeOpenChange}
+            onComplete={handleWelcomeComplete}
+          />
+        </ClientOnly>
       </SleepTimerProvider>
   );
 };
