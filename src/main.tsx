@@ -45,17 +45,67 @@ function isJsonParseCrash(message: string | undefined | null): boolean {
   );
 }
 
+/** Known React hydration / render error codes we want to surface. */
+const HYDRATION_REACT_CODES = new Set(["418", "421", "422", "423", "425", "426", "428"]);
+
+/** Extract a React minified error code from a message (e.g. "#418"). */
+function extractReactErrorCode(message: string | undefined | null): string | null {
+  if (!message) return null;
+  const m = /Minified React error #(\d+)/.exec(String(message));
+  return m ? m[1] : null;
+}
+
+/** Extract the full react.dev/errors URL embedded by React in minified messages. */
+function extractReactErrorUrl(message: string | undefined | null): string | null {
+  if (!message) return null;
+  const m = /https?:\/\/react\.dev\/errors\/[^\s"')]+/.exec(String(message));
+  return m ? m[0] : null;
+}
+
 /** Detect React hydration mismatch errors (#418, #423, #425, etc.) */
 function isHydrationError(message: string | undefined | null): boolean {
   if (!message) return false;
   const m = String(message);
-  return (
+  if (
     m.includes("Hydration failed") ||
     m.includes("hydrating") ||
     m.includes("did not match") ||
-    m.includes("Text content does not match") ||
-    /Minified React error #(418|423|425)/.test(m)
-  );
+    m.includes("Text content does not match")
+  ) return true;
+  const code = extractReactErrorCode(m);
+  return !!code && HYDRATION_REACT_CODES.has(code);
+}
+
+/** Truncate while preserving usefulness. */
+function trunc(s: string | undefined | null, n: number): string {
+  if (!s) return "";
+  return s.length > n ? s.slice(0, n) : s;
+}
+
+/** Lightweight environment fingerprint (non-personal). */
+function envInfo(): Record<string, unknown> {
+  try {
+    const nav = navigator as Navigator & { connection?: { effectiveType?: string }; deviceMemory?: number };
+    return {
+      ua: trunc(nav.userAgent, 160),
+      lang: nav.language,
+      online: nav.onLine,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      dpr: window.devicePixelRatio,
+      net: nav.connection?.effectiveType ?? "unknown",
+      mem: nav.deviceMemory ?? "unknown",
+      visibility: document.visibilityState,
+    };
+  } catch {
+    return {};
+  }
+}
+
+type UmamiWin = { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
+function umamiTrack(event: string, data?: Record<string, unknown>) {
+  try {
+    (window as unknown as UmamiWin).umami?.track(event, data);
+  } catch { /* noop */ }
 }
 
 /** Track crash and report to Umami if available */
