@@ -115,7 +115,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
             href="https://play.google.com/store/apps/details?id=com.fhm.radiosphere"
             target="_blank"
             rel="noopener noreferrer"
-            data-umami-event="google-play-sidebar"
+            onClick={() => umamiTrack("play-store-click", { location: "sidebar-expanded" })}
             className="block hover:opacity-90 transition-opacity mt-3 -ml-1"
             title="Google Play"
           >
