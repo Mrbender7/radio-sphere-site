@@ -1,5 +1,7 @@
 import { useTranslation } from "@/contexts/LanguageContext";
 
+const COPYRIGHT_YEAR = 2026;
+
 export function AboutFooter() {
   const { t } = useTranslation();
   const createdBy = t("footer.createdBy");
@@ -10,7 +12,7 @@ export function AboutFooter() {
       {/* Copyright */}
       <div className="text-center mb-6 select-none space-y-1">
         <p className="text-[10px] text-muted-foreground">
-          © {new Date().getFullYear()} RadioSphere.be — {createdByPrefix}
+          © {COPYRIGHT_YEAR} RadioSphere.be — {createdByPrefix}
           <a href="https://franckmalherbe.be" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
             Franck Malherbe
           </a>
