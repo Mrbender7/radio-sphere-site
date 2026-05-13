@@ -65,18 +65,26 @@
     <!-- Umami Analytics -->
     <script defer src="https://cloud.umami.is/script.js" data-website-id="73a30cfd-4d45-43c2-b296-c4d3a39cd898"></script>
 
-    <!-- WebView early sanitizer: runs BEFORE the React bundle to purge any
-         corrupted Service Worker / Cache Storage entries inside Facebook,
-         Instagram, TikTok, etc. in-app browsers. Visitors must NEVER land
-         on a "clear cache & reload" screen — we do it for them silently. -->
+    <!-- WebView hard redirect to /lite.html: served BEFORE anything else.
+         A user opening a RadioSphere link inside Facebook/Instagram/TikTok/etc.
+         must never see a white screen or hit React hydration. The full app is
+         still reachable via ?full=1 (CTA in lite, manual paste in real browser).
+         Bots, server-side renders, and explicit /lite paths are excluded. -->
     <script>
       (function () {
         try {
-          var ua = (navigator && navigator.userAgent) || "";
-          var isInApp = /FBAN|FBAV|FB_IAB|FB4A|Instagram|Line\//i.test(ua) ||
-                        /MicroMessenger|Twitter|TikTok|Snapchat|Pinterest|LinkedInApp|KAKAOTALK/i.test(ua);
+          if (typeof navigator === "undefined" || typeof location === "undefined") return;
+          var ua = navigator.userAgent || "";
+          var inAppRx = /FBAN|FBAV|FB_IAB|FB4A|FBIOS|FBSV|FBDV|FBMD|Messenger|MessengerLite|Instagram|Threads|Barcelona|Line\/|MicroMessenger|Twitter|TikTok|musical_ly|BytedanceWebview|Snapchat|Pinterest|LinkedInApp|KAKAOTALK|NAVER|WhatsApp|GSA\/|Reddit/i;
+          var isInApp = inAppRx.test(ua);
           window.__rsIsInAppBrowser = isInApp;
           if (!isInApp) return;
+          var path = location.pathname || "/";
+          var bypass = location.search.indexOf("full=1") !== -1 || /(^|[#&])full(=|&|$)/.test(location.hash);
+          if (!bypass && path.indexOf("/lite") !== 0) {
+            location.replace("/lite.html" + (location.search || "") + (location.hash || ""));
+            return; // halt execution: page is being replaced
+          }
           // 1. Unregister any previously installed Service Workers
           if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
             navigator.serviceWorker.getRegistrations().then(function (regs) {
