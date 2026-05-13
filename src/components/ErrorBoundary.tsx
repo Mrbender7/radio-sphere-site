@@ -38,6 +38,9 @@ async function clearAllCachesAndReload() {
     /* noop */
   }
   safeSessionRemove("radiosphere_crash_purge_pending");
+  // Force CSR on next boot so we don't fall right back into the same
+  // hydration mismatch that brought the user here.
+  setForceCsr();
   try {
     window.location.reload();
   } catch {
