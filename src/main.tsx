@@ -380,7 +380,12 @@ if (typeof window !== "undefined") {
   console.error = function patchedConsoleError(...args: unknown[]) {
     try {
       const msg = collectErrorTextChunks(...args);
-      if (isHydrationError(msg)) {
+      // Only forward to Umami when the message clearly comes from React's
+      // minified error pipeline. The previous heuristic ("did not match",
+      // "hydrating", …) caught third-party Cast/Umami/console messages and
+      // triggered cascading rescues — the main cause of the error-boundary
+      // flood on Umami.
+      if (/Minified React error #\d+/.test(msg)) {
         const errArg = args.find((a) => a instanceof Error) as Error | undefined;
         reportHydrationError(msg, "console-error", { stack: trunc(errArg?.stack ?? msg, 600) });
       }
