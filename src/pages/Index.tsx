@@ -251,12 +251,16 @@ const Index = () => {
         <Head>
           <title>{meta.title}</title>
           <meta name="description" content={meta.description} />
-          <link rel="canonical" href={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
           <meta property="og:title" content={meta.title} />
           <meta property="og:description" content={meta.description} />
-          <meta property="og:url" content={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
           <meta name="twitter:title" content={meta.title} />
           <meta name="twitter:description" content={meta.description} />
+          {isMounted && (
+            <>
+              <link rel="canonical" href={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
+              <meta property="og:url" content={`https://radiosphere.be${location.pathname === "/" ? "" : location.pathname}`} />
+            </>
+          )}
         </Head>
         {/* Dynamic, browser-only chrome — kept out of the SSG HTML so the
             first client render matches the static markup byte-for-byte and
