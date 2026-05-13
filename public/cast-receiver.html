@@ -164,11 +164,34 @@
       color: hsla(0,0%,100%,0.25);
     }
 
+    /* Mascot — peeks from bottom-right, sitting above the mini-player */
+    .mascot {
+      position: fixed;
+      right: 28px;
+      bottom: 96px;
+      width: 180px;
+      height: auto;
+      pointer-events: none;
+      z-index: 5;
+      filter:
+        drop-shadow(0 0 14px hsla(280,80%,60%,0.45))
+        drop-shadow(0 6px 18px rgba(0,0,0,0.45));
+      animation: mascotFloat 5.5s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    @keyframes mascotFloat {
+      0%,100% { transform: translateY(0) rotate(-1.5deg); }
+      50%     { transform: translateY(-8px) rotate(1.5deg); }
+    }
+
     /* Hidden state */
     .hidden { display: none !important; }
   </style>
 </head>
 <body>
+
+  <!-- Mascot -->
+  <img class="mascot" src="shiba-mascot.png" alt="" aria-hidden="true" />
 
   <!-- Header -->
   <div class="header">
