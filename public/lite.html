@@ -24,6 +24,10 @@
     .banner-text{opacity:.95;font-size:12.5px}
     .banner-multilang{font-size:11.5px;opacity:.85;font-style:italic}
     .banner-actions{display:flex;flex-wrap:wrap;gap:8px}
+    /* Arrow hint for in-app browser menu */
+    .arrow-hint{position:fixed;top:2px;right:36px;z-index:200;pointer-events:none;animation:arrow-bounce 1.4s ease-in-out infinite}
+    .arrow-hint svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+    @keyframes arrow-bounce{0%,100%{transform:translateY(0);opacity:.85}50%{transform:translateY(-10px);opacity:1}}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:600;transition:transform .15s ease,opacity .15s ease;white-space:nowrap}
     .btn:active{transform:scale(.97)}
     .btn-light{background:#fff;color:#3b3b8a}
@@ -78,6 +82,9 @@
   </style>
 </head>
 <body>
+  <div class="arrow-hint" aria-hidden="true" title="Tap the menu button here">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg>
+  </div>
   <div class="banner" role="region" aria-label="In-app browser notice">
     <div class="banner-inner">
       <div class="banner-title">
@@ -90,13 +97,6 @@
         Alternatively, you can install our <b>Android app</b> for the best stability.
       </div>
       <div class="banner-multilang"><i>Available in French, Spanish, German, Italian, Hindi, Portuguese, Dutch, Polish, Japanese, Chinese, Korean, Arabic, and more.</i></div>
-      <hr style="border:0;border-top:1px solid rgba(255,255,255,.15);margin:8px 0;">
-      <div class="banner-text" lang="fr">
-        <b>Navigateur in-app détecté !</b> Pour profiter de l'expérience complète, incluant <b>TimeBack Machine, Chromecast, plus de 50 000 stations et vos favoris</b>, appuyez sur les trois points <b>[ ⋮ ] ou […]</b> en haut à droite et sélectionnez « Ouvrir dans le navigateur » (Chrome, Firefox ou Safari).
-        <br><br>
-        Vous pouvez également installer notre <b>application Android</b> pour une stabilité optimale.
-      </div>
-      <div class="banner-multilang" lang="fr"><i>Disponible en français, espagnol, allemand, italien, hindi, portugais, néerlandais, polonais, japonais, chinois, coréen, arabe et bien d'autres.</i></div>
       <div class="banner-actions">
         <a class="btn btn-light" href="https://radiosphere.be/?full=1#full" target="_blank" rel="noopener" id="cta-full">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M21 14v7H3V3h7"/></svg>
