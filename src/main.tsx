@@ -9,7 +9,62 @@ import { routes } from "./routes";
 import { isInAppBrowser } from "./utils/inAppBrowser";
 import "./index.css";
 
-export const createRoot = ViteReactSSG({ routes });
+// ─── CSR fallback for in-app browsers ────────────────────────────────────────
+// When a previous mount triggered a hydration mismatch (#418/#421/#423/#425)
+// inside a Facebook / Instagram / TikTok WebView, we set this flag and reload
+// the page. On the next boot we ask vite-react-ssg to look for a non-existent
+// container so its internal IIFE bails out, then we mount manually with
+// `createRoot()` (NOT `hydrateRoot`) on a wiped #root. That breaks the
+// hydration cascade for that whole session — every WebView quirk that would
+// have caused a mismatch (auto-translate, DOM-injecting extensions, broken
+// SW caches, missing polyfills) is bypassed by rendering from scratch.
+const FORCE_CSR_KEY = "__rsForceCSR";
+const isClientEnv = typeof window !== "undefined";
+let shouldForceCSR = false;
+if (isClientEnv) {
+  try { shouldForceCSR = sessionStorage.getItem(FORCE_CSR_KEY) === "1"; } catch { /* noop */ }
+  if (shouldForceCSR) {
+    const rootEl = document.getElementById("root");
+    if (rootEl) {
+      rootEl.innerHTML = "";
+      rootEl.removeAttribute("data-server-rendered");
+    }
+  }
+}
+
+export const createRoot = ViteReactSSG(
+  { routes },
+  undefined,
+  shouldForceCSR ? { rootContainer: "#__rs_csr_noop__" } : undefined,
+);
+
+if (isClientEnv && shouldForceCSR) {
+  void (async () => {
+    try {
+      const ctx = await createRoot(true);
+      const [{ createRoot: rdCreateRoot }, { RouterProvider }, { HelmetProvider }, { jsx }] = await Promise.all([
+        import("react-dom/client"),
+        import("react-router-dom"),
+        import("react-helmet-async"),
+        import("react/jsx-runtime"),
+      ]);
+      const container = document.getElementById("root");
+      if (!container || !ctx.router) return;
+      // Defensive: ensure no stale SSG markup remains.
+      container.innerHTML = "";
+      container.removeAttribute("data-server-rendered");
+      const root = rdCreateRoot(container);
+      root.render(
+        jsx(HelmetProvider, { children: jsx(RouterProvider, { router: ctx.router }) }),
+      );
+      console.log("[RadioSphere] CSR fallback active — hydration bypassed for WebView");
+    } catch (e) {
+      console.error("[RadioSphere] CSR fallback mount failed:", e);
+      // Don't loop forever if CSR mount itself fails
+      try { sessionStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
+    }
+  })();
+}
 
 const CRASH_FLAG_KEY = "radiosphere_crash_purge_pending";
 
