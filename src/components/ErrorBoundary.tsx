@@ -6,11 +6,7 @@ import {
   copyToClipboard,
 } from "@/utils/inAppBrowser";
 import { safeSessionGet, safeSessionRemove, safeSessionSet } from "@/utils/safeStorage";
-
-interface State {
-  hasError: boolean;
-  error?: Error;
-  clearing?: boolean;
+import { forceCsrAndReload, setForceCsr } from "@/utils/forceCsr";
   copied?: boolean;
 }
 
