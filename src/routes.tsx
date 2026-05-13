@@ -59,7 +59,7 @@ function RouteErrorFallback() {
           </button>
         </div>
         <button
-          onClick={() => window.location.reload()}
+          onClick={forceCsrAndReload}
           className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
         >
           Réessayer / Try again
