@@ -256,14 +256,14 @@ function reportHydrationError(rawMessage: string, source: "error-event" | "conso
   if (eventName !== "hydration-error") {
     reportOnce("hydration-error", `generic|${dedupeKey}`, payload);
   }
-  // ─── In-app browser CSR rescue ──────────────────────────────────────────
-  // FB / IG / TikTok WebViews routinely break hydration (auto-translate,
-  // DOM-injecting plugins, broken caches). Once we see a real hydration
-  // error in such an environment, set the CSR flag and reload — the next
-  // boot will skip hydrateRoot entirely (see top of this file).
+  // ─── Universal CSR rescue ───────────────────────────────────────────────
+  // Any real hydration mismatch (#418/#421/#423/#425) cascades into 20+ React
+  // errors and a visible flash. Switching the tab to pure CSR after the first
+  // mismatch breaks the cascade for every browser, not just WebViews. The
+  // sessionStorage flag is one-shot and tab-scoped, so users only pay the
+  // reload cost once per visit, and never if hydration succeeds.
   try {
     if (
-      isInAppBrowser() &&
       sessionStorage.getItem(FORCE_CSR_KEY) !== "1" &&
       !shouldForceCSR
     ) {
@@ -271,6 +271,7 @@ function reportHydrationError(rawMessage: string, source: "error-event" | "conso
       reportOnce("csr-fallback-triggered", `csr|${window.location.pathname}`, {
         code: code ?? "unknown",
         route: window.location.pathname,
+        webview: isInAppBrowser(),
         ...envInfo(),
       });
       // Slight delay so the umami beacon has a chance to flush.
