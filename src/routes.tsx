@@ -2,6 +2,7 @@ import type { RouteRecord } from "vite-react-ssg";
 import App from "./App";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { isInAppBrowser, openInExternalBrowser, copyToClipboard } from "@/utils/inAppBrowser";
+import { forceCsrAndReload, setForceCsr } from "@/utils/forceCsr";
 
 async function clearAllCachesAndReload() {
   try {
