@@ -6,6 +6,7 @@ import { AudioVisualizer } from "@/components/AudioVisualizer";
 import { SmartArtwork } from "@/components/SmartArtwork";
 import { cn } from "@/lib/utils";
 import { useStreamPrefetch } from "@/hooks/useStreamPrefetch";
+import type { KeyboardEvent, MouseEvent } from "react";
 
 export type StationViewMode = "small" | "list" | "medium" | "large";
 interface StationCardProps {
@@ -25,7 +26,27 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
   const favLabel = isFavorite ? t("aria.removeFavorite") : t("aria.addFavorite");
   const playLabel = isPlaying && isActive ? t("aria.pause") : t("aria.play");
 
-  const prefetchProps = {
+  // Card behaves as a button without being an actual <button>, so the inner
+  // favorite <button> doesn't produce invalid <button> in <button> nesting
+  // (cause of React hydration error #418 in production).
+  const handleCardActivate = () => play(station);
+  const handleCardKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      play(station);
+    }
+  };
+  const handleFavClick = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    onToggleFavorite(station);
+  };
+
+  const cardA11y = {
+    role: "button" as const,
+    tabIndex: 0,
+    "aria-label": `${playLabel} ${station.name}`,
+    onClick: handleCardActivate,
+    onKeyDown: handleCardKey,
     onPointerEnter: () => onHover(station),
     onPointerLeave: () => onLeave(station),
   };
@@ -35,11 +56,9 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
 
   if (mode === "small") {
     return (
-      <button
-        onClick={() => play(station)}
-        aria-label={`${playLabel} ${station.name}`}
-        {...prefetchProps}
-        className="relative flex flex-col items-center w-full p-1 rounded-lg transition-all duration-300 ease-out group hover:scale-105 hover:drop-shadow-[0_4px_12px_hsl(var(--primary)/0.3)]"
+      <div
+        {...cardA11y}
+        className="relative flex flex-col items-center w-full p-1 rounded-lg transition-all duration-300 ease-out group hover:scale-105 hover:drop-shadow-[0_4px_12px_hsl(var(--primary)/0.3)] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <div className={cn("relative w-full aspect-square rounded-lg bg-accent overflow-hidden shadow-md", isActive && isPlaying && "animate-card-glow")}>
           <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur RadioSphere.be`} />
@@ -49,7 +68,8 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
             </div>
           )}
           <button
-            onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            type="button"
+            onClick={handleFavClick}
             aria-label={favLabel}
             className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/30 backdrop-blur-sm z-10"
           >
@@ -59,18 +79,16 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         <p className="mt-0.5 text-[10px] font-semibold truncate w-full text-center bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
           {station.name}
         </p>
-      </button>
+      </div>
     );
   }
 
   if (mode === "list") {
     return (
-      <button
-        onClick={() => play(station)}
-        aria-label={`${playLabel} ${station.name}`}
-        {...prefetchProps}
+      <div
+        {...cardA11y}
         className={cn(
-          "flex items-center gap-3 w-full p-3 rounded-lg transition-colors",
+          "flex items-center gap-3 w-full p-3 rounded-lg transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary",
           isActive ? "bg-primary/10 border-l-2 border-primary" : "hover:bg-accent"
         )}
       >
@@ -85,23 +103,22 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
           <AudioVisualizer size="small" />
         )}
         <button
-          onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+          type="button"
+          onClick={handleFavClick}
           aria-label={favLabel}
           className="p-1.5"
         >
           <Heart className={cn("w-4 h-4", isFavorite ? "fill-[hsl(280,80%,60%)] text-[hsl(280,80%,60%)]" : "text-muted-foreground")} />
         </button>
-      </button>
+      </div>
     );
   }
 
   if (mode === "medium") {
     return (
-      <button
-        onClick={() => play(station)}
-        aria-label={`${playLabel} ${station.name}`}
-        {...prefetchProps}
-        className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
+      <div
+        {...cardA11y}
+        className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
           <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur RadioSphere.be`} />
@@ -111,7 +128,8 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
             </div>
           )}
           <button
-            onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            type="button"
+            onClick={handleFavClick}
             aria-label={favLabel}
             className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/30 backdrop-blur-sm z-10"
           >
@@ -121,17 +139,15 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
         <p className="mt-1.5 text-xs font-semibold truncate w-full text-center bg-gradient-to-r from-primary to-[hsl(280,80%,60%)] bg-clip-text text-transparent">
           {station.name}
         </p>
-      </button>
+      </div>
     );
   }
 
   if (mode === "large") {
     return (
-      <button
-        onClick={() => play(station)}
-        aria-label={`${playLabel} ${station.name}`}
-        {...prefetchProps}
-        className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group"
+      <div
+        {...cardA11y}
+        className="relative flex flex-col items-center w-full p-2 rounded-xl transition-colors group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <div className={cn("relative w-full aspect-square rounded-xl bg-accent overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
           <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur RadioSphere.be`} />
@@ -141,7 +157,8 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
             </div>
           )}
           <button
-            onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+            type="button"
+            onClick={handleFavClick}
             aria-label={favLabel}
             className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 backdrop-blur-sm z-10"
           >
@@ -152,17 +169,15 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
           {station.name}
         </p>
         <p className="text-[11px] text-muted-foreground truncate w-full text-center">{station.country}</p>
-      </button>
+      </div>
     );
   }
 
   // Default: small thumbnail (used in HomePage scrollables)
   return (
-    <button
-      onClick={() => play(station)}
-      aria-label={`${playLabel} ${station.name}`}
-      {...prefetchProps}
-      className="relative flex flex-col items-center w-[7.5rem] flex-shrink-0 p-2 rounded-xl transition-all duration-300 ease-out group hover:scale-105 hover:drop-shadow-[0_4px_12px_hsl(var(--primary)/0.3)]"
+    <div
+      {...cardA11y}
+      className="relative flex flex-col items-center w-[7.5rem] flex-shrink-0 p-2 rounded-xl transition-all duration-300 ease-out group hover:scale-105 hover:drop-shadow-[0_4px_12px_hsl(var(--primary)/0.3)] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <div className={cn("relative w-[5.5rem] h-[5.5rem] rounded-xl bg-accent mb-1.5 overflow-hidden shadow-lg", isActive && isPlaying && "animate-card-glow")}>
         <SmartArtwork stationId={station.id} originalUrl={station.logo} homepage={station.homepage} stationName={station.name} alt={`Écouter ${station.name} en direct sur RadioSphere.be`} />
@@ -176,7 +191,8 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
           </div>
         )}
         <button
-          onClick={e => { e.stopPropagation(); onToggleFavorite(station); }}
+          type="button"
+          onClick={handleFavClick}
           aria-label={favLabel}
           className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/30 backdrop-blur-sm z-10"
         >
@@ -185,6 +201,6 @@ export function StationCard({ station, isFavorite, onToggleFavorite, compact, vi
       </div>
       <p className="text-xs font-medium text-foreground truncate w-full text-center">{station.name}</p>
       <p className="text-[10px] text-muted-foreground truncate w-full text-center">{station.country}</p>
-    </button>
+    </div>
   );
 }
