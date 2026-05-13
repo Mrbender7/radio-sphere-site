@@ -1,68 +1,99 @@
-# Plan d'arrêt de la fuite — hydration errors radiosphere.be
+## Diagnostic court
 
-## Diagnostic des données Umami
+Le signal le plus concret n’est plus seulement `location.pathname` : le navigateur remonte maintenant un warning React explicite `validateDOMNesting`: un `<button>` est rendu dans un autre `<button>` dans `StationCard`. React liste ce cas comme cause directe possible de mismatch d’hydratation (#418), et vos logs Umami montrent bien la chaîne `hydration-error-418` → `hydration-error-423` → `csr-fallback-triggered` → `error-boundary`.
 
-Le rapport indique 99% de corrélation avec `fbclid` mais **seulement 1% des sessions sont en in-app browser** (Facebook). 99% sont **Chrome/Chromium-WebView Android**. La corrélation `fbclid` n'est donc **pas causale** : c'est un proxy pour « visiteur mobile Android nouveau, cache froid, qui passe réellement par l'hydratation » (vs. desktop / utilisateur récurrent qui sert le cache SW). Conclusion : **le code source contient un mismatch SSG/CSR systémique, qui ne déclenche le crash que sur les visites réelles en cold-load**.
+Le problème critique actuel : le fallback CSR existe, mais il ne sauve pas toujours l’utilisateur. En Edge InPrivate, il tombe quand même sur l’ErrorBoundary, et les boutons Reload / Clear cache relancent la même séquence.
 
-## Cause racine identifiée (par investigation `rg`)
+## Objectif
 
-### 1. `Math.random()` dans le render de `AudioVisualizer`
-`src/components/AudioVisualizer.tsx` lignes 47-50 — un `useMemo` calcule `duration`, `delay`, `--bar-min-scale` à partir de `Math.random()`. Au build SSG ces valeurs sont figées dans le HTML statique via les attributs `style=`. Au premier render client, React ré-exécute le `useMemo` et obtient des valeurs **différentes** → **mismatch direct sur l'attribut `style`** → React #418 → cascade #423 → fallback CSR → flash blanc.
+Faire une correction “quoiqu’il arrive” :
 
-`AudioVisualizer` est utilisé par `StationCard`, `MiniPlayer`, `DesktopPlayerBar`, `FullScreenPlayer`. Tous les players sont déjà sous `<ClientOnly>` dans `Index.tsx` ✅, **mais `StationCard` ne l'est pas** : il est rendu directement dans la home (`recent`, `favorites`, sections par genre) et dans les pages lazy. Dès qu'un visiteur a une favorite ou une station récente en localStorage, `StationCard` se re-render après hydratation avec `isPlaying=false` → pas d'AudioVisualizer initial. Mais `recent`/`favorites` initialisés à `[]` côté SSG ET côté client → en théorie pas de StationCard rendu au premier paint. **Le mismatch vient probablement d'un autre chemin** : la `SearchPage`/`HomePage` lazy-loaded peut réémettre AudioVisualizer juste après hydratation ce qui déclenche #423 dans le Suspense boundary qui n'a pas fini d'hydrater.
+1. supprimer la cause HTML invalide immédiate ;
+2. empêcher l’hydratation de bloquer l’app ;
+3. rendre Reload / Clear cache réellement capables de sortir de la boucle ;
+4. garder la page visible même si React échoue encore ;
+5. réduire le bruit Umami pour distinguer les vrais crashs restants.
 
-### 2. `Math.random()` dans `SidebarMenuSkeleton`
-`src/components/ui/sidebar.tsx` ligne 536. Même schéma que ci-dessus si ce composant est jamais rendu côté SSG.
+## Plan d’implémentation
 
-### 3. Le filet de secours CSR ne couvre pas les vrais affectés
-`src/main.tsx` lignes ~280-295 : la rescue `__rsForceCSR` ne se déclenche **que si `isInAppBrowser()` est vrai**. Les 99% de sessions Chrome Android n'en bénéficient **jamais** → elles subissent la cascade complète sans recovery.
+### 1. Corriger la cause certaine : boutons imbriqués dans `StationCard`
 
-## Plan de correctif (3 fichiers, prioritaire)
+Dans `src/components/StationCard.tsx` :
 
-### Étape 1 — Rendre `AudioVisualizer` déterministe au render SSG/premier paint
-Fichier : `src/components/AudioVisualizer.tsx`
+- remplacer les boutons “carte entière” par des éléments non imbriquants (`div`/`article` avec `role="button"`, `tabIndex=0`, gestion Enter/Space) ;
+- garder le bouton favori comme vrai `<button>` séparé ;
+- appliquer ce changement à tous les modes (`small`, `list`, `medium`, `large`, default) ;
+- conserver les interactions existantes : clic carte = play, clic cœur = favori, hover prefetch, accessibilité clavier.
 
-- Initialiser `instanceAnimations` à un tableau **déterministe** (utiliser `barAnimations[i % 9]` directement, sans variance, sans random).
-- Calculer la version « variée » avec `Math.random()` **après** mount, dans un `useEffect` qui setState. Premier render = HTML stable identique SSG/client. Effet de variance appliqué juste après.
-- Garde-fou : `useId()` au lieu de Math.random pour seed déterministe si on veut quand même un peu de variation visuelle.
+C’est prioritaire, car l’HTML invalide peut être réparé différemment par le parser navigateur avant que React hydrate, ce qui déclenche précisément #418.
 
-### Étape 2 — Idem pour `SidebarMenuSkeleton`
-Fichier : `src/components/ui/sidebar.tsx` ligne 535-537
+### 2. Rendre le fallback CSR universel et immédiat
 
-- Remplacer `Math.floor(Math.random() * 40) + 50` par une largeur fixe (ex. `70%`) ou un pattern déterministe basé sur l'index du skeleton.
+Dans `src/main.tsx` :
 
-### Étape 3 — Étendre le filet de secours CSR à tous les navigateurs
-Fichier : `src/main.tsx`
+- ne plus limiter le bypass CSR au seul `sessionStorage`, fragile en mode privé/restrictif ;
+- ajouter un fallback mémoire / URL marker temporaire si `sessionStorage` échoue ;
+- en cas d’erreur d’hydratation (#418/#423/#425), ne pas dépendre uniquement d’un reload différé : déclencher un remount CSR direct quand possible ;
+- garder le reload comme plan B uniquement si le remount direct n’est pas possible.
 
-- Dans `reportHydrationError`, retirer la condition `isInAppBrowser()` qui gate le passage en mode CSR. Garder les autres garde-fous (sessionStorage one-shot, removal en cas d'échec du remount).
-- Ajouter une dimension `webview: boolean` à l'event Umami `csr-fallback-triggered` pour pouvoir filtrer par cohorte ensuite.
-- Effet : dès qu'**un seul** mismatch est détecté, le tab passe en CSR pur pour le reste de la session → impossible que l'utilisateur subisse 26 erreurs en cascade comme aujourd'hui.
+But : si l’hydratation casse, on vide `#root` et on rend avec `createRoot()` sans attendre que l’utilisateur reclique.
 
-## Détails techniques
+### 3. Corriger les boutons de récupération qui bouclent
 
-```text
-AVANT (mismatch garanti)
-─────────────────────────
-SSG build:    style="animation: bar 0.42s ease 0.18s ..."   ← random figé au build
-Client first: style="animation: bar 0.51s ease 0.07s ..."   ← random différent
-              ↳ React #418 → #423 → fallback CSR → flash blanc
+Dans `src/components/ErrorBoundary.tsx` et `src/routes.tsx` :
 
-APRÈS étape 1
-─────────────
-SSG build:    style="animation: bar 0.45s ease 0s ..."      ← déterministe (table fixe)
-Client first: style="animation: bar 0.45s ease 0s ..."      ← identique ✅
-              ↳ post-mount useEffect applique la variance, sans mismatch
-```
+- `Reload` doit forcer le mode CSR avant de recharger, pas juste refaire la même hydratation cassée ;
+- `Clear cache & reload` doit aussi poser le flag CSR avant purge/reload ;
+- après un crash, afficher un fallback utilisable qui privilégie “Continuer sans cache” plutôt qu’un simple reload.
 
-## Vérification
+But : même si l’utilisateur arrive sur l’écran “Something went wrong”, un clic le sort de la boucle.
 
-1. `bun run build` (le harness le fait automatiquement) — pas de régression de build.
-2. Reproduction locale : `npm run dev` puis ouvrir `http://localhost:5173/?fbclid=test123&utm_source=facebook` → vérifier dans la console que **plus aucune** erreur #418/#423 n'apparaît.
-3. Dashboard Umami : surveiller les events `hydration-error`, `hydration-error-418`, `hydration-error-423`, `csr-fallback-triggered` sur 24h après déploiement. Cible : **−80% minimum** des trois premiers ; éventuel petit bump de `csr-fallback-triggered` (cohorte Chrome Android maintenant éligible) **suivi d'une chute** dès que les patches AudioVisualizer/sidebar sont en cache.
+### 4. Isoler encore plus le contenu dynamique du HTML SSG
 
-## Fichiers modifiés
-- `src/components/AudioVisualizer.tsx` (déterminisme au render)
-- `src/components/ui/sidebar.tsx` (déterminisme du skeleton)
-- `src/main.tsx` (extension du filet CSR à tous les navigateurs)
+Dans `src/pages/Index.tsx` :
 
-Aucun autre fichier touché — pas de refactor, pas de changement business logic, pas de changement UI visible.
+- conserver le skeleton au premier rendu ;
+- vérifier que le premier rendu hydraté ne contient pas de sections dépendantes de favoris/récents/langue détectée/router ;
+- rendre le `Head` encore plus déterministe au premier rendu : titre/description home statiques avant mount, puis meta dynamiques après mount.
+
+But : le HTML SSG et le premier rendu client restent identiques, même avec `fbclid`, Edge InPrivate, stockage restreint ou langue navigateur différente.
+
+### 5. Ajouter un “static emergency shell” hors React
+
+Dans `index.html` :
+
+- ajouter un mini fallback HTML/CSS déjà présent dans `#root` ou adjacent, masqué dès que React démarre correctement ;
+- si React ne démarre pas après quelques secondes, afficher ce shell avec logo + accès direct aux routes principales / message simple ;
+- ne pas dépendre de localStorage, service worker, chunks lazy ou React.
+
+But : même en cas de bundle cassé, chunk bloqué, extension, SW ou hydration catastrophique, l’utilisateur ne voit pas un écran vide.
+
+### 6. Réduire le bruit Umami et rendre les prochains logs exploitables
+
+Dans `src/main.tsx` :
+
+- dédupliquer `error-boundary` / hydration sur une fenêtre courte ;
+- enrichir l’event `error-boundary` avec `message`, `stack` tronquée, `route`, `csrForced`, `storageAvailable`, `privateLike` si détectable ;
+- distinguer : `hydration-rescued`, `csr-remount-success`, `csr-remount-failed`, `manual-recovery-clicked`.
+
+But : après déploiement, on saura si les visiteurs sont sauvés, pas seulement qu’une erreur est survenue.
+
+## Vérification après implémentation
+
+- tester `/` en viewport mobile et desktop ;
+- vérifier qu’il n’y a plus de warning `<button>` dans `<button>` ;
+- simuler un flag CSR et confirmer que l’app monte sans hydratation ;
+- tester les boutons Reload / Clear cache depuis l’ErrorBoundary ;
+- contrôler qu’aucun écran vide ne peut rester affiché si React tarde ou échoue.
+
+## Priorité de livraison
+
+Je ferais ça en une passe urgente, dans cet ordre :
+
+1. `StationCard` boutons imbriqués ;
+2. recovery CSR robuste dans `main.tsx` ;
+3. boutons ErrorBoundary ;
+4. emergency shell ;
+5. télémétrie propre.
+
+C’est le chemin le plus sûr pour arrêter la perte visiteurs rapidement, sans continuer à chercher une cause unique hypothétique.
