@@ -51,13 +51,31 @@ if (isClientEnv && shouldForceCSR) {
           <RouterProvider router={ctx.router} />
         </HelmetProvider>,
       );
-      console.log("[RadioSphere] CSR fallback active — hydration bypassed for WebView");
+      try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
+      console.log("[RadioSphere] CSR fallback active — hydration bypassed");
     } catch (e) {
       console.error("[RadioSphere] CSR fallback mount failed:", e);
       // Don't loop forever if CSR mount itself fails
       try { sessionStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
+      try { localStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
     }
   })();
+}
+
+// Tell the emergency shell that React has taken over (works for both
+// hydration and CSR-fallback paths). The shell polls this flag and removes
+// itself once set.
+if (isClientEnv) {
+  // Mark as mounted on next tick — by then either hydration succeeded or
+  // the CSR fallback handler above has run.
+  const markMounted = () => {
+    try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
+  };
+  if (document.readyState === "complete") {
+    setTimeout(markMounted, 0);
+  } else {
+    window.addEventListener("load", () => setTimeout(markMounted, 0));
+  }
 }
 
 const CRASH_FLAG_KEY = "radiosphere_crash_purge_pending";
