@@ -1,42 +1,39 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, X, Copy, AlertTriangle, Check } from "lucide-react";
+import { ExternalLink, X, Copy, AlertTriangle, Check, Music } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { isInAppBrowser, openInExternalBrowser, copyToClipboard } from "@/utils/inAppBrowser";
 
 const STORAGE_KEY = "radiosphere_inapp_banner_dismissed";
 
 /**
- * Warns users browsing inside Facebook / Instagram / TikTok / etc. WebViews
- * that some features may not work and offers escape hatches:
- * - Open in real browser (intent:// on Android, x-safari-https:// on iOS)
- * - Copy URL to paste into a real browser manually
- *
- * The banner can be minimised but never fully auto-hidden, because in many
- * WebViews localStorage is cleared on every load anyway.
+ * Smart banner for in-app browser WebViews (Facebook, Instagram, TikTok…).
+ * Neon-style, highly visible, with a clear CTA to open in an external browser
+ * so background audio isn't killed by the WebView.
  */
 export function InAppBrowserBanner() {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
-  const [minimised, setMinimised] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     try {
-      if (localStorage.getItem(STORAGE_KEY) === "true") {
-        setMinimised(true);
+      if (sessionStorage.getItem(STORAGE_KEY) === "true" || localStorage.getItem(STORAGE_KEY) === "true") {
+        setDismissed(true);
       }
     } catch {
-      /* localStorage unavailable — show full banner */
+      /* storage unavailable */
     }
     if (isInAppBrowser()) setVisible(true);
   }, []);
 
-  const minimise = () => {
-    try { localStorage.setItem(STORAGE_KEY, "true"); } catch {}
-    setMinimised(true);
-  };
+  if (!visible || dismissed) return null;
 
-  const expand = () => setMinimised(false);
+  const dismiss = () => {
+    try { sessionStorage.setItem(STORAGE_KEY, "true"); } catch {}
+    try { localStorage.setItem(STORAGE_KEY, "true"); } catch {}
+    setDismissed(true);
+  };
 
   const openExternal = () => {
     const url = "https://radiosphere.be" + (typeof window !== "undefined" ? window.location.pathname : "");
@@ -52,60 +49,67 @@ export function InAppBrowserBanner() {
     }
   };
 
-  if (!visible) return null;
-
-  // Minimised: small floating chip top-right
-  if (minimised) {
-    return (
-      <button
-        onClick={expand}
-        aria-label={t("inAppBrowser.warning")}
-        className="fixed top-2 right-2 z-40 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-amber-500 text-white shadow-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-        style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
-      >
-        <AlertTriangle className="w-3.5 h-3.5" />
-      </button>
-    );
-  }
+  // Translations with fallbacks so the banner works even if i18n keys drift
+  const warningText = t("inAppBrowser.warning") || "⚠️ Facebook bloque l'écoute en arrière-plan. Pour ne pas que le son coupe, ouvrez la radio dans votre navigateur.";
+  const openLabel = t("inAppBrowser.openExternal") || "Ouvrir dans le navigateur";
+  const copyLabel = t("inAppBrowser.copyLink") || "Copier le lien";
 
   return (
     <div
       role="alert"
-      className="fixed top-0 inset-x-0 z-40 bg-amber-500 text-white px-3 py-2.5 shadow-lg"
-      style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.5rem)" }}
+      className="fixed top-0 inset-x-0 z-[60] bg-[#070b14] border-b border-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.35)]"
+      style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.6rem)" }}
     >
-      <div className="flex items-start gap-2 max-w-3xl mx-auto">
-        <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm leading-snug font-medium">
-            {t("inAppBrowser.warning")}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <button
-              onClick={openExternal}
-              className="inline-flex items-center gap-1 rounded-md bg-white/20 hover:bg-white/30 active:bg-white/40 transition-colors px-2.5 py-1.5 text-[11px] font-semibold"
-              data-umami-event="inapp-banner-open-external"
-            >
-              <ExternalLink className="w-3 h-3" />
-              <span>{t("inAppBrowser.openExternal")}</span>
-            </button>
-            <button
-              onClick={handleCopy}
-              className="inline-flex items-center gap-1 rounded-md bg-white/20 hover:bg-white/30 active:bg-white/40 transition-colors px-2.5 py-1.5 text-[11px] font-semibold"
-              data-umami-event="inapp-banner-copy-link"
-            >
-              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              <span>{copied ? "✓" : "Copy link"}</span>
-            </button>
+      <div className="max-w-3xl mx-auto px-3 pb-3 pt-1">
+        <div className="flex items-start gap-3">
+          {/* Neon icon pulse */}
+          <div className="mt-0.5 shrink-0 relative">
+            <AlertTriangle className="w-5 h-5 text-cyan-300" />
+            <span className="absolute inset-0 rounded-full animate-ping opacity-30 bg-cyan-400" />
           </div>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-sm sm:text-base font-semibold text-white leading-snug">
+              {warningText}
+            </p>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {/* Primary CTA — neon button */}
+              <button
+                onClick={openExternal}
+                className="inline-flex items-center gap-2 rounded-lg bg-cyan-400 text-slate-950 px-4 py-2 text-sm font-bold shadow-[0_0_16px_rgba(34,211,238,0.55)] hover:bg-cyan-300 hover:shadow-[0_0_24px_rgba(34,211,238,0.7)] active:scale-95 transition-all"
+                data-umami-event="inapp-banner-open-external"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>{openLabel}</span>
+              </button>
+
+              {/* Secondary — copy link */}
+              <button
+                onClick={handleCopy}
+                className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 text-cyan-300 px-3 py-2 text-sm font-semibold hover:bg-cyan-400/10 active:scale-95 transition-all"
+                data-umami-event="inapp-banner-copy-link"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                <span>{copied ? "✓" : copyLabel}</span>
+              </button>
+
+              {/* Hint for manual open */}
+              <span className="text-[11px] text-slate-400 hidden sm:inline">
+                Appuyez sur ⋮ puis « Ouvrir dans… »
+              </span>
+            </div>
+          </div>
+
+          {/* Close */}
+          <button
+            onClick={dismiss}
+            className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label={t("aria.close") || "Fermer"}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={minimise}
-          className="shrink-0 p-1 rounded-md hover:bg-white/20 transition-colors"
-          aria-label={t("aria.close")}
-        >
-          <X className="w-4 h-4" />
-        </button>
       </div>
     </div>
   );

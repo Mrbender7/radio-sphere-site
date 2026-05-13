@@ -7,6 +7,9 @@ import "./utils/patchHydrateRoot";
 import { ViteReactSSG } from "vite-react-ssg";
 import { routes } from "./routes";
 import { isInAppBrowser } from "./utils/inAppBrowser";
+import { createRoot as reactDomCreateRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import "./index.css";
 
 // ─── CSR fallback for in-app browsers ────────────────────────────────────────
@@ -42,20 +45,16 @@ if (isClientEnv && shouldForceCSR) {
   void (async () => {
     try {
       const ctx = await createRoot(true);
-      const [{ createRoot: rdCreateRoot }, { RouterProvider }, { HelmetProvider }, { jsx }] = await Promise.all([
-        import("react-dom/client"),
-        import("react-router-dom"),
-        import("react-helmet-async"),
-        import("react/jsx-runtime"),
-      ]);
       const container = document.getElementById("root");
       if (!container || !ctx.router) return;
       // Defensive: ensure no stale SSG markup remains.
       container.innerHTML = "";
       container.removeAttribute("data-server-rendered");
-      const root = rdCreateRoot(container);
+      const root = reactDomCreateRoot(container);
       root.render(
-        jsx(HelmetProvider, { children: jsx(RouterProvider, { router: ctx.router }) }),
+        <HelmetProvider>
+          <RouterProvider router={ctx.router} />
+        </HelmetProvider>,
       );
       console.log("[RadioSphere] CSR fallback active — hydration bypassed for WebView");
     } catch (e) {
