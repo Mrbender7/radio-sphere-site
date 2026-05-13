@@ -60,10 +60,6 @@ async function clearAllCachesAndReload() {
   await hardReload({ purge: true });
 }
 
-async function softReloadWithBuster() {
-  await hardReload({ purge: false });
-}
-
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
