@@ -117,6 +117,7 @@ const Index = () => {
   // We flip it on in a useEffect once hydration is done.
   const [showWelcome, setShowWelcome] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Sync route-derived state post-hydratation so SSG and first client render
   // produce identical HTML (activeTab="home", showPrivacy=false).
@@ -134,7 +135,7 @@ const Index = () => {
       // hydrating first.
       startTransition(() => setShowWelcome(true));
     }
-  }, []);
+  useEffect(() => { setIsMounted(true); }, []);
   const { favorites, toggleFavorite, isFavorite, recent } = useFavoritesContext();
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
   const { setLanguage } = useTranslation();
@@ -224,6 +225,7 @@ const Index = () => {
   });
 
   const renderContent = () => {
+    if (!isMounted) return <PageLoader />;
     if (showPrivacy) {
       return <PrivacyPolicyPage onBack={() => setShowPrivacy(false)} />;
     }
