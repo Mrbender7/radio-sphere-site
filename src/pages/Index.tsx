@@ -14,6 +14,7 @@ import { DesktopPlayerBar } from "@/components/DesktopPlayerBar";
 import { Footer } from "@/components/Footer";
 
 import { HomePage } from "@/pages/HomePage";
+import { HomeSkeleton } from "@/components/HomeSkeleton";
 const SearchPage = lazy(() => import("@/pages/SearchPage").then(m => ({ default: m.SearchPage })));
 const LibraryPage = lazy(() => import("@/pages/LibraryPage").then(m => ({ default: m.LibraryPage })));
 const AboutPage = lazy(() => import("@/pages/AboutPage").then(m => ({ default: m.AboutPage })));
