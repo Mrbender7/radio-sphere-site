@@ -10,28 +10,23 @@ import { isInAppBrowser } from "./utils/inAppBrowser";
 import { createRoot as reactDomCreateRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { setForceCsr, shouldForceCsr, FORCE_CSR_KEY } from "./utils/forceCsr";
 import "./index.css";
 
-// ─── CSR fallback for in-app browsers ────────────────────────────────────────
+// ─── CSR fallback (universal) ────────────────────────────────────────────────
 // When a previous mount triggered a hydration mismatch (#418/#421/#423/#425)
-// inside a Facebook / Instagram / TikTok WebView, we set this flag and reload
-// the page. On the next boot we ask vite-react-ssg to look for a non-existent
-// container so its internal IIFE bails out, then we mount manually with
-// `createRoot()` (NOT `hydrateRoot`) on a wiped #root. That breaks the
-// hydration cascade for that whole session — every WebView quirk that would
-// have caused a mismatch (auto-translate, DOM-injecting extensions, broken
-// SW caches, missing polyfills) is bypassed by rendering from scratch.
-const FORCE_CSR_KEY = "__rsForceCSR";
+// — Edge InPrivate, Facebook/Instagram/TikTok WebViews, browser extensions,
+// auto-translation, etc. — we set the force-CSR flag and reload. On the next
+// boot we ask vite-react-ssg to look for a non-existent container so its
+// internal IIFE bails out, then we mount manually with `createRoot()` on a
+// wiped #root. That bypasses every hydration quirk for the whole session.
 const isClientEnv = typeof window !== "undefined";
-let shouldForceCSR = false;
-if (isClientEnv) {
-  try { shouldForceCSR = sessionStorage.getItem(FORCE_CSR_KEY) === "1"; } catch { /* noop */ }
-  if (shouldForceCSR) {
-    const rootEl = document.getElementById("root");
-    if (rootEl) {
-      rootEl.innerHTML = "";
-      rootEl.removeAttribute("data-server-rendered");
-    }
+const shouldForceCSR = isClientEnv && shouldForceCsr();
+if (isClientEnv && shouldForceCSR) {
+  const rootEl = document.getElementById("root");
+  if (rootEl) {
+    rootEl.innerHTML = "";
+    rootEl.removeAttribute("data-server-rendered");
   }
 }
 
