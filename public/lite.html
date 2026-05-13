@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en" translate="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="google" content="notranslate" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <title>RadioSphere.be — Lite</title>
+  <meta name="description" content="RadioSphere.be Lite — listen to free radio stations from anywhere, even inside in-app browsers. No ads, no tracking, no signup." />
+  <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:#0a0a0a;color:#f2f2f2;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased;min-height:100%}
+    body{padding-bottom:96px}
+    a{color:inherit;text-decoration:none}
+    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+    /* Banner */
+    .banner{background:linear-gradient(135deg,#3b6cf5 0%,#8b5cf6 100%);padding:14px 16px;font-size:13px;line-height:1.45;color:#fff}
+    .banner-inner{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+    .banner-title{font-weight:700;display:flex;align-items:center;gap:8px}
+    .banner-title svg{flex:0 0 auto}
+    .banner-text{opacity:.95;font-size:12.5px}
+    .banner-multilang{font-size:11.5px;opacity:.85;font-style:italic}
+    .banner-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:600;transition:transform .15s ease,opacity .15s ease;white-space:nowrap}
+    .btn:active{transform:scale(.97)}
+    .btn-light{background:#fff;color:#3b3b8a}
+    .btn-outline{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35)}
+    /* Header */
+    .hero{padding:24px 16px 8px;text-align:center;max-width:880px;margin:0 auto}
+    .logo{display:inline-flex;align-items:center;gap:10px;font-size:22px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#3b6cf5,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .logo-dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#3b6cf5,#a78bfa);box-shadow:0 0 16px rgba(139,92,246,.7)}
+    .tagline{margin:8px 0 0;font-size:12.5px;color:#9a9a9a}
+    /* Search */
+    .search-wrap{max-width:880px;margin:18px auto 8px;padding:0 16px}
+    .search{width:100%;padding:12px 14px;border-radius:12px;background:#181818;border:1px solid #2a2a2a;color:#f2f2f2;font-size:14px;outline:none;transition:border-color .15s}
+    .search:focus{border-color:#3b6cf5}
+    .search::placeholder{color:#6a6a6a}
+    /* Section */
+    .section{max-width:880px;margin:14px auto 0;padding:0 16px}
+    .section-title{font-size:14px;font-weight:700;color:#cfcfcf;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+    .section-title::before{content:"";display:inline-block;width:3px;height:14px;background:linear-gradient(180deg,#3b6cf5,#8b5cf6);border-radius:2px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+    .card{background:#141414;border:1px solid #232323;border-radius:14px;padding:12px 12px 14px;text-align:left;transition:border-color .15s,transform .15s,background .15s;display:flex;flex-direction:column;gap:8px;min-height:108px}
+    .card:hover,.card:focus-visible{border-color:#3b6cf5;background:#181a22}
+    .card.active{border-color:#8b5cf6;background:linear-gradient(135deg,rgba(59,108,245,.12),rgba(139,92,246,.12))}
+    .card-name{font-size:13.5px;font-weight:700;line-height:1.25;color:#f2f2f2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .card-meta{font-size:11px;color:#888;display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+    .card-genre{color:#a78bfa;font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:10px}
+    .empty{color:#777;font-size:13px;text-align:center;padding:32px 16px}
+    /* Sticky player */
+    .player{position:fixed;left:0;right:0;bottom:0;background:rgba(15,15,17,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid #232323;padding:10px 14px;z-index:50;box-shadow:0 -6px 24px rgba(0,0,0,.5)}
+    .player-inner{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:12px}
+    .player-info{flex:1 1 auto;min-width:0}
+    .player-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f2f2f2}
+    .player-sub{font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .player-empty{font-size:12.5px;color:#666;font-style:italic}
+    .play-btn{flex:0 0 auto;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#3b6cf5,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 16px rgba(59,108,245,.4);transition:transform .12s}
+    .play-btn:active{transform:scale(.94)}
+    .play-btn[disabled]{opacity:.4;box-shadow:none}
+    .vol{flex:0 0 auto;display:flex;align-items:center;gap:6px;color:#888}
+    .vol input[type=range]{width:80px;-webkit-appearance:none;appearance:none;height:4px;background:#2a2a2a;border-radius:2px;outline:none}
+    .vol input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:#a78bfa;cursor:pointer}
+    .vol input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#a78bfa;cursor:pointer;border:0}
+    @media (max-width:480px){.vol input[type=range]{width:64px}}
+    .pulse{animation:pulse 1.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+    /* Footer */
+    .footer{max-width:880px;margin:28px auto 12px;padding:0 16px;font-size:11px;color:#666;text-align:center;line-height:1.6}
+    .footer a{color:#8b5cf6;text-decoration:underline;text-underline-offset:2px}
+  </style>
+</head>
+<body>
+  <div class="banner" role="region" aria-label="In-app browser notice">
+    <div class="banner-inner">
+      <div class="banner-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        You're using <strong>RadioSphere.be Lite</strong>
+      </div>
+      <div class="banner-text">
+        We detected a limited in-app browser. For the full experience — TimeBack Machine, Chromecast, 50,000+ stations, favourites — please open the site in your regular browser or install the Android app.
+      </div>
+      <div class="banner-multilang">Also available in French, Spanish, German, Italian, Portuguese, Dutch, Polish, Japanese, Chinese, Korean, Arabic and more.</div>
+      <div class="banner-actions">
+        <a class="btn btn-light" href="https://radiosphere.be/?full=1#full" target="_blank" rel="noopener" id="cta-full">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M21 14v7H3V3h7"/></svg>
+          Open full site
+        </a>
+        <a class="btn btn-outline" href="https://play.google.com/store/apps/details?id=be.radiosphere.app" target="_blank" rel="noopener" id="cta-android">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Get the Android app
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="logo"><span class="logo-dot"></span>RadioSphere.be</div>
+    <p class="tagline">Free radio · No ads · No signup · Lite edition</p>
+  </header>
+
+  <div class="search-wrap">
+    <input class="search" id="search" type="search" placeholder="Search a station..." aria-label="Search a station" autocomplete="off" />
+  </div>
+
+  <section class="section">
+    <h2 class="section-title">Top stations</h2>
+    <div class="grid" id="grid" role="list"></div>
+    <p class="empty" id="empty" hidden>No station matches your search.</p>
+  </section>
+
+  <p class="footer">
+    RadioSphere.be Lite is a stripped-down emergency build for in-app browsers.<br/>
+    The <a href="https://radiosphere.be/?full=1#full" target="_blank" rel="noopener">full version</a> ships with 50,000+ stations, TimeBack Machine, Chromecast, favourites, multilingual UI and much more.
+  </p>
+
+  <div class="player" role="region" aria-label="Audio player">
+    <div class="player-inner">
+      <div class="player-info">
+        <div class="player-name" id="p-name">Pick a station above</div>
+        <div class="player-sub" id="p-sub"><span class="player-empty">No station selected</span></div>
+      </div>
+      <button class="play-btn" id="p-btn" aria-label="Play / pause" disabled>
+        <svg id="p-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+      </button>
+      <label class="vol" aria-label="Volume">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <input id="p-vol" type="range" min="0" max="100" value="80" />
+      </label>
+    </div>
+    <audio id="audio" preload="none" crossorigin="anonymous"></audio>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // Curated, English-speaking, HTTPS-only, geo-unrestricted stations.
+    // Streams chosen for known reliability; if one dies, others still work.
+    var STATIONS = [
+      { n: "SomaFM Groove Salad",     g: "Ambient",     c: "USA", u: "https://ice1.somafm.com/groovesalad-128-mp3" },
+      { n: "SomaFM Indie Pop Rocks",  g: "Indie",       c: "USA", u: "https://ice1.somafm.com/indiepop-128-mp3" },
+      { n: "SomaFM Lush",             g: "Vocal",       c: "USA", u: "https://ice1.somafm.com/lush-128-mp3" },
+      { n: "SomaFM Drone Zone",       g: "Ambient",     c: "USA", u: "https://ice1.somafm.com/dronezone-128-mp3" },
+      { n: "SomaFM DEF CON Radio",    g: "Electronic",  c: "USA", u: "https://ice1.somafm.com/defcon-128-mp3" },
+      { n: "SomaFM Fluid",            g: "Hip-Hop",     c: "USA", u: "https://ice1.somafm.com/fluid-128-mp3" },
+      { n: "SomaFM Secret Agent",     g: "Lounge",      c: "USA", u: "https://ice1.somafm.com/secretagent-128-mp3" },
+      { n: "SomaFM Underground 80s",  g: "80s",         c: "USA", u: "https://ice1.somafm.com/u80s-128-mp3" },
+      { n: "SomaFM Beat Blender",     g: "Deep House",  c: "USA", u: "https://ice1.somafm.com/beatblender-128-mp3" },
+      { n: "SomaFM Suburbs of Goa",   g: "World",       c: "USA", u: "https://ice1.somafm.com/suburbsofgoa-128-mp3" },
+      { n: "SomaFM Folk Forward",     g: "Folk",        c: "USA", u: "https://ice1.somafm.com/folkfwd-128-mp3" },
+      { n: "SomaFM Left Coast 70s",   g: "70s Rock",    c: "USA", u: "https://ice1.somafm.com/seventies-128-mp3" },
+      { n: "SomaFM Boot Liquor",      g: "Country",     c: "USA", u: "https://ice1.somafm.com/bootliquor-128-mp3" },
+      { n: "SomaFM Metal Detector",   g: "Metal",       c: "USA", u: "https://ice1.somafm.com/metal-128-mp3" },
+      { n: "Radio Paradise Main Mix", g: "Eclectic",    c: "USA", u: "https://stream.radioparadise.com/aac-128" },
+      { n: "Radio Paradise Mellow",   g: "Mellow",      c: "USA", u: "https://stream.radioparadise.com/mellow-128" },
+      { n: "Radio Paradise Rock",     g: "Rock",        c: "USA", u: "https://stream.radioparadise.com/rock-128" },
+      { n: "Radio Paradise Global",   g: "World",       c: "USA", u: "https://stream.radioparadise.com/global-128" },
+      { n: "KEXP Seattle",            g: "Indie",       c: "USA", u: "https://kexp.streamguys1.com/kexp160.aac" },
+      { n: "WWOZ New Orleans",        g: "Jazz / Blues",c: "USA", u: "https://wwoz-sc.streamguys1.com/wwoz-hi.mp3" }
+    ];
+
+    var grid = document.getElementById("grid");
+    var emptyEl = document.getElementById("empty");
+    var search = document.getElementById("search");
+    var audio = document.getElementById("audio");
+    var pName = document.getElementById("p-name");
+    var pSub = document.getElementById("p-sub");
+    var pBtn = document.getElementById("p-btn");
+    var pIcon = document.getElementById("p-icon");
+    var pVol = document.getElementById("p-vol");
+
+    var ICON_PLAY = '<polygon points="6 4 20 12 6 20 6 4"/>';
+    var ICON_PAUSE = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+
+    var current = null;
+    audio.volume = 0.8;
+
+    function setIcon(playing) { pIcon.innerHTML = playing ? ICON_PAUSE : ICON_PLAY; }
+
+    function render(filter) {
+      var q = (filter || "").trim().toLowerCase();
+      grid.innerHTML = "";
+      var n = 0;
+      for (var i = 0; i < STATIONS.length; i++) {
+        var s = STATIONS[i];
+        if (q && (s.n + " " + s.g + " " + s.c).toLowerCase().indexOf(q) === -1) continue;
+        var card = document.createElement("button");
+        card.type = "button";
+        card.className = "card" + (current && current.n === s.n ? " active" : "");
+        card.setAttribute("role", "listitem");
+        card.setAttribute("data-i", String(i));
+        card.innerHTML =
+          '<div class="card-name">' + escape(s.n) + '</div>' +
+          '<div class="card-meta"><span class="card-genre">' + escape(s.g) + '</span><span>' + escape(s.c) + '</span></div>';
+        card.addEventListener("click", onPick);
+        grid.appendChild(card);
+        n++;
+      }
+      emptyEl.hidden = n > 0;
+    }
+
+    function escape(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    function onPick(e) {
+      var idx = Number(e.currentTarget.getAttribute("data-i"));
+      var s = STATIONS[idx];
+      if (!s) return;
+      if (current && current.n === s.n && !audio.paused) {
+        audio.pause();
+        return;
+      }
+      current = s;
+      pName.textContent = s.n;
+      pSub.textContent = s.g + " · " + s.c;
+      pBtn.disabled = false;
+      audio.src = s.u;
+      var p = audio.play();
+      if (p && p.catch) p.catch(function () { /* user gesture issues etc. */ });
+      track("lite-play");
+      render(search.value);
+    }
+
+    pBtn.addEventListener("click", function () {
+      if (!current) return;
+      if (audio.paused) {
+        var p = audio.play();
+        if (p && p.catch) p.catch(function () {});
+      } else {
+        audio.pause();
+      }
+    });
+
+    audio.addEventListener("play", function () { setIcon(true); pBtn.classList.add("pulse"); });
+    audio.addEventListener("pause", function () { setIcon(false); pBtn.classList.remove("pulse"); });
+    audio.addEventListener("ended", function () { setIcon(false); pBtn.classList.remove("pulse"); });
+    audio.addEventListener("error", function () {
+      setIcon(false);
+      pBtn.classList.remove("pulse");
+      pSub.innerHTML = '<span style="color:#ef4444">Stream unavailable. Try another station.</span>';
+    });
+
+    pVol.addEventListener("input", function () { audio.volume = Number(pVol.value) / 100; });
+
+    search.addEventListener("input", function () { render(search.value); });
+
+    // Cookie-less Umami pixel tracking (no script load — purely <img>).
+    function track(event) {
+      try {
+        var img = new Image(1, 1);
+        img.referrerPolicy = "no-referrer-when-downgrade";
+        img.src = "https://cloud.umami.is/api/send?website=73a30cfd-4d45-43c2-b296-c4d3a39cd898&event=" + encodeURIComponent(event) + "&t=" + Date.now();
+      } catch (e) { /* never break the page */ }
+    }
+
+    document.getElementById("cta-full").addEventListener("click", function () { track("lite-cta-full"); });
+    document.getElementById("cta-android").addEventListener("click", function () { track("lite-cta-android"); });
+
+    render("");
+    track("lite-view");
+  })();
+  </script>
+</body>
+</html>
