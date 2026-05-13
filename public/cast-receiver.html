@@ -98,6 +98,8 @@
       background: hsla(0,0%,100%,0.05);
       border-top: 1px solid hsla(0,0%,100%,0.1);
       backdrop-filter: blur(12px);
+      position: relative;
+      z-index: 10;
     }
     .mini-player-icon {
       width: 48px;
@@ -168,11 +170,11 @@
     .mascot {
       position: fixed;
       right: 28px;
-      bottom: 96px;
+      bottom: 50px;
       width: 180px;
       height: auto;
       pointer-events: none;
-      z-index: 5;
+      z-index: 1;
       filter:
         drop-shadow(0 0 14px hsla(280,80%,60%,0.45))
         drop-shadow(0 6px 18px rgba(0,0,0,0.45));
