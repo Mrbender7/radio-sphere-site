@@ -117,20 +117,24 @@ export function useWeeklyDiscoveries(favorites: RadioStation[]) {
     staleTime: forceRefresh > 0 ? 0 : Infinity,
   });
 
+  // Initial state MUST be empty (deterministic) so SSG HTML matches first
+  // client render. Population happens in effects below.
   const [discoveries, setDiscoveries] = useState<RadioStation[]>([]);
 
   useEffect(() => {
     if (cached && weekKey && cached.weekKey === weekKey) {
-      setDiscoveries(cached.stations);
+      // Re-shuffle on the client only — Math.random() never runs at render.
+      setDiscoveries(shuffle(cached.stations).slice(0, 10));
     }
   }, [cached, weekKey]);
 
   useEffect(() => {
     if (weekKey && data && data.length > 0) {
-      setDiscoveries(data);
-      safeSetItem(DISCOVERIES_KEY, JSON.stringify({ weekKey, stations: data }));
+      const ordered = shuffle(data).slice(0, 10);
+      setDiscoveries(ordered);
+      safeSetItem(DISCOVERIES_KEY, JSON.stringify({ weekKey, stations: ordered }));
       const history = loadHistory();
-      const newIds = data.map(s => s.id);
+      const newIds = ordered.map(s => s.id);
       saveHistory([...newIds, ...history]);
     }
   }, [data, weekKey]);
