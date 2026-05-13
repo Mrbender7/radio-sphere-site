@@ -73,33 +73,40 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[RadioSphere] ErrorBoundary caught:", error, info.componentStack);
 
-    // Telemetry
+    const inApp = isInAppBrowser();
+
+    // Telemetry — single event per crash, no double-fire from auto-recovery.
     try {
       const w = window as unknown as { umami?: { track: (name: string, data?: Record<string, unknown>) => void } };
       w.umami?.track("error-boundary", {
-        webview: isInAppBrowser(),
+        webview: inApp,
+        recovery: inApp ? "auto-webview" : "manual",
         message: String(error?.message || "").slice(0, 200),
       });
     } catch { /* noop */ }
 
-    // Auto-recovery: if this is the first crash this session, the user is likely
-    // running a stale cached bundle (e.g. after a deploy). Purge SW + caches and
-    // reload once. Subsequent crashes show the manual UI to avoid infinite loops.
-    // Belt-and-braces: also check localStorage so a WebView that wipes
-    // sessionStorage between reloads can't spin in an endless reload loop.
+    // Auto-recovery is RESERVED for in-app WebViews where hydration genuinely
+    // never recovers. On regular browsers (desktop, mobile Chrome/Safari/Edge,
+    // installed PWA…) we used to nuke caches + force-CSR + reload on every
+    // first crash — which turned a single benign component error into a full
+    // session reset, and produced cascades of error-boundary events on Umami.
+    // Now we just show the manual "Reload" UI and let the user decide.
+    if (!inApp) {
+      console.warn("[RadioSphere] Crash on regular browser — showing manual UI (no auto-purge)");
+      return;
+    }
+
     const sessionTried = safeSessionGet(AUTO_RECOVERY_KEY) === "1";
     let localTried = false;
     try { localTried = localStorage.getItem(AUTO_RECOVERY_KEY) === "1"; } catch { /* noop */ }
     if (!sessionTried && !localTried) {
       safeSessionSet(AUTO_RECOVERY_KEY, "1");
       try { localStorage.setItem(AUTO_RECOVERY_KEY, "1"); } catch { /* noop */ }
-      // Clear the localStorage flag after 60s so a future genuine deploy crash
-      // can still trigger one auto-recovery in a later session.
       setTimeout(() => { try { localStorage.removeItem(AUTO_RECOVERY_KEY); } catch { /* noop */ } }, 60000);
-      console.warn("[RadioSphere] Attempting auto-recovery (clear caches + reload)");
+      console.warn("[RadioSphere] WebView crash — attempting auto-recovery (clear caches + reload)");
       void clearAllCachesAndReload();
     } else {
-      console.warn("[RadioSphere] Auto-recovery already attempted — showing manual UI");
+      console.warn("[RadioSphere] WebView auto-recovery already attempted — showing manual UI");
     }
   }
 
