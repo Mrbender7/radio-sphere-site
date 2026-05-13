@@ -1,8 +1,14 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" translate="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Disable Chrome / Edge / Safari auto-translation: it rewrites text
+         nodes BEFORE React hydrates, causing #418/#423 mismatches in
+         WebViews where the user UI lang differs from the page lang
+         (e.g. en-US user on a fr SSG page in India). -->
+    <meta name="google" content="notranslate" />
+    <meta http-equiv="Content-Language" content="fr" />
 
     <!-- Security headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
