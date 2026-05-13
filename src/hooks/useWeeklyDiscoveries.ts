@@ -148,6 +148,17 @@ export function useWeeklyDiscoveries(favorites: RadioStation[]) {
 }
 
 function pickThree(candidates: RadioStation[], _exclude: string[]): RadioStation[] {
-  const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 10);
+  // No Math.random() here — keep queryFn output deterministic.
+  // Shuffling happens client-side in a useEffect, never in render.
+  return candidates.slice(0, 30);
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  // Fisher-Yates, only ever called from inside useEffect.
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
