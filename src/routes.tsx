@@ -77,7 +77,7 @@ function RouteErrorFallback() {
       </p>
       <div className="flex flex-col sm:flex-row gap-3">
         <button
-          onClick={() => window.location.reload()}
+          onClick={forceCsrAndReload}
           className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
         >
           Reload
