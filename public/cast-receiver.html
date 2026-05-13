@@ -164,40 +164,63 @@
 
   <!-- Header -->
   <div class="header">
-    <svg viewBox="0 0 80 80" fill="none">
-      <circle cx="40" cy="40" r="28" stroke="url(#lg)" stroke-width="3">
-        <animate attributeName="r" values="26;30;26" dur="4s" repeatCount="indefinite"/>
-      </circle>
-      <circle cx="40" cy="40" r="18" stroke="url(#lg)" stroke-width="2" opacity="0.6">
-        <animate attributeName="r" values="16;20;16" dur="3s" repeatCount="indefinite"/>
-      </circle>
-      <circle cx="40" cy="40" r="8" stroke="url(#lg)" stroke-width="2" opacity="0.8">
-        <animate attributeName="r" values="7;10;7" dur="2.5s" repeatCount="indefinite"/>
-      </circle>
-      <circle cx="40" cy="40" r="4" fill="url(#lg)">
-        <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/>
-      </circle>
-      <defs>
-        <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="hsl(220,90%,60%)"/>
-          <stop offset="100%" stop-color="hsl(280,80%,60%)"/>
-        </linearGradient>
-      </defs>
-    </svg>
+    <img class="brand-logo" src="/web-app-manifest-512x512.png" alt="RadioSphere" />
     <h1>RadioSphere.be</h1>
   </div>
 
   <!-- Center -->
   <div class="center">
     <div class="genre-animation" id="genreAnimContainer">
-      <!-- Default radio waves animation -->
+      <!-- Default: parabolic satellite dish, animated when playing -->
       <svg viewBox="0 0 80 80" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="36" y1="68" x2="40" y2="28" stroke-width="2.5"/>
-        <circle cx="40" cy="26" r="3" stroke-width="2.5"/>
-        <line x1="26" y1="68" x2="46" y2="68" stroke-width="2.5"/>
-        <path d="M26,26 A14,14 0 0,1 54,26" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1s" repeatCount="indefinite"/></path>
-        <path d="M18,26 A22,22 0 0,1 62,26" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.4s" repeatCount="indefinite"/></path>
-        <path d="M10,26 A30,30 0 0,1 70,26" stroke-width="2"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.8s" repeatCount="indefinite"/></path>
+        <defs>
+          <linearGradient id="dishGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="hsl(220,90%,70%)"/>
+            <stop offset="100%" stop-color="hsl(280,80%,70%)"/>
+          </linearGradient>
+          <radialGradient id="dishFace" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="hsla(0,0%,100%,0.35)"/>
+            <stop offset="100%" stop-color="hsla(220,60%,40%,0.15)"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Emitted radio waves (arcs from feed horn, top-right) -->
+        <g stroke="url(#dishGrad)" fill="none" stroke-width="2" opacity="0.9">
+          <path d="M52,28 A10,10 0 0,1 62,18">
+            <animate attributeName="opacity" values="0;1;0" dur="1.6s" repeatCount="indefinite"/>
+          </path>
+          <path d="M52,28 A18,18 0 0,1 70,10">
+            <animate attributeName="opacity" values="0;1;0" dur="1.6s" begin="0.4s" repeatCount="indefinite"/>
+          </path>
+          <path d="M52,28 A26,26 0 0,1 78,2">
+            <animate attributeName="opacity" values="0;1;0" dur="1.6s" begin="0.8s" repeatCount="indefinite"/>
+          </path>
+        </g>
+
+        <!-- Mast / pedestal base -->
+        <line x1="34" y1="74" x2="46" y2="74" stroke-width="3"/>
+        <path d="M40,74 L40,58" stroke-width="2.5"/>
+        <rect x="36" y="56" width="8" height="6" rx="1.5" stroke-width="2" fill="hsla(0,0%,100%,0.08)"/>
+
+        <!-- Dish (parabolic ellipse, tilted slightly up-right) -->
+        <g transform="rotate(-25 40 40)">
+          <!-- Outer rim -->
+          <ellipse cx="40" cy="40" rx="22" ry="9" stroke="url(#dishGrad)" stroke-width="2.5" fill="url(#dishFace)"/>
+          <!-- Inner concentric rings (truss detail) -->
+          <ellipse cx="40" cy="40" rx="16" ry="6.5" stroke-width="1" opacity="0.55"/>
+          <ellipse cx="40" cy="40" rx="10" ry="4" stroke-width="1" opacity="0.45"/>
+          <ellipse cx="40" cy="40" rx="4.5" ry="1.8" stroke-width="1" opacity="0.4"/>
+          <!-- Radial trusses -->
+          <line x1="18" y1="40" x2="62" y2="40" stroke-width="0.8" opacity="0.4"/>
+          <line x1="22" y1="32" x2="58" y2="48" stroke-width="0.8" opacity="0.35"/>
+          <line x1="22" y1="48" x2="58" y2="32" stroke-width="0.8" opacity="0.35"/>
+          <!-- Feed horn arms -->
+          <line x1="40" y1="40" x2="40" y2="22" stroke-width="1.5"/>
+          <line x1="32" y1="40" x2="40" y2="22" stroke-width="1" opacity="0.6"/>
+          <line x1="48" y1="40" x2="40" y2="22" stroke-width="1" opacity="0.6"/>
+          <!-- Feed horn -->
+          <rect x="37" y="18" width="6" height="6" rx="1" stroke-width="1.5" fill="hsla(0,0%,100%,0.2)"/>
+        </g>
       </svg>
     </div>
     <div class="station-name" id="stationName">En attente...</div>
