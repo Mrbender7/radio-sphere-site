@@ -135,6 +135,7 @@ const Index = () => {
       // hydrating first.
       startTransition(() => setShowWelcome(true));
     }
+  }, []);
   useEffect(() => { setIsMounted(true); }, []);
   const { favorites, toggleFavorite, isFavorite, recent } = useFavoritesContext();
   const { isFullScreen, closeFullScreen, currentStation } = usePlayer();
