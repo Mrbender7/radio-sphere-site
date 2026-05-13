@@ -41,18 +41,33 @@ export function AudioVisualizer({ size = "small", active = true, className }: Au
     return () => query.removeEventListener("change", updateMobileState);
   }, []);
 
-  const instanceAnimations = useMemo(
+  // Deterministic baseline so SSG HTML matches the first client render
+  // byte-for-byte (no Math.random in render path → no React #418/#423).
+  const baseAnimations = useMemo(
     () => Array.from({ length: visibleBars }, (_, i) => {
       const base = barAnimations[i % barAnimations.length];
-      const variance = Math.random() * 0.28 - 0.14;
-      const duration = `${Math.max(0.28, parseFloat(base.duration) + variance).toFixed(2)}s`;
-      const delay = `${(Math.random() * 0.36).toFixed(2)}s`;
-      const minScale = (0.12 + Math.random() * 0.36).toFixed(2);
-
-      return { duration, delay, minScale };
+      // Stable pseudo-variation based on index only.
+      const minScale = (0.18 + ((i * 37) % 30) / 100).toFixed(2);
+      return { duration: base.duration, delay: base.delay, minScale };
     }),
     [visibleBars]
   );
+
+  // After mount, sprinkle real Math.random variance — this only runs on the
+  // client, well after hydration, so it cannot cause a mismatch.
+  const [instanceAnimations, setInstanceAnimations] = useState(baseAnimations);
+  useEffect(() => {
+    setInstanceAnimations(
+      Array.from({ length: visibleBars }, (_, i) => {
+        const base = barAnimations[i % barAnimations.length];
+        const variance = Math.random() * 0.28 - 0.14;
+        const duration = `${Math.max(0.28, parseFloat(base.duration) + variance).toFixed(2)}s`;
+        const delay = `${(Math.random() * 0.36).toFixed(2)}s`;
+        const minScale = (0.12 + Math.random() * 0.36).toFixed(2);
+        return { duration, delay, minScale };
+      })
+    );
+  }, [visibleBars]);
 
   return (
     <div className={cn("flex items-end justify-center", className)} style={{ height, width: totalWidth, gap }}>
