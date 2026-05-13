@@ -7,6 +7,11 @@ import {
 } from "@/utils/inAppBrowser";
 import { safeSessionGet, safeSessionRemove, safeSessionSet } from "@/utils/safeStorage";
 import { forceCsrAndReload, setForceCsr } from "@/utils/forceCsr";
+
+interface State {
+  hasError: boolean;
+  error?: Error;
+  clearing?: boolean;
   copied?: boolean;
 }
 
