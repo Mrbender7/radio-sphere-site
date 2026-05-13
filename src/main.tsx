@@ -257,6 +257,27 @@ function reportHydrationError(rawMessage: string, source: "error-event" | "conso
   if (eventName !== "hydration-error") {
     reportOnce("hydration-error", `generic|${dedupeKey}`, payload);
   }
+  // ─── In-app browser CSR rescue ──────────────────────────────────────────
+  // FB / IG / TikTok WebViews routinely break hydration (auto-translate,
+  // DOM-injecting plugins, broken caches). Once we see a real hydration
+  // error in such an environment, set the CSR flag and reload — the next
+  // boot will skip hydrateRoot entirely (see top of this file).
+  try {
+    if (
+      isInAppBrowser() &&
+      sessionStorage.getItem(FORCE_CSR_KEY) !== "1" &&
+      !shouldForceCSR
+    ) {
+      sessionStorage.setItem(FORCE_CSR_KEY, "1");
+      reportOnce("csr-fallback-triggered", `csr|${window.location.pathname}`, {
+        code: code ?? "unknown",
+        route: window.location.pathname,
+        ...envInfo(),
+      });
+      // Slight delay so the umami beacon has a chance to flush.
+      setTimeout(() => { try { window.location.reload(); } catch { /* noop */ } }, 250);
+    }
+  } catch { /* sessionStorage may throw inside partitioned WebViews */ }
 }
 
 if (typeof window !== "undefined") {
