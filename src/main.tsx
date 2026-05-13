@@ -10,28 +10,23 @@ import { isInAppBrowser } from "./utils/inAppBrowser";
 import { createRoot as reactDomCreateRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { setForceCsr, shouldForceCsr, FORCE_CSR_KEY } from "./utils/forceCsr";
 import "./index.css";
 
-// ─── CSR fallback for in-app browsers ────────────────────────────────────────
+// ─── CSR fallback (universal) ────────────────────────────────────────────────
 // When a previous mount triggered a hydration mismatch (#418/#421/#423/#425)
-// inside a Facebook / Instagram / TikTok WebView, we set this flag and reload
-// the page. On the next boot we ask vite-react-ssg to look for a non-existent
-// container so its internal IIFE bails out, then we mount manually with
-// `createRoot()` (NOT `hydrateRoot`) on a wiped #root. That breaks the
-// hydration cascade for that whole session — every WebView quirk that would
-// have caused a mismatch (auto-translate, DOM-injecting extensions, broken
-// SW caches, missing polyfills) is bypassed by rendering from scratch.
-const FORCE_CSR_KEY = "__rsForceCSR";
+// — Edge InPrivate, Facebook/Instagram/TikTok WebViews, browser extensions,
+// auto-translation, etc. — we set the force-CSR flag and reload. On the next
+// boot we ask vite-react-ssg to look for a non-existent container so its
+// internal IIFE bails out, then we mount manually with `createRoot()` on a
+// wiped #root. That bypasses every hydration quirk for the whole session.
 const isClientEnv = typeof window !== "undefined";
-let shouldForceCSR = false;
-if (isClientEnv) {
-  try { shouldForceCSR = sessionStorage.getItem(FORCE_CSR_KEY) === "1"; } catch { /* noop */ }
-  if (shouldForceCSR) {
-    const rootEl = document.getElementById("root");
-    if (rootEl) {
-      rootEl.innerHTML = "";
-      rootEl.removeAttribute("data-server-rendered");
-    }
+const shouldForceCSR = isClientEnv && shouldForceCsr();
+if (isClientEnv && shouldForceCSR) {
+  const rootEl = document.getElementById("root");
+  if (rootEl) {
+    rootEl.innerHTML = "";
+    rootEl.removeAttribute("data-server-rendered");
   }
 }
 
@@ -56,13 +51,31 @@ if (isClientEnv && shouldForceCSR) {
           <RouterProvider router={ctx.router} />
         </HelmetProvider>,
       );
-      console.log("[RadioSphere] CSR fallback active — hydration bypassed for WebView");
+      try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
+      console.log("[RadioSphere] CSR fallback active — hydration bypassed");
     } catch (e) {
       console.error("[RadioSphere] CSR fallback mount failed:", e);
       // Don't loop forever if CSR mount itself fails
       try { sessionStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
+      try { localStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
     }
   })();
+}
+
+// Tell the emergency shell that React has taken over (works for both
+// hydration and CSR-fallback paths). The shell polls this flag and removes
+// itself once set.
+if (isClientEnv) {
+  // Mark as mounted on next tick — by then either hydration succeeded or
+  // the CSR fallback handler above has run.
+  const markMounted = () => {
+    try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
+  };
+  if (document.readyState === "complete") {
+    setTimeout(markMounted, 0);
+  } else {
+    window.addEventListener("load", () => setTimeout(markMounted, 0));
+  }
 }
 
 const CRASH_FLAG_KEY = "radiosphere_crash_purge_pending";
@@ -257,23 +270,18 @@ function reportHydrationError(rawMessage: string, source: "error-event" | "conso
     reportOnce("hydration-error", `generic|${dedupeKey}`, payload);
   }
   // ─── Universal CSR rescue ───────────────────────────────────────────────
-  // Any real hydration mismatch (#418/#421/#423/#425) cascades into 20+ React
-  // errors and a visible flash. Switching the tab to pure CSR after the first
-  // mismatch breaks the cascade for every browser, not just WebViews. The
-  // sessionStorage flag is one-shot and tab-scoped, so users only pay the
-  // reload cost once per visit, and never if hydration succeeds.
+  // Any real hydration mismatch cascades into 20+ React errors and a visible
+  // flash. Force CSR (cross-storage flag) and reload — once per tab — so the
+  // user sees the real app on the next boot, even in InPrivate / WebViews.
   try {
-    if (
-      sessionStorage.getItem(FORCE_CSR_KEY) !== "1" &&
-      !shouldForceCSR
-    ) {
-      sessionStorage.setItem(FORCE_CSR_KEY, "1");
+    if (!shouldForceCSR && sessionStorage.getItem(FORCE_CSR_KEY) !== "1") {
       reportOnce("csr-fallback-triggered", `csr|${window.location.pathname}`, {
         code: code ?? "unknown",
         route: window.location.pathname,
         webview: isInAppBrowser(),
         ...envInfo(),
       });
+      setForceCsr();
       // Slight delay so the umami beacon has a chance to flush.
       setTimeout(() => { try { window.location.reload(); } catch { /* noop */ } }, 250);
     }

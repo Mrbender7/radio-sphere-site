@@ -2,6 +2,7 @@ import type { RouteRecord } from "vite-react-ssg";
 import App from "./App";
 import radioSphereLogo from "@/assets/new-radio-logo.png";
 import { isInAppBrowser, openInExternalBrowser, copyToClipboard } from "@/utils/inAppBrowser";
+import { forceCsrAndReload, setForceCsr } from "@/utils/forceCsr";
 
 async function clearAllCachesAndReload() {
   try {
@@ -20,6 +21,7 @@ async function clearAllCachesAndReload() {
   } catch {
     /* noop */
   }
+  setForceCsr();
   window.location.reload();
 }
 
@@ -57,7 +59,7 @@ function RouteErrorFallback() {
           </button>
         </div>
         <button
-          onClick={() => window.location.reload()}
+          onClick={forceCsrAndReload}
           className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
         >
           Réessayer / Try again
@@ -75,7 +77,7 @@ function RouteErrorFallback() {
       </p>
       <div className="flex flex-col sm:flex-row gap-3">
         <button
-          onClick={() => window.location.reload()}
+          onClick={forceCsrAndReload}
           className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
         >
           Reload
