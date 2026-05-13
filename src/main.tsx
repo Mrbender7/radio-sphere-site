@@ -269,23 +269,44 @@ function reportHydrationError(rawMessage: string, source: "error-event" | "conso
   if (eventName !== "hydration-error") {
     reportOnce("hydration-error", `generic|${dedupeKey}`, payload);
   }
-  // ─── Universal CSR rescue ───────────────────────────────────────────────
-  // Any real hydration mismatch cascades into 20+ React errors and a visible
-  // flash. Force CSR (cross-storage flag) and reload — once per tab — so the
-  // user sees the real app on the next boot, even in InPrivate / WebViews.
+  // ─── Targeted CSR rescue ────────────────────────────────────────────────
+  // We only auto-trigger force-CSR + reload when:
+  //   (a) we're inside a known in-app WebView (FB/IG/TikTok/etc.) — that's where
+  //       hydration genuinely never recovers; OR
+  //   (b) the React error code is a hard-block hydration failure (#418/#423).
+  // #421/#425/#422/#426/#428 are typically transient and React recovers from
+  // them — reloading on every occurrence was the main cause of the
+  // error-boundary flood on Umami.
+  // We also enforce a 24h cap (max 2 auto force-CSR per browser) to break any
+  // remaining loop risk. Manual UI from ErrorBoundary remains available.
+  const HARD_HYDRATION_CODES = new Set(["418", "423"]);
+  const inWebView = isInAppBrowser();
+  const isHardHydration = !!code && HARD_HYDRATION_CODES.has(code);
+  if (!inWebView && !isHardHydration) return;
+
+  const FORCE_CSR_24H_KEY = "__rsForceCsrLog24h";
   try {
+    const raw = localStorage.getItem(FORCE_CSR_24H_KEY);
+    const now = Date.now();
+    const recent: number[] = raw ? (JSON.parse(raw) as number[]).filter((t) => now - t < 24 * 60 * 60 * 1000) : [];
+    if (recent.length >= 2) {
+      // Cap reached — don't auto-rescue, let the manual UI take over.
+      return;
+    }
     if (!shouldForceCSR && sessionStorage.getItem(FORCE_CSR_KEY) !== "1") {
       reportOnce("csr-fallback-triggered", `csr|${window.location.pathname}`, {
         code: code ?? "unknown",
         route: window.location.pathname,
-        webview: isInAppBrowser(),
+        webview: inWebView,
+        reason: inWebView ? "webview" : "hard-hydration",
         ...envInfo(),
       });
+      recent.push(now);
+      try { localStorage.setItem(FORCE_CSR_24H_KEY, JSON.stringify(recent)); } catch { /* noop */ }
       setForceCsr();
-      // Slight delay so the umami beacon has a chance to flush.
       setTimeout(() => { try { window.location.reload(); } catch { /* noop */ } }, 250);
     }
-  } catch { /* sessionStorage may throw inside partitioned WebViews */ }
+  } catch { /* storage may throw inside partitioned WebViews */ }
 }
 
 if (typeof window !== "undefined") {
