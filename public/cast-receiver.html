@@ -184,19 +184,6 @@
           </radialGradient>
         </defs>
 
-        <!-- Emitted radio waves (arcs from feed horn, top-right) -->
-        <g stroke="url(#dishGrad)" fill="none" stroke-width="2" opacity="0.9">
-          <path d="M52,28 A10,10 0 0,1 62,18">
-            <animate attributeName="opacity" values="0;1;0" dur="1.6s" repeatCount="indefinite"/>
-          </path>
-          <path d="M52,28 A18,18 0 0,1 70,10">
-            <animate attributeName="opacity" values="0;1;0" dur="1.6s" begin="0.4s" repeatCount="indefinite"/>
-          </path>
-          <path d="M52,28 A26,26 0 0,1 78,2">
-            <animate attributeName="opacity" values="0;1;0" dur="1.6s" begin="0.8s" repeatCount="indefinite"/>
-          </path>
-        </g>
-
         <!-- Mast / pedestal base -->
         <line x1="34" y1="74" x2="46" y2="74" stroke-width="3"/>
         <path d="M40,74 L40,58" stroke-width="2.5"/>
@@ -220,6 +207,23 @@
           <line x1="48" y1="40" x2="40" y2="22" stroke-width="1" opacity="0.6"/>
           <!-- Feed horn -->
           <rect x="37" y="18" width="6" height="6" rx="1" stroke-width="1.5" fill="hsla(0,0%,100%,0.2)"/>
+        </g>
+
+        <!-- Emitted radio waves — IN FRONT of the dish, growing outward from the feed horn -->
+        <g stroke="url(#dishGrad)" fill="none" stroke-linecap="round" opacity="0.95"
+           transform="rotate(-25 31 20)">
+          <path d="M31,12 A8,8 0 0,1 39,20" stroke-width="2">
+            <animate attributeName="opacity" values="0;1;0" dur="1.8s" repeatCount="indefinite"/>
+            <animate attributeName="stroke-width" values="2.4;1.2" dur="1.8s" repeatCount="indefinite"/>
+          </path>
+          <path d="M31,6 A14,14 0 0,1 45,20" stroke-width="1.8">
+            <animate attributeName="opacity" values="0;1;0" dur="1.8s" begin="0.45s" repeatCount="indefinite"/>
+            <animate attributeName="stroke-width" values="2.2;1" dur="1.8s" begin="0.45s" repeatCount="indefinite"/>
+          </path>
+          <path d="M31,0 A20,20 0 0,1 51,20" stroke-width="1.5">
+            <animate attributeName="opacity" values="0;0.9;0" dur="1.8s" begin="0.9s" repeatCount="indefinite"/>
+            <animate attributeName="stroke-width" values="2;0.8" dur="1.8s" begin="0.9s" repeatCount="indefinite"/>
+          </path>
         </g>
       </svg>
     </div>
