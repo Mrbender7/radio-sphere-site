@@ -79,6 +79,11 @@
     /* Footer */
     .footer{max-width:880px;margin:28px auto 12px;padding:0 16px;font-size:11px;color:#666;text-align:center;line-height:1.6}
     .footer a{color:#8b5cf6;text-decoration:underline;text-underline-offset:2px}
+    /* Mascot — friendly background touch */
+    .mascot{position:fixed;right:14px;bottom:108px;width:96px;height:96px;z-index:5;pointer-events:none;opacity:.55;filter:grayscale(.35) drop-shadow(0 6px 14px rgba(0,0,0,.45));animation:mascot-float 4s ease-in-out infinite;transition:opacity .2s}
+    .mascot:hover{opacity:.9;filter:grayscale(0) drop-shadow(0 6px 14px rgba(139,92,246,.5))}
+    @keyframes mascot-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+    @media (max-width:480px){.mascot{width:72px;height:72px;right:8px;bottom:104px}}
   </style>
 </head>
 <body>
@@ -114,6 +119,8 @@
     <div class="logo"><img class="logo-img" src="/lite-logo.png" alt="" width="34" height="34" decoding="async" />RadioSphere.be</div>
     <p class="tagline">Free radio · No ads · No signup · Lite edition</p>
   </header>
+
+  <img class="mascot" src="/lite-shiba.png" alt="" aria-hidden="true" width="96" height="96" decoding="async" loading="lazy" />
 
   <div class="search-wrap">
     <input class="search" id="search" type="search" placeholder="Search a station..." aria-label="Search a station" autocomplete="off" />
