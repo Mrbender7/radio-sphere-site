@@ -21,6 +21,7 @@ async function clearAllCachesAndReload() {
   } catch {
     /* noop */
   }
+  setForceCsr();
   window.location.reload();
 }
 
