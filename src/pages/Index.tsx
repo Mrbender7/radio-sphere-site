@@ -227,7 +227,7 @@ const Index = () => {
   });
 
   const renderContent = () => {
-    if (!isMounted) return <PageLoader />;
+    if (!isMounted) return <HomeSkeleton />;
     if (showPrivacy) {
       return <PrivacyPolicyPage onBack={() => setShowPrivacy(false)} />;
     }
