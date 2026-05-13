@@ -17,35 +17,47 @@ interface State {
 
 const AUTO_RECOVERY_KEY = "radiosphere_auto_recovery_attempted";
 
-async function clearAllCachesAndReload() {
-  // Service Worker — may be unavailable in Chrome WebView, private mode, or
-  // when the page is served over an insecure origin. Each call is guarded.
-  try {
-    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+async function hardReload(opts: { purge: boolean }) {
+  if (opts.purge) {
+    // Service Worker — may be unavailable in Chrome WebView, private mode, or
+    // when the page is served over an insecure origin. Each call is guarded.
+    try {
+      if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+      }
+    } catch {
+      /* noop */
     }
-  } catch {
-    /* noop */
-  }
-  // Cache Storage — not available in older WebView builds.
-  try {
-    if (typeof window !== "undefined" && "caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+    // Cache Storage — not available in older WebView builds.
+    try {
+      if (typeof window !== "undefined" && "caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+      }
+    } catch {
+      /* noop */
     }
-  } catch {
-    /* noop */
+    safeSessionRemove("radiosphere_crash_purge_pending");
+    // Also clear the auto-recovery flags so a future genuine crash can recover.
+    try { localStorage.removeItem("radiosphere_auto_recovery_attempted"); } catch { /* noop */ }
+    safeSessionRemove("radiosphere_auto_recovery_attempted");
   }
-  safeSessionRemove("radiosphere_crash_purge_pending");
   // Force CSR on next boot so we don't fall right back into the same
   // hydration mismatch that brought the user here.
   setForceCsr();
+  // Cache-buster query so Edge / proxies can't return the same stale HTML.
   try {
-    window.location.reload();
+    const url = new URL(window.location.href);
+    url.searchParams.set("_rs", String(Date.now()));
+    window.location.replace(url.toString());
   } catch {
-    /* extremely defensive — should never throw */
+    try { window.location.reload(); } catch { /* noop */ }
   }
+}
+
+async function clearAllCachesAndReload() {
+  await hardReload({ purge: true });
 }
 
 export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
@@ -165,7 +177,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={forceCsrAndReload}
+            onClick={this.handleClearCache}
             className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/30 hover:opacity-90 transition-opacity"
           >
             Reload
