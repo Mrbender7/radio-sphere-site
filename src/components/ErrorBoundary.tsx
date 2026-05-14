@@ -85,14 +85,19 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
       });
     } catch { /* noop */ }
 
-    // Auto-recovery is RESERVED for in-app WebViews where hydration genuinely
-    // never recovers. On regular browsers (desktop, mobile Chrome/Safari/Edge,
-    // installed PWA…) we used to nuke caches + force-CSR + reload on every
-    // first crash — which turned a single benign component error into a full
-    // session reset, and produced cascades of error-boundary events on Umami.
-    // Now we just show the manual "Reload" UI and let the user decide.
-    if (!inApp) {
-      console.warn("[RadioSphere] Crash on regular browser — showing manual UI (no auto-purge)");
+    // Detect React hydration errors (#418/#423/#425…) — these are the ones
+    // we know we can recover from by remounting with createRoot (no hydration).
+    const msg = String(error?.message || "");
+    const hydrationCodeMatch = /Minified React error #(\d+)/.exec(msg);
+    const code = hydrationCodeMatch ? hydrationCodeMatch[1] : null;
+    const isHydrationCrash = !!code && new Set(["418", "421", "422", "423", "425", "426", "428"]).has(code);
+
+    // Auto-recovery applies to:
+    //   - in-app WebViews where hydration genuinely never recovers, OR
+    //   - any browser when the error IS a React hydration error.
+    // For unrelated component crashes on a normal browser, keep the manual UI.
+    if (!inApp && !isHydrationCrash) {
+      console.warn("[RadioSphere] Non-hydration crash on regular browser — manual UI");
       return;
     }
 
