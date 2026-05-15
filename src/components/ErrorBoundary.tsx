@@ -7,6 +7,7 @@ import {
 } from "@/utils/inAppBrowser";
 import { safeSessionGet, safeSessionRemove, safeSessionSet } from "@/utils/safeStorage";
 import { forceCsrAndReload, setForceCsr } from "@/utils/forceCsr";
+import { trackHydrationMismatch } from "@/lib/analytics-events";
 
 interface State {
   hasError: boolean;
@@ -91,6 +92,17 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     const hydrationCodeMatch = /Minified React error #(\d+)/.exec(msg);
     const code = hydrationCodeMatch ? hydrationCodeMatch[1] : null;
     const isHydrationCrash = !!code && new Set(["418", "421", "422", "423", "425", "426", "428"]).has(code);
+
+    // Hydration-specific telemetry — captures the offending component stack.
+    if (isHydrationCrash) {
+      try {
+        trackHydrationMismatch({
+          digest: (error as Error & { digest?: string })?.digest,
+          componentStack: info?.componentStack ?? "",
+          message: msg,
+        });
+      } catch { /* noop */ }
+    }
 
     // Auto-recovery applies to:
     //   - in-app WebViews where hydration genuinely never recovers, OR

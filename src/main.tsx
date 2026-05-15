@@ -11,7 +11,25 @@ import { createRoot as reactDomCreateRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { setForceCsr, shouldForceCsr, FORCE_CSR_KEY } from "./utils/forceCsr";
+import {
+  trackHydrationMismatch,
+  trackCsrFallbackDuration,
+  trackWebViewDetected,
+  cleanUrlPollutingParams,
+  trackUrlCleaned,
+  setupPageviewPerf,
+} from "./lib/analytics-events";
 import "./index.css";
+
+// ─── Boot-time diagnostics (safe no-ops in SSR) ──────────────────────────────
+if (typeof window !== "undefined") {
+  try { trackWebViewDetected(); } catch { /* noop */ }
+  try {
+    const removed = cleanUrlPollutingParams();
+    if (removed.length > 0) trackUrlCleaned(removed);
+  } catch { /* noop */ }
+  try { setupPageviewPerf(); } catch { /* noop */ }
+}
 
 // ─── CSR fallback (universal) ────────────────────────────────────────────────
 // When a previous mount triggered a hydration mismatch (#418/#421/#423/#425)
@@ -38,6 +56,7 @@ export const createRoot = ViteReactSSG(
 
 if (isClientEnv && shouldForceCSR) {
   void (async () => {
+    const csrStart = performance.now();
     try {
       const ctx = await createRoot(true);
       const container = document.getElementById("root");
@@ -45,13 +64,30 @@ if (isClientEnv && shouldForceCSR) {
       // Defensive: ensure no stale SSG markup remains.
       container.innerHTML = "";
       container.removeAttribute("data-server-rendered");
-      const root = reactDomCreateRoot(container);
+      const root = reactDomCreateRoot(container, {
+        onRecoverableError: (error, errorInfo) => {
+          try {
+            const err = error as Error & { digest?: string };
+            trackHydrationMismatch({
+              digest: err?.digest,
+              componentStack: errorInfo?.componentStack ?? "",
+              message: err?.message ?? String(error),
+            });
+          } catch { /* noop */ }
+        },
+      });
       root.render(
         <HelmetProvider>
           <RouterProvider router={ctx.router} />
         </HelmetProvider>,
       );
       try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
+      // Measure first paint AFTER the CSR remount.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+        });
+      });
       console.log("[RadioSphere] CSR fallback active — hydration bypassed");
     } catch (e) {
       console.error("[RadioSphere] CSR fallback mount failed:", e);
