@@ -11,7 +11,25 @@ import { createRoot as reactDomCreateRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { setForceCsr, shouldForceCsr, FORCE_CSR_KEY } from "./utils/forceCsr";
+import {
+  trackHydrationMismatch,
+  trackCsrFallbackDuration,
+  trackWebViewDetected,
+  cleanUrlPollutingParams,
+  trackUrlCleaned,
+  setupPageviewPerf,
+} from "./lib/analytics-events";
 import "./index.css";
+
+// ─── Boot-time diagnostics (safe no-ops in SSR) ──────────────────────────────
+if (typeof window !== "undefined") {
+  try { trackWebViewDetected(); } catch { /* noop */ }
+  try {
+    const removed = cleanUrlPollutingParams();
+    if (removed.length > 0) trackUrlCleaned(removed);
+  } catch { /* noop */ }
+  try { setupPageviewPerf(); } catch { /* noop */ }
+}
 
 // ─── CSR fallback (universal) ────────────────────────────────────────────────
 // When a previous mount triggered a hydration mismatch (#418/#421/#423/#425)
