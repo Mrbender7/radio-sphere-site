@@ -10,6 +10,10 @@
   <meta name="description" content="RadioSphere.be Lite — listen to free radio stations from anywhere, even inside in-app browsers. No ads, no tracking, no signup." />
   <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <!-- Umami analytics: same site-id as the full app, so lite pageviews
+       and CTA clicks land in the same dashboard. Loaded async, never
+       blocks render even on slow WebView networks. -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="73a30cfd-4d45-43c2-b296-c4d3a39cd898"></script>
   <!-- If lite.html is opened in a REAL browser (not an in-app WebView),
        redirect to the full app immediately so users don't have to click twice.
        ?keeplite=1 lets power-users force the lite version on purpose. -->
