@@ -7,6 +7,7 @@ import {
 } from "@/utils/inAppBrowser";
 import { safeSessionGet, safeSessionRemove, safeSessionSet } from "@/utils/safeStorage";
 import { forceCsrAndReload, setForceCsr } from "@/utils/forceCsr";
+import { trackHydrationMismatch } from "@/lib/analytics-events";
 
 interface State {
   hasError: boolean;
