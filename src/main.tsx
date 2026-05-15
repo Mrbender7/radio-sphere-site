@@ -56,6 +56,7 @@ export const createRoot = ViteReactSSG(
 
 if (isClientEnv && shouldForceCSR) {
   void (async () => {
+    const csrStart = performance.now();
     try {
       const ctx = await createRoot(true);
       const container = document.getElementById("root");
@@ -63,13 +64,30 @@ if (isClientEnv && shouldForceCSR) {
       // Defensive: ensure no stale SSG markup remains.
       container.innerHTML = "";
       container.removeAttribute("data-server-rendered");
-      const root = reactDomCreateRoot(container);
+      const root = reactDomCreateRoot(container, {
+        onRecoverableError: (error, errorInfo) => {
+          try {
+            const err = error as Error & { digest?: string };
+            trackHydrationMismatch({
+              digest: err?.digest,
+              componentStack: errorInfo?.componentStack ?? "",
+              message: err?.message ?? String(error),
+            });
+          } catch { /* noop */ }
+        },
+      });
       root.render(
         <HelmetProvider>
           <RouterProvider router={ctx.router} />
         </HelmetProvider>,
       );
       try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
+      // Measure first paint AFTER the CSR remount.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+        });
+      });
       console.log("[RadioSphere] CSR fallback active — hydration bypassed");
     } catch (e) {
       console.error("[RadioSphere] CSR fallback mount failed:", e);
