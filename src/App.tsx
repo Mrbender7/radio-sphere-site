@@ -28,20 +28,22 @@ function CoreProviders({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <LanguageProvider>
-          <FavoritesProvider>
-            <CoreProviders>
-              <Toaster />
-              <Sonner />
-              <Index />
-              <Outlet />
-            </CoreProviders>
-          </FavoritesProvider>
-        </LanguageProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <LanguageProvider>
+            <FavoritesProvider>
+              <CoreProviders>
+                <Toaster />
+                <Sonner />
+                <Index />
+                <Outlet />
+              </CoreProviders>
+            </FavoritesProvider>
+          </LanguageProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   </ErrorBoundary>
 );
 
