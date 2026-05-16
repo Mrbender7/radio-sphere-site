@@ -31,13 +31,15 @@ if (typeof window !== "undefined") {
   try { setupPageviewPerf(); } catch { /* noop */ }
 }
 
-// ─── CSR fallback (universal) ────────────────────────────────────────────────
-// When a previous mount triggered a hydration mismatch (#418/#421/#423/#425)
-// — Edge InPrivate, Facebook/Instagram/TikTok WebViews, browser extensions,
-// auto-translation, etc. — we set the force-CSR flag and reload. On the next
-// boot we ask vite-react-ssg to look for a non-existent container so its
-// internal IIFE bails out, then we mount manually with `createRoot()` on a
-// wiped #root. That bypasses every hydration quirk for the whole session.
+// ─── Manual mount (always) ───────────────────────────────────────────────────
+// We ALWAYS bypass vite-react-ssg's auto-mount IIFE by pointing it to a
+// non-existent container. Then we mount the app ourselves so we can wire
+// React's `onRecoverableError` on BOTH paths:
+//   - normal hydration → `hydrateRoot(container, app, { onRecoverableError })`
+//   - CSR fallback     → `createRoot(container, { onRecoverableError })`
+// This is the only way to get the real `componentStack` of hydration
+// mismatches (#418/#421/#423/#425) in production — vite-react-ssg's
+// public API doesn't expose hydration options.
 const isClientEnv = typeof window !== "undefined";
 const shouldForceCSR = isClientEnv && shouldForceCsr();
 if (isClientEnv && shouldForceCSR) {
@@ -51,49 +53,58 @@ if (isClientEnv && shouldForceCSR) {
 export const createRoot = ViteReactSSG(
   { routes },
   undefined,
-  shouldForceCSR ? { rootContainer: "#__rs_csr_noop__" } : undefined,
+  { rootContainer: "#__rs_ssg_noop__" },
 );
 
-if (isClientEnv && shouldForceCSR) {
+function onRecoverableError(error: unknown, errorInfo: { componentStack?: string } | undefined) {
+  try {
+    const err = error as Error & { digest?: string };
+    trackHydrationMismatch({
+      digest: err?.digest,
+      componentStack: errorInfo?.componentStack ?? "",
+      message: err?.message ?? String(error),
+    });
+  } catch { /* noop */ }
+}
+
+if (isClientEnv) {
   void (async () => {
     const csrStart = performance.now();
     try {
       const ctx = await createRoot(true);
       const container = document.getElementById("root");
       if (!container || !ctx.router) return;
-      // Defensive: ensure no stale SSG markup remains.
-      container.innerHTML = "";
-      container.removeAttribute("data-server-rendered");
-      const root = reactDomCreateRoot(container, {
-        onRecoverableError: (error, errorInfo) => {
-          try {
-            const err = error as Error & { digest?: string };
-            trackHydrationMismatch({
-              digest: err?.digest,
-              componentStack: errorInfo?.componentStack ?? "",
-              message: err?.message ?? String(error),
-            });
-          } catch { /* noop */ }
-        },
-      });
-      root.render(
+
+      const app = (
         <HelmetProvider>
           <RouterProvider router={ctx.router} />
-        </HelmetProvider>,
+        </HelmetProvider>
       );
-      try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
-      // Measure first paint AFTER the CSR remount.
-      requestAnimationFrame(() => {
+
+      if (shouldForceCSR) {
+        // Defensive: ensure no stale SSG markup remains.
+        container.innerHTML = "";
+        container.removeAttribute("data-server-rendered");
+        const root = reactDomCreateRoot(container, { onRecoverableError });
+        root.render(app);
+        // Measure first paint AFTER the CSR remount.
         requestAnimationFrame(() => {
-          try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+          requestAnimationFrame(() => {
+            try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+          });
         });
-      });
-      console.log("[RadioSphere] CSR fallback active — hydration bypassed");
+        console.log("[RadioSphere] CSR fallback active — hydration bypassed");
+      } else {
+        // Normal hydration path with onRecoverableError wired in.
+        reactDomHydrateRoot(container, app, { onRecoverableError });
+      }
+      try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
     } catch (e) {
-      console.error("[RadioSphere] CSR fallback mount failed:", e);
-      // Don't loop forever if CSR mount itself fails
-      try { sessionStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
-      try { localStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
+      console.error("[RadioSphere] Manual mount failed:", e);
+      if (shouldForceCSR) {
+        try { sessionStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
+        try { localStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
+      }
     }
   })();
 }
