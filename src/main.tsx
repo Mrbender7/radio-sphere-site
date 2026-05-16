@@ -72,6 +72,7 @@ if (isClientEnv) {
     const csrStart = performance.now();
     try {
       const ctx = await createRoot(true);
+      try { (window as unknown as { __VITE_REACT_SSG_CONTEXT__?: unknown }).__VITE_REACT_SSG_CONTEXT__ = ctx; } catch { /* noop */ }
       const container = document.getElementById("root");
       if (!container || !ctx.router) return;
 
