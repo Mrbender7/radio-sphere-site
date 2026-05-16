@@ -117,6 +117,13 @@ const POLLUTING_PARAMS = [
   "igshid",
   "ttclid",
   "_openstat",
+  // Lovable preview chrome params — leak into prod URLs via in-app browsers
+  // sharing the staging link. Inert for our code but pollute Umami stats.
+  "__lovable_sha",
+  "forceHideBadge",
+  // Branch.io deep-linking artifacts
+  "_branch_match_id",
+  "_branch_referrer",
 ];
 const UTM_PREFIX = /^utm_/i;
 
