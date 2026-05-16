@@ -66,6 +66,10 @@ export function trackAdLandingOnce(): void {
         "utm_source", "utm_medium", "utm_campaign", "utm_term",
         "utm_content", "utm_id", "utm_name", "utm_brand",
         "mc_cid", "mc_eid", "_ga", "ref", "ref_src",
+        // Lovable preview chrome (should never appear in prod but does via shared links)
+        "__lovable_sha", "forceHideBadge",
+        // Branch.io
+        "_branch_match_id", "_branch_referrer",
       ];
       const url = new URL(window.location.href);
       let mutated = false;
