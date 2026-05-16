@@ -9,7 +9,7 @@ import { routes } from "./routes";
 import { isInAppBrowser } from "./utils/inAppBrowser";
 import { createRoot as reactDomCreateRoot, hydrateRoot as reactDomHydrateRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
+
 import { setForceCsr, shouldForceCsr, FORCE_CSR_KEY } from "./utils/forceCsr";
 import {
   trackHydrationMismatch,
