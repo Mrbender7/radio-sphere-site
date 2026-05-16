@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { FavoritesProvider, useFavoritesContext } from "@/contexts/FavoritesContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
@@ -28,22 +27,20 @@ function CoreProviders({ children }: { children: React.ReactNode }) {
 
 const App = () => (
   <ErrorBoundary>
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <LanguageProvider>
-            <FavoritesProvider>
-              <CoreProviders>
-                <Toaster />
-                <Sonner />
-                <Index />
-                <Outlet />
-              </CoreProviders>
-            </FavoritesProvider>
-          </LanguageProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <LanguageProvider>
+          <FavoritesProvider>
+            <CoreProviders>
+              <Toaster />
+              <Sonner />
+              <Index />
+              <Outlet />
+            </CoreProviders>
+          </FavoritesProvider>
+        </LanguageProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
   </ErrorBoundary>
 );
 
