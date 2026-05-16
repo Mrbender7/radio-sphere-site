@@ -82,19 +82,28 @@ if (isClientEnv) {
         </HelmetProvider>
       );
 
-      if (shouldForceCSR) {
-        // Defensive: ensure no stale SSG markup remains.
-        container.innerHTML = "";
-        container.removeAttribute("data-server-rendered");
+      // In dev / preview there is NO SSG markup — the container is empty and
+      // hydrateRoot would throw a hydration mismatch immediately. Mirror what
+      // vite-react-ssg does internally: only hydrate when the SSG sentinel
+      // attribute is present.
+      const isSSR = document.querySelector("[data-server-rendered=true]") !== null;
+      if (shouldForceCSR || !isSSR) {
+        // Defensive: ensure no stale SSG markup remains (CSR-fallback only).
+        if (shouldForceCSR) {
+          container.innerHTML = "";
+          container.removeAttribute("data-server-rendered");
+        }
         const root = reactDomCreateRoot(container, { onRecoverableError });
         root.render(app);
-        // Measure first paint AFTER the CSR remount.
-        requestAnimationFrame(() => {
+        if (shouldForceCSR) {
+          // Measure first paint AFTER the CSR remount.
           requestAnimationFrame(() => {
-            try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+            requestAnimationFrame(() => {
+              try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+            });
           });
-        });
-        console.log("[RadioSphere] CSR fallback active — hydration bypassed");
+          console.log("[RadioSphere] CSR fallback active — hydration bypassed");
+        }
       } else {
         // Normal hydration path with onRecoverableError wired in.
         reactDomHydrateRoot(container, app, { onRecoverableError });
