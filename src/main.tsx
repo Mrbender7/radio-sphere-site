@@ -77,9 +77,7 @@ if (isClientEnv) {
       if (!container || !ctx.router) return;
 
       const app = (
-        <HelmetProvider>
-          <RouterProvider router={ctx.router} />
-        </HelmetProvider>
+        <RouterProvider router={ctx.router} />
       );
 
       // In dev / preview there is NO SSG markup — the container is empty and
