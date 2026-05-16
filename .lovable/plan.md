@@ -1,66 +1,94 @@
-## Lecture du rapport + avis Gemini/Claude
+# Remise en état RadioSphere.be post-WebView
 
-J'ai croisé le rapport, Gemini et Claude avec l'état actuel du code. Voici ce qui tient et ce qui ne tient pas, avant tout fix.
+## Diagnostic — pourquoi autant de `error-boundary` sur Umami
 
-### Ce que les 3 sources disent et qui est vrai
-- 100% des erreurs sur `/`, en cascade #418 → #423 → CSR fallback.
-- Médiane CSR fallback à **1816 ms** = flash blanc perçu comme un crash.
-- 94 % du trafic en erreur vient du **WebView Facebook** (campagne `120243382723630172`).
-- Page Lite : **46 vues, 0 CTA cliqué** — problème UX séparé.
+Tu ne te trompes pas : les couches anti-WebView empilées ces dernières semaines se déclenchent **aussi sur les navigateurs sains**, et chacune produit un événement `error-boundary` (parfois suivi d'un reload qui en re-déclenche un). Trois coupables principaux :
 
-### Ce que Gemini affirme mais qui est déjà fait dans le code
-Gemini propose de déplacer la lecture des query params dans un `useEffect`. C'est **déjà le cas** :
-- `cleanUrlPollutingParams()` s'exécute en haut de `main.tsx` **avant React** et strippe fbclid/utm_* via `history.replaceState`.
-- `trackAdLandingOnce()` est dans un `useEffect([])` dans `Index.tsx`.
-- `Index.tsx` initialise `activeTab="home"` / `showPrivacy=false` / `showWelcome=false` à des valeurs stables et synchronise dans un `useEffect`.
-- Tout le chrome dynamique (Sidebar, MiniPlayer, WelcomeModal, etc.) est déjà sous `<ClientOnly>`.
+### 1. L'auto-recovery de l'ErrorBoundary (le plus violent)
+Dans `src/components/ErrorBoundary.tsx`, **toute** première erreur dans **n'importe quel** composant React déclenche :
+- envoi `error-boundary` à Umami
+- purge des Service Workers + Cache Storage
+- `setForceCsr()` (désactive l'hydratation)
+- reload avec query `?_rs=timestamp`
 
-Donc le diagnostic "URL lue au render initial" est **probablement faux** ici. Reproduire le bug avec `?fbclid=test` en local ne va sans doute rien donner — c'est ce qu'on a déjà fait.
+Conséquences : une erreur bénigne dans un sous-composant (genre une promesse Cast qui rate, un fetch radio-browser qui timeout pendant le render, etc.) **nuke tout le cache de l'utilisateur** et désactive l'hydratation pour 5 min. Sur desktop avec PWA installée, c'est une cause directe du « peu importe ce que je fais, ça ne marche plus ».
 
-### Ce que Claude voit juste et que Gemini rate
-1. **`__lovable_sha` (35 %) et `forceHideBadge` (29 %) sont au-dessus de `fbclid` (23 %)**. Ces params ne sont **pas** dans notre liste `POLLUTING_PARAMS` (`src/lib/analytics-events.ts`) ni dans `TRACKING_PARAMS` (`src/utils/adLandingTracking.ts`). Ils restent dans l'URL et peuvent biaiser les stats — mais pas casser l'hydratation : aucun composant ne les lit (vérifié par `rg`).
-2. **L'erreur `Cannot read properties of undefined (reading 'add')` (8 occurrences) est ignorée par Gemini.** C'est **la vraie cause racine probable** : une exception JS pendant le render initial → React jette le tree → cascade #418/#423 → CSR fallback. Le grep dans `src/` ne montre aucun `.classList.add` direct, donc c'est soit un appel `Set.add` / `Map.set` sur un objet undefined, soit un appel via lib tierce (Cast SDK, react-helmet, vite-react-ssg, Umami pixel, Workbox).
-3. **0 % de conversion sur `/lite.html`** = chantier UX séparé à ne pas mélanger.
+### 2. Le « Universal CSR rescue » dans `main.tsx`
+Lignes 272-289 : à la première erreur reconnue comme hydratation (#418/#421/#423/#425), force CSR + reload — **sans distinguer WebView vs Edge desktop normal**. Or des extensions, l'auto-translate Chrome, ou même un repaint mal timé suffisent à déclencher un #418 transitoire que la page survivrait normalement.
 
-### Le vrai problème de visibilité
-`src/utils/patchHydrateRoot.ts` est un **no-op** depuis une régression SSG ("Cannot assign to read only property 'hydrateRoot'"). Donc `onRecoverableError` n'est branché **que** dans le mount CSR-fallback, pas pendant l'hydratation initiale. Résultat : `hydration-mismatch-detail` arrive vide de `componentStack` et on a juste le message minifié. On vole à l'aveugle.
+### 3. console.error patché globalement
+Le wrap de `console.error` (ligne 358) requalifie en hydratation des `console.error` qui contiennent juste « did not match » dans un message tiers (Cast SDK, Umami, etc.) → faux positifs qui retombent dans le rescue universel.
+
+### Effet boule de neige
+Auto-recovery → reload → nouveau boot avec force-CSR → si le moindre warning React arrive pendant ce boot, re-error-boundary → nouveau reload. D'où le chiffre « affolant » dans Umami : un seul utilisateur peut générer 10-20 events en quelques secondes.
 
 ---
 
-## Plan d'action (3 étapes, indépendantes)
+## Plan de remise en état
 
-### Étape 1 — Récupérer le `componentStack` pour identifier le composant fautif
-Re-brancher `onRecoverableError` sur l'**hydratation initiale** sans casser le build SSG :
-- Au lieu de monkey-patcher `ReactDOM.hydrateRoot` (interdit en ESM), passer par la **3ᵉ option de `ViteReactSSG()`** : `hydrationOptions: { onRecoverableError }`. C'est l'API officielle de vite-react-ssg et elle ne touche pas au namespace en lecture seule.
-- Le callback appellera `trackHydrationMismatch({ digest, componentStack, message, url })` exactement comme dans le path CSR.
+### Étape 1 — Inventaire des modifs WebView (15 min, lecture seule)
+Lister tout ce qui a été ajouté pour les WebViews et classer en 3 catégories :
+- **Garder tel quel** : redirection `index.html` → `/lite.html`, CSP, `safeStorage` defensive
+- **Restreindre aux WebViews uniquement** : force-CSR, auto-recovery cache purge, `ClientOnly` wrappers
+- **Supprimer ou désarmer** : patch console.error global, double try-each-error layer
 
-**Résultat attendu** : sous 24 h, l'event `hydration-mismatch-detail` aura un vrai `componentStack` (~500 chars) → on saura quel composant React déclenche la cascade. C'est le pré-requis pour fixer la cause racine sans tâtonner.
+Fichiers concernés à relire :
+`src/main.tsx`, `src/components/ErrorBoundary.tsx`, `src/utils/forceCsr.ts`, `src/utils/inAppBrowser.ts`, `src/utils/patchHydrateRoot.ts`, `src/pages/Index.tsx`, `index.html`, `public/lite.html`, `src/components/ClientOnly.tsx`, `src/components/InAppBrowserBanner.tsx`.
 
-### Étape 2 — Compléter la liste des params strippés
-Dans `src/lib/analytics-events.ts` (`POLLUTING_PARAMS`) **et** `src/utils/adLandingTracking.ts` (`TRACKING_PARAMS`), ajouter :
-- `__lovable_sha`, `forceHideBadge` (params Lovable preview qui ne devraient jamais apparaître en prod mais polluent les stats)
-- `_branch_match_id`, `_branch_referrer` (Branch.io / deeplinks)
+### Étape 2 — Borner l'ErrorBoundary
+Dans `ErrorBoundary.tsx` :
+- **Ne plus déclencher d'auto-recovery sur desktop** : ne purger les caches + force-CSR **que** si `isInAppBrowser()` est vrai.
+- Sur navigateurs normaux : juste afficher l'UI « Reload » et envoyer **un seul** event Umami avec `recovery=manual`.
+- Garder la limite « une seule recovery par session » pour les WebViews.
 
-Effet : URLs canoniques propres, moins de bruit dans Umami sur les params corrélés aux erreurs. Aucun impact fonctionnel (aucun composant ne les lit).
+### Étape 3 — Restreindre le rescue CSR universel
+Dans `main.tsx` `reportHydrationError()` :
+- Ne déclencher `setForceCsr() + reload` **que** si `isInAppBrowser()` OU si le code d'erreur fait partie d'un set strict (#418/#423 confirmés bloquants), pas #421/#425 qui sont souvent transitoires et auto-récupérés par React.
+- Ajouter un **plafond global** : max 1 force-CSR par session, **et** par origin (cross-tab via localStorage timestamp), pour casser tout risque de boucle.
 
-### Étape 3 — Traquer le `Cannot read properties of undefined (reading 'add')`
-Enrichir le handler `window.addEventListener('error')` dans `main.tsx` pour qu'**en plus** du `message`/`stack` actuels, on capture pour cette classe d'erreur :
-- la **première frame applicative** du stack (pattern `/assets/index-*.js:L:C`),
-- le **fichier source** mappé si un sourcemap inline est disponible (sinon juste le chunk hash),
-- un flag `tracked_via=app-error` pour le différencier des hydration mismatches.
+### Étape 4 — Désarmer le patch console.error
+Soit le supprimer entièrement (les `window.error` + `unhandledrejection` listeners suffisent en pratique), soit le restreindre à des messages contenant **explicitement** `Minified React error #` (et pas juste « did not match »).
 
-On l'envoie via un nouvel event Umami **`app-runtime-error`** (payload < 1 KB) avec `{ name, message, frame, route, webview, ua_short }`. Une fois remonté dans le dashboard, on saura sur quelle lib/composant pointer.
+### Étape 5 — Vérifier la bascule WebView → /lite.html
+Le redirect existe déjà dans `index.html` (lignes 88-100) côté client. Vérifier :
+- qu'il s'exécute **avant** tout autre script (déjà OK, premier `<script>` du `<head>`)
+- que la regex UA couvre bien tous les cas (Reddit, LinkedIn, Snapchat, etc. — déjà OK)
+- que `lite.html` ne contient **aucun** import du bundle React (vérification visuelle rapide)
+- ajouter un test manuel : forcer un UA Facebook via DevTools sur preview et confirmer la redirection
+
+### Étape 6 — QA navigateurs cibles
+Une fois les étapes 2-4 mergées, valider sur :
+- **Desktop Chrome / Edge / Firefox** : `radiosphere.be` doit charger sans force-CSR, sans event `error-boundary`, sans reload spontané
+- **Edge PWA installée** : recharger plusieurs fois, vérifier qu'aucune purge cache n'est déclenchée
+- **Mobile Chrome / Safari** : navigation normale, pas de bascule lite
+- **Facebook in-app (UA spoofé)** : doit basculer immédiatement sur `/lite.html`
+- **Edge InPrivate** : doit charger normalement (on s'attend à ce que CSR fallback puisse se déclencher 1× max si vraiment besoin)
+
+### Étape 7 — Surveiller Umami 24-48 h
+Après déploiement, observer la chute des events `error-boundary`, `csr-fallback-triggered`, `hydration-error-*`. Cible : division par 10 minimum.
 
 ---
 
-## Ce que je ne propose **pas** de faire maintenant
-- **Pas** de `useEffect` saupoudré à l'aveugle : le code respecte déjà le contrat SSG.
-- **Pas** de `suppressHydrationWarning` : ça masque le symptôme sans fixer le bug `.add()`.
-- **Pas** de touche à la page Lite : c'est un chantier UX (CTA, copywriting) à traiter à part.
-- **Pas** de retry automatique côté `ErrorBoundary` : il existe déjà (`forceCsrAndReload`) avec cap 24h ; le vrai gain est d'éliminer la cause, pas d'augmenter les rescues.
+## Détails techniques
 
-## Reproduction
-- En local : `bun run build && bun run preview` puis `/?fbclid=test&__lovable_sha=abc&forceHideBadge=true` — utile mais **insuffisant** (on n'est pas dans le WebView Facebook).
-- En vrai : déployer l'étape 1, attendre 6–12 h de campagne, relire le dashboard Umami pour récupérer les `componentStack` réels.
+### Critère « WebView » à utiliser partout
+`isInAppBrowser()` existe déjà dans `src/utils/inAppBrowser.ts` — l'importer dans `ErrorBoundary.tsx` (déjà fait) et `main.tsx` (déjà importé), et l'utiliser comme garde **avant** toute action destructive (purge SW, force CSR).
 
-Une fois les composantStack remontés (étape 1), on saura si c'est `helmet-async`, le router, un de nos contextes (PlayerContext, StreamBufferContext) ou un appel Cast SDK, et on fera un correctif chirurgical en suivant.
+### Plafond global force-CSR
+```ts
+const FORCE_CSR_COUNT_KEY = "__rsForceCsrCount24h";
+// Si > 2 force-CSR en 24h depuis ce navigateur → ne plus jamais le déclencher
+// automatiquement, juste afficher l'UI manuelle.
+```
+
+### Choses à NE PAS toucher
+- `index.html` redirect WebView (fonctionne)
+- `public/lite.html` (page autonome)
+- `safeStorage.ts` (defensive, ne nuit jamais)
+- `ClientOnly` wrappers dans `Index.tsx` (corrects, évitent les vrais mismatches SSG)
+- Service Worker registration guard `isPreviewHost()` (correct)
+
+---
+
+## Livrable
+3 fichiers édités (`ErrorBoundary.tsx`, `main.tsx`, optionnellement `forceCsr.ts` pour le compteur 24h), zéro régression WebView, et un site qui ne se sabote plus tout seul sur les navigateurs normaux.

@@ -7,9 +7,9 @@ import "./utils/patchHydrateRoot";
 import { ViteReactSSG } from "vite-react-ssg";
 import { routes } from "./routes";
 import { isInAppBrowser } from "./utils/inAppBrowser";
-import { createRoot as reactDomCreateRoot, hydrateRoot as reactDomHydrateRoot } from "react-dom/client";
+import { createRoot as reactDomCreateRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
-
+import { HelmetProvider } from "react-helmet-async";
 import { setForceCsr, shouldForceCsr, FORCE_CSR_KEY } from "./utils/forceCsr";
 import {
   trackHydrationMismatch,
@@ -31,15 +31,13 @@ if (typeof window !== "undefined") {
   try { setupPageviewPerf(); } catch { /* noop */ }
 }
 
-// ─── Manual mount (always) ───────────────────────────────────────────────────
-// We ALWAYS bypass vite-react-ssg's auto-mount IIFE by pointing it to a
-// non-existent container. Then we mount the app ourselves so we can wire
-// React's `onRecoverableError` on BOTH paths:
-//   - normal hydration → `hydrateRoot(container, app, { onRecoverableError })`
-//   - CSR fallback     → `createRoot(container, { onRecoverableError })`
-// This is the only way to get the real `componentStack` of hydration
-// mismatches (#418/#421/#423/#425) in production — vite-react-ssg's
-// public API doesn't expose hydration options.
+// ─── CSR fallback (universal) ────────────────────────────────────────────────
+// When a previous mount triggered a hydration mismatch (#418/#421/#423/#425)
+// — Edge InPrivate, Facebook/Instagram/TikTok WebViews, browser extensions,
+// auto-translation, etc. — we set the force-CSR flag and reload. On the next
+// boot we ask vite-react-ssg to look for a non-existent container so its
+// internal IIFE bails out, then we mount manually with `createRoot()` on a
+// wiped #root. That bypasses every hydration quirk for the whole session.
 const isClientEnv = typeof window !== "undefined";
 const shouldForceCSR = isClientEnv && shouldForceCsr();
 if (isClientEnv && shouldForceCSR) {
@@ -53,66 +51,49 @@ if (isClientEnv && shouldForceCSR) {
 export const createRoot = ViteReactSSG(
   { routes },
   undefined,
-  { rootContainer: "#__rs_ssg_noop__" },
+  shouldForceCSR ? { rootContainer: "#__rs_csr_noop__" } : undefined,
 );
 
-function onRecoverableError(error: unknown, errorInfo: { componentStack?: string } | undefined) {
-  try {
-    const err = error as Error & { digest?: string };
-    trackHydrationMismatch({
-      digest: err?.digest,
-      componentStack: errorInfo?.componentStack ?? "",
-      message: err?.message ?? String(error),
-    });
-  } catch { /* noop */ }
-}
-
-if (isClientEnv) {
+if (isClientEnv && shouldForceCSR) {
   void (async () => {
     const csrStart = performance.now();
     try {
       const ctx = await createRoot(true);
-      try { (window as unknown as { __VITE_REACT_SSG_CONTEXT__?: unknown }).__VITE_REACT_SSG_CONTEXT__ = ctx; } catch { /* noop */ }
       const container = document.getElementById("root");
       if (!container || !ctx.router) return;
-
-      const app = (
-        <RouterProvider router={ctx.router} />
-      );
-
-      // In dev / preview there is NO SSG markup — the container is empty and
-      // hydrateRoot would throw a hydration mismatch immediately. Mirror what
-      // vite-react-ssg does internally: only hydrate when the SSG sentinel
-      // attribute is present.
-      const isSSR = document.querySelector("[data-server-rendered=true]") !== null;
-      if (shouldForceCSR || !isSSR) {
-        // Defensive: ensure no stale SSG markup remains (CSR-fallback only).
-        if (shouldForceCSR) {
-          container.innerHTML = "";
-          container.removeAttribute("data-server-rendered");
-        }
-        const root = reactDomCreateRoot(container, { onRecoverableError });
-        root.render(app);
-        if (shouldForceCSR) {
-          // Measure first paint AFTER the CSR remount.
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+      // Defensive: ensure no stale SSG markup remains.
+      container.innerHTML = "";
+      container.removeAttribute("data-server-rendered");
+      const root = reactDomCreateRoot(container, {
+        onRecoverableError: (error, errorInfo) => {
+          try {
+            const err = error as Error & { digest?: string };
+            trackHydrationMismatch({
+              digest: err?.digest,
+              componentStack: errorInfo?.componentStack ?? "",
+              message: err?.message ?? String(error),
             });
-          });
-          console.log("[RadioSphere] CSR fallback active — hydration bypassed");
-        }
-      } else {
-        // Normal hydration path with onRecoverableError wired in.
-        reactDomHydrateRoot(container, app, { onRecoverableError });
-      }
+          } catch { /* noop */ }
+        },
+      });
+      root.render(
+        <HelmetProvider>
+          <RouterProvider router={ctx.router} />
+        </HelmetProvider>,
+      );
       try { (window as unknown as { __rsAppMounted?: boolean }).__rsAppMounted = true; } catch { /* noop */ }
+      // Measure first paint AFTER the CSR remount.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try { trackCsrFallbackDuration(performance.now() - csrStart); } catch { /* noop */ }
+        });
+      });
+      console.log("[RadioSphere] CSR fallback active — hydration bypassed");
     } catch (e) {
-      console.error("[RadioSphere] Manual mount failed:", e);
-      if (shouldForceCSR) {
-        try { sessionStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
-        try { localStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
-      }
+      console.error("[RadioSphere] CSR fallback mount failed:", e);
+      // Don't loop forever if CSR mount itself fails
+      try { sessionStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
+      try { localStorage.removeItem(FORCE_CSR_KEY); } catch { /* noop */ }
     }
   })();
 }
@@ -415,18 +396,6 @@ if (typeof window !== "undefined") {
       return;
     }
     if (message) {
-      // Extract the first applicative frame (chunk + line:col) so the dashboard
-      // can group runtime errors by code location even with minified bundles.
-      // Skips browser-extension / node_modules / chrome-extension frames.
-      const frame = (() => {
-        if (!stack) return "";
-        const lines = stack.split("\n");
-        for (const ln of lines) {
-          const m = /(\/(?:assets|src)\/[A-Za-z0-9_\-./]+\.[mc]?[jt]sx?)(?::(\d+):(\d+))?/.exec(ln);
-          if (m) return trunc(m[0], 160);
-        }
-        return "";
-      })();
       umamiTrack("js-error", {
         name: err instanceof Error ? err.name : "Error",
         message: trunc(message, 300),
@@ -435,22 +404,6 @@ if (typeof window !== "undefined") {
         route: window.location.pathname,
         ...envInfo(),
       });
-      // Dedicated, slimmer event for the analytics dashboard — groups by
-      // (name, frame, route) to point to the exact culprit lib/component.
-      // Example target: the recurring "Cannot read properties of undefined
-      // (reading 'add')" reported via hydration-mismatch-detail.
-      reportOnce(
-        "app-runtime-error",
-        `runtime|${err instanceof Error ? err.name : "Error"}|${trunc(message, 80)}|${frame}|${window.location.pathname}`,
-        {
-          name: err instanceof Error ? err.name : "Error",
-          message: trunc(message, 200),
-          frame,
-          route: window.location.pathname,
-          webview: isInAppBrowser(),
-          ua_short: trunc(navigator.userAgent, 120),
-        },
-      );
     }
   });
 
