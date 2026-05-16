@@ -407,6 +407,18 @@ if (typeof window !== "undefined") {
       return;
     }
     if (message) {
+      // Extract the first applicative frame (chunk + line:col) so the dashboard
+      // can group runtime errors by code location even with minified bundles.
+      // Skips browser-extension / node_modules / chrome-extension frames.
+      const frame = (() => {
+        if (!stack) return "";
+        const lines = stack.split("\n");
+        for (const ln of lines) {
+          const m = /(\/(?:assets|src)\/[A-Za-z0-9_\-./]+\.[mc]?[jt]sx?)(?::(\d+):(\d+))?/.exec(ln);
+          if (m) return trunc(m[0], 160);
+        }
+        return "";
+      })();
       umamiTrack("js-error", {
         name: err instanceof Error ? err.name : "Error",
         message: trunc(message, 300),
@@ -415,6 +427,22 @@ if (typeof window !== "undefined") {
         route: window.location.pathname,
         ...envInfo(),
       });
+      // Dedicated, slimmer event for the analytics dashboard — groups by
+      // (name, frame, route) to point to the exact culprit lib/component.
+      // Example target: the recurring "Cannot read properties of undefined
+      // (reading 'add')" reported via hydration-mismatch-detail.
+      reportOnce(
+        "app-runtime-error",
+        `runtime|${err instanceof Error ? err.name : "Error"}|${trunc(message, 80)}|${frame}|${window.location.pathname}`,
+        {
+          name: err instanceof Error ? err.name : "Error",
+          message: trunc(message, 200),
+          frame,
+          route: window.location.pathname,
+          webview: isInAppBrowser(),
+          ua_short: trunc(navigator.userAgent, 120),
+        },
+      );
     }
   });
 
