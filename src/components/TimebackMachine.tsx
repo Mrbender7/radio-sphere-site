@@ -276,7 +276,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
           <div
             ref={timelineRef}
             data-umami-event="tbm-used"
-            className="relative h-4 rounded-full bg-[hsl(0,0%,10%)] border border-[hsl(0,0%,18%)] overflow-hidden cursor-pointer touch-none"
+            className="relative h-4 rounded-full bg-[hsl(0,0%,10%)] border border-[hsl(0,0%,18%)] cursor-pointer touch-none"
             onClick={handleTimelineClick}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
