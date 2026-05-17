@@ -374,7 +374,7 @@
         card.setAttribute("data-category", s.cat);
         card.innerHTML =
           '<div class="card-name">' + escape(s.n) + '</div>' +
-          '<div class="card-meta"><span class="card-genre">' + escape(s.g) + '</span><span>' + escape(s.c) + '</span></div>';
+          '<div class="card-meta"><span class="card-genre">' + escape(s.g) + '</span><span>' + escape(s.cat) + '</span></div>';
         card.addEventListener("click", onPick);
         grid.appendChild(card);
         n++;
