@@ -96,6 +96,13 @@
     @media (max-width:480px){.vol input[type=range]{width:64px}}
     .pulse{animation:pulse 1.4s ease-in-out infinite}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+    /* Pills */
+    .pills-wrap{max-width:880px;margin:10px auto 4px;padding:0 16px;position:relative}
+    .pills{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:4px 0 6px;scroll-behavior:smooth}
+    .pills::-webkit-scrollbar{display:none}
+    .pill{flex:0 0 auto;padding:7px 14px;border-radius:999px;background:#181818;border:1px solid #2a2a2a;color:#cfcfcf;font-size:12.5px;font-weight:600;letter-spacing:.01em;transition:all .15s;white-space:nowrap}
+    .pill:hover{border-color:#3b6cf5;color:#fff}
+    .pill.active{background:linear-gradient(135deg,#3b6cf5,#8b5cf6);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(139,92,246,.35)}
     /* Footer */
     .footer{max-width:880px;margin:28px auto 12px;padding:0 16px;font-size:11px;color:#666;text-align:center;line-height:1.6}
     .footer a{color:#8b5cf6;text-decoration:underline;text-underline-offset:2px}
