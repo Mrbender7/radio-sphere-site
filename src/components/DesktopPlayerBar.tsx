@@ -95,7 +95,7 @@ export function DesktopPlayerBar() {
       </div>
 
       {/* Right: Volume + actions */}
-      <div className="flex items-center gap-3 w-64 flex-shrink-0 justify-end">
+      <div className="flex items-center gap-3 w-80 flex-shrink-0 justify-end">
         <CastButton />
         <button
           onClick={openFullScreen}
