@@ -262,7 +262,7 @@ export function FullScreenPlayer({ onTagClick }: { onTagClick?: (tag: string) =>
 
             {/* Tags */}
             {currentStation.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 {currentStation.tags.slice(0, 4).map((tag, i) => (
                   <button
                     key={i}
