@@ -187,92 +187,157 @@
   (function () {
     "use strict";
 
-    // Curated, English-speaking, HTTPS-only, geo-unrestricted stations.
-    // Streams chosen for known reliability; if one dies, others still work.
-    var STATIONS = [
-      // ─ Ambient / Chill ─
-      { n: "SomaFM Groove Salad",     g: "Ambient",     cat: "Ambient",  c: "USA", u: "https://ice1.somafm.com/groovesalad-128-mp3" },
-      { n: "SomaFM Drone Zone",       g: "Ambient",     cat: "Ambient",  c: "USA", u: "https://ice1.somafm.com/dronezone-128-mp3" },
-      { n: "SomaFM Deep Space One",   g: "Ambient",     cat: "Ambient",  c: "USA", u: "https://ice1.somafm.com/deepspaceone-128-mp3" },
-      { n: "SomaFM Space Station",    g: "Ambient",     cat: "Ambient",  c: "USA", u: "https://ice1.somafm.com/spacestation-128-mp3" },
-      { n: "SomaFM Mission Control",  g: "Ambient",     cat: "Ambient",  c: "USA", u: "https://ice1.somafm.com/missioncontrol-128-mp3" },
-      { n: "SomaFM Lush",             g: "Vocal Chill", cat: "Ambient",  c: "USA", u: "https://ice1.somafm.com/lush-128-mp3" },
-      // ─ Pop ─
-      { n: "181.FM The Beat",         g: "Top 40",      cat: "Pop",      c: "USA", u: "https://listen.181fm.com/181-beat_128k.mp3" },
-      { n: "181.FM Energy 98",        g: "Dance Pop",   cat: "Pop",      c: "USA", u: "https://listen.181fm.com/181-energy98_128k.mp3" },
-      { n: "181.FM Power 181",        g: "Hit Music",   cat: "Pop",      c: "USA", u: "https://listen.181fm.com/181-power_128k.mp3" },
-      { n: "Capital FM UK",           g: "Hits",        cat: "Pop",      c: "UK",  u: "https://media-ssl.musicradio.com/CapitalMP3" },
-      { n: "Hit Radio FFH",           g: "Pop Hits",    cat: "Pop",      c: "DE",  u: "https://mp3.ffh.de/radioffh/hqlivestream.mp3" },
-      { n: "NRJ France",              g: "Hit Music",   cat: "Pop",      c: "FR",  u: "https://scdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3" },
-      { n: "Fun Radio",               g: "Dance Pop",   cat: "Pop",      c: "FR",  u: "https://stream.funradio.fr/fun-1-44-128" },
-      // ─ Rock ─
-      { n: "Radio Paradise Rock",     g: "Rock Mix",    cat: "Rock",     c: "USA", u: "https://stream.radioparadise.com/rock-128" },
-      { n: "181.FM Classic Hits",     g: "Classic Rock",cat: "Rock",     c: "USA", u: "https://listen.181fm.com/181-greatoldies_128k.mp3" },
-      { n: "Absolute Radio",          g: "Rock",        cat: "Rock",     c: "UK",  u: "https://edge-bauerall-01-gos2.sharp-stream.com/absoluteradio.mp3" },
-      { n: "Planet Rock",             g: "Classic Rock",cat: "Rock",     c: "UK",  u: "https://edge-bauerall-02-gos2.sharp-stream.com/net2national.mp3?aw_0_1st.bauer_brand=PlanetRock" },
-      { n: "Q-Music NL",              g: "Pop Rock",    cat: "Rock",     c: "NL",  u: "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3" },
-      { n: "SomaFM Left Coast 70s",   g: "70s Rock",    cat: "Rock",     c: "USA", u: "https://ice1.somafm.com/seventies-128-mp3" },
-      // ─ Metal ─
-      { n: "SomaFM Metal Detector",   g: "Metal",       cat: "Metal",    c: "USA", u: "https://ice1.somafm.com/metal-128-mp3" },
-      { n: "181.FM Awesome 80s",      g: "80s Rock",    cat: "Metal",    c: "USA", u: "https://listen.181fm.com/181-awesome80s_128k.mp3" },
-      { n: "Radio Caroline",          g: "Album Rock",  cat: "Metal",    c: "UK",  u: "https://sc6.radiocaroline.net:8040/mp3" },
-      // ─ Electronic / Dance ─
-      { n: "SomaFM Beat Blender",     g: "Deep House",  cat: "Electro",  c: "USA", u: "https://ice1.somafm.com/beatblender-128-mp3" },
-      { n: "SomaFM DEF CON Radio",    g: "Electronic",  cat: "Electro",  c: "USA", u: "https://ice1.somafm.com/defcon-128-mp3" },
-      { n: "SomaFM Cliqhop IDM",      g: "IDM",         cat: "Electro",  c: "USA", u: "https://ice1.somafm.com/cliqhop-128-mp3" },
-      { n: "SomaFM Dub Step Beyond",  g: "Dubstep",     cat: "Electro",  c: "USA", u: "https://ice1.somafm.com/dubstep-128-mp3" },
-      { n: "Ibiza Global Radio",      g: "House",       cat: "Electro",  c: "ES",  u: "https://ibizaglobalradio.streaming-pro.com:8024/;stream.mp3" },
-      { n: "DI.fm Trance",            g: "Trance",      cat: "Electro",  c: "USA", u: "https://prem4.di.fm/trance" },
-      { n: "Defected Radio",          g: "House",       cat: "Electro",  c: "UK",  u: "https://edge-defectedradio-01-gos2.sharp-stream.com/defectedradio.mp3" },
-      // ─ Hip-Hop / R&B ─
-      { n: "SomaFM Fluid",            g: "Hip-Hop",     cat: "HipHop",   c: "USA", u: "https://ice1.somafm.com/fluid-128-mp3" },
-      { n: "181.FM The Box",          g: "Hip-Hop",     cat: "HipHop",   c: "USA", u: "https://listen.181fm.com/181-thebox_128k.mp3" },
-      { n: "181.FM Jammin 247",       g: "R&B",         cat: "HipHop",   c: "USA", u: "https://listen.181fm.com/181-jammin_128k.mp3" },
-      { n: "Hot 108 Jamz",            g: "Hip-Hop",     cat: "HipHop",   c: "USA", u: "https://hot108.com/listen.pls" },
-      // ─ Jazz / Blues ─
-      { n: "WWOZ New Orleans",        g: "Jazz / Blues",cat: "Jazz",     c: "USA", u: "https://wwoz-sc.streamguys1.com/wwoz-hi.mp3" },
-      { n: "Jazz24",                  g: "Smooth Jazz", cat: "Jazz",     c: "USA", u: "https://live.wostreaming.net/direct/ppm-jazz24mp3-ibc1" },
-      { n: "181.FM Classical Jazz",   g: "Jazz",        cat: "Jazz",     c: "USA", u: "https://listen.181fm.com/181-classicjazz_128k.mp3" },
-      { n: "TSF Jazz",                g: "Jazz",        cat: "Jazz",     c: "FR",  u: "https://tsfjazz.ice.infomaniak.ch/tsfjazz-high.mp3" },
-      { n: "Smooth Jazz Florida",     g: "Smooth Jazz", cat: "Jazz",     c: "USA", u: "https://us4.internet-radio.com:8266/stream" },
-      // ─ Classical ─
-      { n: "Classical KING FM",       g: "Classical",   cat: "Classical",c: "USA", u: "https://classicalking.streamguys1.com/king-fm-aac-iheart" },
-      { n: "Venice Classic Radio",    g: "Classical",   cat: "Classical",c: "IT",  u: "https://uk2.streamingpulse.com/ssl/vcr1" },
-      { n: "Radio Swiss Classic",     g: "Classical",   cat: "Classical",c: "CH",  u: "https://stream.srg-ssr.ch/m/rsc_de/mp3_128" },
-      { n: "181.FM Classical",        g: "Classical",   cat: "Classical",c: "USA", u: "https://listen.181fm.com/181-classical_128k.mp3" },
-      // ─ News / Talk ─
-      { n: "BBC World Service",       g: "News",        cat: "News",     c: "UK",  u: "https://stream.live.vc.bbcmedia.co.uk/bbc_world_service" },
-      { n: "BBC Radio 4",             g: "News / Talk", cat: "News",     c: "UK",  u: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_fourfm" },
-      { n: "France Info",             g: "News",        cat: "News",     c: "FR",  u: "https://icecast.radiofrance.fr/franceinfo-midfi.mp3" },
-      { n: "Deutschlandfunk",         g: "News / Talk", cat: "News",     c: "DE",  u: "https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3" },
-      { n: "NPR Program Stream",      g: "News",        cat: "News",     c: "USA", u: "https://npr-ice.streamguys1.com/live.mp3" },
-      // ─ Country / Folk ─
-      { n: "SomaFM Boot Liquor",      g: "Country",     cat: "Country",  c: "USA", u: "https://ice1.somafm.com/bootliquor-128-mp3" },
-      { n: "SomaFM Folk Forward",     g: "Folk",        cat: "Country",  c: "USA", u: "https://ice1.somafm.com/folkfwd-128-mp3" },
-      { n: "181.FM Real Country",     g: "Country",     cat: "Country",  c: "USA", u: "https://listen.181fm.com/181-realcountry_128k.mp3" },
-      { n: "Big R Country Gold",      g: "Classic Country",cat: "Country",c: "USA",u: "https://bigrradio.cdnstream1.com/5106_128.mp3" },
-      // ─ Latin / Reggae / World ─
-      { n: "SomaFM Suburbs of Goa",   g: "World",       cat: "World",    c: "USA", u: "https://ice1.somafm.com/suburbsofgoa-128-mp3" },
-      { n: "SomaFM Reggae",           g: "Reggae",      cat: "World",    c: "USA", u: "https://ice1.somafm.com/reggae-128-mp3" },
-      { n: "181.FM Salsa",            g: "Salsa",       cat: "World",    c: "USA", u: "https://listen.181fm.com/181-salsa_128k.mp3" },
-      { n: "Radio Latina",            g: "Latin",       cat: "World",    c: "FR",  u: "https://radiolatina.ice.infomaniak.ch/radiolatina-128.mp3" },
-      { n: "Capital Bra Brasil",      g: "Brazilian",   cat: "World",    c: "BR",  u: "https://servidor33-3.brlogic.com:8192/live" },
-      // ─ Indie / Eclectic ─
-      { n: "Radio Paradise Main Mix", g: "Eclectic",    cat: "Indie",    c: "USA", u: "https://stream.radioparadise.com/aac-128" },
-      { n: "Radio Paradise Mellow",   g: "Mellow Mix",  cat: "Indie",    c: "USA", u: "https://stream.radioparadise.com/mellow-128" },
-      { n: "Radio Paradise Global",   g: "World Mix",   cat: "Indie",    c: "USA", u: "https://stream.radioparadise.com/global-128" },
-      { n: "KEXP Seattle",            g: "Indie",       cat: "Indie",    c: "USA", u: "https://kexp.streamguys1.com/kexp160.aac" },
-      { n: "SomaFM Indie Pop Rocks",  g: "Indie Pop",   cat: "Indie",    c: "USA", u: "https://ice1.somafm.com/indiepop-128-mp3" },
-      { n: "SomaFM Secret Agent",     g: "Lounge",      cat: "Indie",    c: "USA", u: "https://ice1.somafm.com/secretagent-128-mp3" },
-      // ─ Oldies / 80s ─
-      { n: "SomaFM Underground 80s",  g: "80s",         cat: "Oldies",   c: "USA", u: "https://ice1.somafm.com/u80s-128-mp3" },
-      { n: "181.FM Super 70s",        g: "70s Hits",    cat: "Oldies",   c: "USA", u: "https://listen.181fm.com/181-super70s_128k.mp3" },
-      { n: "181.FM 80s Hairband",     g: "80s Rock",    cat: "Oldies",   c: "USA", u: "https://listen.181fm.com/181-hairband_128k.mp3" },
-      { n: "181.FM Good Time Oldies", g: "Oldies",      cat: "Oldies",   c: "USA", u: "https://listen.181fm.com/181-goodtime_128k.mp3" },
-      { n: "Absolute 60s",            g: "60s",         cat: "Oldies",   c: "UK",  u: "https://edge-bauerall-01-gos2.sharp-stream.com/absolute60s.mp3" }
-    ];
+    // Curated, language-targeted, HTTPS-only stations.
+    // Only well-known national broadcasters and major commercial networks
+    // with proven-reliable streams — no obscure / dead-prone URLs.
+    var stationsByLanguage = {
+      "fr": [
+        // France — national public
+        { n: "France Inter",     cat: "News",    g: "Public",   u: "https://icecast.radiofrance.fr/franceinter-midfi.mp3" },
+        { n: "France Info",      cat: "News",    g: "News",     u: "https://icecast.radiofrance.fr/franceinfo-midfi.mp3" },
+        { n: "France Culture",   cat: "News",    g: "Talk",     u: "https://icecast.radiofrance.fr/franceculture-midfi.mp3" },
+        { n: "France Musique",   cat: "News",    g: "Classical",u: "https://icecast.radiofrance.fr/francemusique-midfi.mp3" },
+        { n: "FIP",              cat: "Pop",     g: "Eclectic", u: "https://icecast.radiofrance.fr/fip-midfi.mp3" },
+        { n: "Mouv'",            cat: "Pop",     g: "Hip-Hop",  u: "https://icecast.radiofrance.fr/mouv-midfi.mp3" },
+        // France — commercial
+        { n: "NRJ",              cat: "Pop",     g: "Hits",     u: "https://scdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3" },
+        { n: "Nostalgie",        cat: "Pop",     g: "Oldies",   u: "https://scdn.nrjaudio.fm/audio1/fr/30601/mp3_128.mp3" },
+        { n: "Chérie FM",        cat: "Pop",     g: "Pop",      u: "https://scdn.nrjaudio.fm/audio1/fr/30201/mp3_128.mp3" },
+        { n: "Rire & Chansons",  cat: "Pop",     g: "Talk",     u: "https://scdn.nrjaudio.fm/audio1/fr/30401/mp3_128.mp3" },
+        { n: "RTL",              cat: "News",    g: "Talk",     u: "https://streaming.radio.rtl.fr/rtl-1-44-128" },
+        { n: "RTL2",             cat: "Rock",    g: "Pop Rock", u: "https://streaming.radio.rtl.fr/rtl2-1-44-128" },
+        { n: "Fun Radio",        cat: "Electro", g: "Dance",    u: "https://stream.funradio.fr/fun-1-44-128" },
+        { n: "TSF Jazz",         cat: "News",    g: "Jazz",     u: "https://tsfjazz.ice.infomaniak.ch/tsfjazz-high.mp3" },
+        // Belgique francophone (RTBF)
+        { n: "La Première (RTBF)", cat: "News",  g: "Public",   u: "https://radios.rtbf.be/lapremiere-128.mp3" },
+        { n: "Classic 21 (RTBF)",  cat: "Rock",  g: "Classic Rock", u: "https://radios.rtbf.be/classic21-128.mp3" },
+        { n: "Pure (RTBF)",        cat: "Electro", g: "Electronic", u: "https://radios.rtbf.be/pure-128.mp3" },
+        { n: "VivaCité (RTBF)",    cat: "Pop",   g: "Pop",      u: "https://radios.rtbf.be/vivacite-128.mp3" },
+        { n: "Musiq3 (RTBF)",      cat: "News",  g: "Classical",u: "https://radios.rtbf.be/musiq3-128.mp3" },
+        { n: "Bel RTL",            cat: "News",  g: "Talk",     u: "https://radios.rtl.be/belrtl-128.mp3" }
+      ],
+      "en": [
+        // UK — BBC
+        { n: "BBC Radio 1",       cat: "Pop",     g: "Hits",       u: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one" },
+        { n: "BBC Radio 2",       cat: "Pop",     g: "Adult Pop",  u: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_two" },
+        { n: "BBC Radio 4",       cat: "News",    g: "News / Talk",u: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_fourfm" },
+        { n: "BBC Radio 6 Music", cat: "Rock",    g: "Alternative",u: "https://stream.live.vc.bbcmedia.co.uk/bbc_6music" },
+        { n: "BBC World Service", cat: "News",    g: "News",       u: "https://stream.live.vc.bbcmedia.co.uk/bbc_world_service" },
+        // UK — commercial
+        { n: "Capital FM",        cat: "Pop",     g: "Hits",       u: "https://media-ssl.musicradio.com/CapitalMP3" },
+        { n: "Heart UK",          cat: "Pop",     g: "Pop",        u: "https://media-ssl.musicradio.com/HeartLondonMP3" },
+        { n: "Smooth Radio",      cat: "Pop",     g: "Smooth",     u: "https://media-ssl.musicradio.com/SmoothUKMP3" },
+        { n: "Classic FM",        cat: "News",    g: "Classical",  u: "https://media-ssl.musicradio.com/ClassicFMMP3" },
+        { n: "Absolute Radio",    cat: "Rock",    g: "Rock",       u: "https://edge-bauerall-01-gos2.sharp-stream.com/absoluteradio.mp3" },
+        { n: "Planet Rock",       cat: "Rock",    g: "Classic Rock", u: "https://edge-bauerall-02-gos2.sharp-stream.com/net2national.mp3?aw_0_1st.bauer_brand=PlanetRock" },
+        { n: "Kiss UK",           cat: "Electro", g: "Dance",      u: "https://edge-bauerall-01-gos2.sharp-stream.com/kissnational.mp3" },
+        { n: "Magic Radio",       cat: "Pop",     g: "Easy",       u: "https://edge-bauerall-01-gos2.sharp-stream.com/magic.mp3" },
+        // USA
+        { n: "NPR Program Stream",cat: "News",    g: "News",       u: "https://npr-ice.streamguys1.com/live.mp3" },
+        { n: "KEXP Seattle",      cat: "Rock",    g: "Indie",      u: "https://kexp.streamguys1.com/kexp160.aac" },
+        { n: "Radio Paradise",    cat: "Rock",    g: "Eclectic",   u: "https://stream.radioparadise.com/aac-128" },
+        { n: "WWOZ New Orleans",  cat: "News",    g: "Jazz/Blues", u: "https://wwoz-sc.streamguys1.com/wwoz-hi.mp3" },
+        { n: "SomaFM Groove Salad",cat: "Electro",g: "Ambient",    u: "https://ice1.somafm.com/groovesalad-128-mp3" },
+        { n: "SomaFM Indie Pop",  cat: "Pop",     g: "Indie Pop",  u: "https://ice1.somafm.com/indiepop-128-mp3" },
+        { n: "SomaFM Metal Detector", cat: "Rock",g: "Metal",      u: "https://ice1.somafm.com/metal-128-mp3" }
+      ],
+      "es": [
+        { n: "Cadena SER",        cat: "News",    g: "News / Talk",u: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENASER.mp3" },
+        { n: "Los 40 Principales",cat: "Pop",     g: "Hits",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40.mp3" },
+        { n: "Cadena Dial",       cat: "Pop",     g: "Spanish Pop",u: "https://playerservices.streamtheworld.com/api/livestream-redirect/CADENADIAL.mp3" },
+        { n: "Máxima FM",         cat: "Electro", g: "Dance",      u: "https://playerservices.streamtheworld.com/api/livestream-redirect/MAXIMAFM.mp3" },
+        { n: "Rock FM",           cat: "Rock",    g: "Classic Rock", u: "https://playerservices.streamtheworld.com/api/livestream-redirect/ROCKFM.mp3" },
+        { n: "M80 Radio",         cat: "Pop",     g: "Oldies",     u: "https://playerservices.streamtheworld.com/api/livestream-redirect/M80.mp3" },
+        { n: "Kiss FM España",    cat: "Pop",     g: "Adult Pop",  u: "https://playerservices.streamtheworld.com/api/livestream-redirect/KISSFM.mp3" },
+        { n: "COPE",              cat: "News",    g: "News / Talk",u: "https://flucast-b04-01.flumotion.com/cope/net1.mp3" },
+        { n: "Cadena 100",        cat: "Pop",     g: "Pop",        u: "https://flucast-b04-01.flumotion.com/cope/c100.mp3" },
+        { n: "Ibiza Global Radio",cat: "Electro", g: "House",      u: "https://ibizaglobalradio.streaming-pro.com:8024/;stream.mp3" },
+        { n: "Los 40 Classic",    cat: "Pop",     g: "Classics",   u: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40_CLASSIC.mp3" },
+        { n: "Los 40 Dance",      cat: "Electro", g: "Dance",      u: "https://playerservices.streamtheworld.com/api/livestream-redirect/LOS40_DANCE.mp3" },
+        { n: "Radio Marca",       cat: "News",    g: "Sports",     u: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO_MARCA.mp3" }
+      ],
+      "de": [
+        { n: "Deutschlandfunk",   cat: "News",    g: "Public News",u: "https://st01.sslstream.dlf.de/dlf/01/128/mp3/stream.mp3" },
+        { n: "Deutschlandfunk Kultur", cat: "News", g: "Culture",  u: "https://st02.sslstream.dlf.de/dlf/02/128/mp3/stream.mp3" },
+        { n: "Deutschlandfunk Nova",   cat: "News", g: "Talk",     u: "https://st03.sslstream.dlf.de/dlf/03/128/mp3/stream.mp3" },
+        { n: "1LIVE (WDR)",       cat: "Pop",     g: "Hits",       u: "https://wdr-1live-live.icecastssl.wdr.de/wdr/1live/live/mp3/128/stream.mp3" },
+        { n: "WDR 2",             cat: "Pop",     g: "Adult Pop",  u: "https://wdr-wdr2-aachenundregion.icecastssl.wdr.de/wdr/wdr2/aachenundregion/mp3/128/stream.mp3" },
+        { n: "WDR 4",             cat: "Pop",     g: "Schlager",   u: "https://wdr-wdr4-live.icecastssl.wdr.de/wdr/wdr4/live/mp3/128/stream.mp3" },
+        { n: "Bayern 3",          cat: "Pop",     g: "Hits",       u: "https://dispatcher.rndfnk.com/br/br3/live/mp3/mid" },
+        { n: "SWR3",              cat: "Pop",     g: "Pop Rock",   u: "https://liveradio.swr.de/sw282p3/swr3/play.mp3" },
+        { n: "Hit Radio FFH",     cat: "Pop",     g: "Pop Hits",   u: "https://mp3.ffh.de/radioffh/hqlivestream.mp3" },
+        { n: "Antenne Bayern",    cat: "Pop",     g: "Hits",       u: "https://stream.antenne.de/antenne" },
+        { n: "Radio Hamburg",     cat: "Pop",     g: "Hits",       u: "https://stream.radiohamburg.de/rhh-live/mp3-128/linkradiohamburg" },
+        { n: "bigFM",             cat: "Electro", g: "Dance",      u: "https://streams.bigfm.de/bigfm-deutschland-128-mp3" },
+        { n: "Rock Antenne",      cat: "Rock",    g: "Rock",       u: "https://stream.rockantenne.de/rockantenne/stream/mp3" },
+        { n: "Klassik Radio",     cat: "News",    g: "Classical",  u: "https://stream.klassikradio.de/live/mp3-192/" }
+      ],
+      "it": [
+        { n: "Rai Radio 1",       cat: "News",    g: "Public",     u: "https://icestreaming.rai.it/1.mp3" },
+        { n: "Rai Radio 2",       cat: "Pop",     g: "Pop",        u: "https://icestreaming.rai.it/2.mp3" },
+        { n: "Rai Radio 3",       cat: "News",    g: "Culture",    u: "https://icestreaming.rai.it/3.mp3" },
+        { n: "Rai Isoradio",      cat: "News",    g: "Traffic",    u: "https://icestreaming.rai.it/12.mp3" },
+        { n: "RTL 102.5",         cat: "Pop",     g: "Hits",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/RTL_1025.mp3" },
+        { n: "Radio 105",         cat: "Pop",     g: "Hits",       u: "https://icecast.unitedradio.it/Radio105.mp3" },
+        { n: "Virgin Radio Italy",cat: "Rock",    g: "Rock",       u: "https://icecast.unitedradio.it/Virgin.mp3" },
+        { n: "Radio Monte Carlo", cat: "Pop",     g: "Lounge",     u: "https://icecast.unitedradio.it/Radio_Monte_Carlo.mp3" },
+        { n: "m2o",               cat: "Electro", g: "Dance",      u: "https://icecast.unitedradio.it/m2o.mp3" },
+        { n: "Radio Italia",      cat: "Pop",     g: "Italian Pop",u: "https://flv11.fluidstream.net/RadioItalia.mp3" },
+        { n: "Radio 24",          cat: "News",    g: "News / Talk",u: "https://shoutcast.radio24.ilsole24ore.com/stream/1/" },
+        { n: "Venice Classic Radio", cat: "News", g: "Classical",  u: "https://uk2.streamingpulse.com/ssl/vcr1" }
+      ],
+      "pt": [
+        { n: "Antena 1 (RTP)",    cat: "News",    g: "Public",     u: "https://radiocast.rtp.pt/antena1" },
+        { n: "Antena 3 (RTP)",    cat: "Pop",     g: "Alternative",u: "https://radiocast.rtp.pt/antena3" },
+        { n: "Rádio Comercial",   cat: "Pop",     g: "Hits",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/SCOMERCIAL.mp3" },
+        { n: "RFM",               cat: "Pop",     g: "Pop",        u: "https://playerservices.streamtheworld.com/api/livestream-redirect/RFM.mp3" },
+        { n: "M80 Portugal",      cat: "Pop",     g: "Oldies",     u: "https://playerservices.streamtheworld.com/api/livestream-redirect/M80.mp3" },
+        { n: "Mega Hits",         cat: "Pop",     g: "Top 40",     u: "https://playerservices.streamtheworld.com/api/livestream-redirect/MEGA_HITS.mp3" },
+        // Brasil
+        { n: "Mix FM São Paulo",  cat: "Pop",     g: "Hits",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/MIXFM_SAOPAULO.mp3" },
+        { n: "Antena 1 Brasil",   cat: "Pop",     g: "Adult Pop",  u: "https://playerservices.streamtheworld.com/api/livestream-redirect/ANTENA1.mp3" },
+        { n: "89 FM A Rádio Rock",cat: "Rock",    g: "Rock",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO89FM.mp3" },
+        { n: "Jovem Pan FM",      cat: "Pop",     g: "Hits",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/JOVEMPANFMSP_ADP.aac" },
+        { n: "Band FM",           cat: "Pop",     g: "Pop",        u: "https://playerservices.streamtheworld.com/api/livestream-redirect/BANDFM_SPAAC.aac" }
+      ],
+      "nl": [
+        { n: "NPO Radio 1",       cat: "News",    g: "News / Talk",u: "https://icecast.omroep.nl/radio1-bb-mp3" },
+        { n: "NPO Radio 2",       cat: "Pop",     g: "Adult Pop",  u: "https://icecast.omroep.nl/radio2-bb-mp3" },
+        { n: "NPO 3FM",           cat: "Pop",     g: "Hits",       u: "https://icecast.omroep.nl/3fm-bb-mp3" },
+        { n: "NPO Radio 4",       cat: "News",    g: "Classical",  u: "https://icecast.omroep.nl/radio4-bb-mp3" },
+        { n: "NPO Radio 5",       cat: "Pop",     g: "Oldies",     u: "https://icecast.omroep.nl/radio5-bb-mp3" },
+        { n: "Qmusic NL",         cat: "Pop",     g: "Hits",       u: "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3" },
+        { n: "Radio 538",         cat: "Pop",     g: "Hits",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO538.mp3" },
+        { n: "Sky Radio",         cat: "Pop",     g: "Hits",       u: "https://playerservices.streamtheworld.com/api/livestream-redirect/SKYRADIO.mp3" },
+        { n: "Radio Veronica",    cat: "Rock",    g: "Classic Rock", u: "https://playerservices.streamtheworld.com/api/livestream-redirect/VERONICA.mp3" },
+        { n: "100% NL",           cat: "Pop",     g: "Dutch Pop",  u: "https://stream.100p.nl/100pctnl.mp3" },
+        { n: "SLAM!",             cat: "Electro", g: "Dance",      u: "https://stream.slam.nl/slam_mp3" },
+        { n: "Joe NL",            cat: "Pop",     g: "Feel Good",  u: "https://playerservices.streamtheworld.com/api/livestream-redirect/JOE_NL.mp3" }
+      ],
+      "int": [
+        { n: "BBC World Service", cat: "News",    g: "News",       u: "https://stream.live.vc.bbcmedia.co.uk/bbc_world_service" },
+        { n: "BBC Radio 1",       cat: "Pop",     g: "Hits",       u: "https://stream.live.vc.bbcmedia.co.uk/bbc_radio_one" },
+        { n: "BBC Radio 6 Music", cat: "Rock",    g: "Alternative",u: "https://stream.live.vc.bbcmedia.co.uk/bbc_6music" },
+        { n: "NPR Program Stream",cat: "News",    g: "News",       u: "https://npr-ice.streamguys1.com/live.mp3" },
+        { n: "Radio Paradise",    cat: "Rock",    g: "Eclectic",   u: "https://stream.radioparadise.com/aac-128" },
+        { n: "Radio Paradise Mellow", cat: "Pop", g: "Mellow",     u: "https://stream.radioparadise.com/mellow-128" },
+        { n: "Radio Paradise Global", cat: "Pop", g: "World",      u: "https://stream.radioparadise.com/global-128" },
+        { n: "KEXP Seattle",      cat: "Rock",    g: "Indie",      u: "https://kexp.streamguys1.com/kexp160.aac" },
+        { n: "SomaFM Groove Salad", cat: "Electro", g: "Ambient",  u: "https://ice1.somafm.com/groovesalad-128-mp3" },
+        { n: "SomaFM Beat Blender", cat: "Electro", g: "Deep House", u: "https://ice1.somafm.com/beatblender-128-mp3" },
+        { n: "SomaFM Indie Pop",  cat: "Pop",     g: "Indie",      u: "https://ice1.somafm.com/indiepop-128-mp3" },
+        { n: "SomaFM Metal Detector", cat: "Rock", g: "Metal",     u: "https://ice1.somafm.com/metal-128-mp3" },
+        { n: "Capital FM UK",     cat: "Pop",     g: "Hits",       u: "https://media-ssl.musicradio.com/CapitalMP3" },
+        { n: "Classic FM",        cat: "News",    g: "Classical",  u: "https://media-ssl.musicradio.com/ClassicFMMP3" },
+        { n: "Ibiza Global Radio",cat: "Electro", g: "House",      u: "https://ibizaglobalradio.streaming-pro.com:8024/;stream.mp3" }
+      ]
+    };
 
-    var CATEGORIES = ["All","Pop","Rock","Electro","HipHop","Jazz","Classical","News","Country","World","Indie","Metal","Ambient","Oldies"];
+    // Detect user language → pick station set (fallback: en, then int).
+    var userLang = ((navigator.language || navigator.userLanguage || "en").split("-")[0] || "en").toLowerCase();
+    var STATIONS = stationsByLanguage[userLang] || stationsByLanguage["en"] || stationsByLanguage["int"];
+
+    var CATEGORIES = ["All","Pop","Rock","News","Electro"];
     var activeCat = "All";
 
     var grid = document.getElementById("grid");
@@ -300,7 +365,7 @@
       for (var i = 0; i < STATIONS.length; i++) {
         var s = STATIONS[i];
         if (activeCat !== "All" && s.cat !== activeCat) continue;
-        if (q && (s.n + " " + s.g + " " + s.c + " " + s.cat).toLowerCase().indexOf(q) === -1) continue;
+        if (q && (s.n + " " + s.g + " " + s.cat).toLowerCase().indexOf(q) === -1) continue;
         var card = document.createElement("button");
         card.type = "button";
         card.className = "card" + (current && current.n === s.n ? " active" : "");
@@ -309,7 +374,7 @@
         card.setAttribute("data-category", s.cat);
         card.innerHTML =
           '<div class="card-name">' + escape(s.n) + '</div>' +
-          '<div class="card-meta"><span class="card-genre">' + escape(s.g) + '</span><span>' + escape(s.c) + '</span></div>';
+          '<div class="card-meta"><span class="card-genre">' + escape(s.g) + '</span><span>' + escape(s.cat) + '</span></div>';
         card.addEventListener("click", onPick);
         grid.appendChild(card);
         n++;
@@ -354,7 +419,7 @@
       }
       current = s;
       pName.textContent = s.n;
-      pSub.textContent = s.g + " · " + s.c;
+      pSub.textContent = s.g + " · " + s.cat;
       pBtn.disabled = false;
       audio.src = s.u;
       var p = audio.play();
