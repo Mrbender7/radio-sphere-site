@@ -276,7 +276,7 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
           <div
             ref={timelineRef}
             data-umami-event="tbm-used"
-            className="relative h-4 rounded-full bg-[hsl(0,0%,10%)] border border-[hsl(0,0%,18%)] overflow-hidden cursor-pointer touch-none"
+            className="relative h-4 rounded-full bg-[hsl(0,0%,10%)] border border-[hsl(0,0%,18%)] cursor-pointer touch-none"
             onClick={handleTimelineClick}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -312,9 +312,9 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
                 alt=""
                 aria-hidden="true"
                 draggable={false}
-                className={`absolute top-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none transition-transform duration-300 ${isDragging ? 'scale-125' : ''}`}
+                className={`absolute top-1/2 -translate-y-1/2 w-14 h-14 pointer-events-none transition-transform duration-300 ${isDragging ? 'scale-125' : ''}`}
                 style={{
-                  left: `calc(${cursorPct}% - 16px)`,
+                  left: `calc(${cursorPct}% - 28px)`,
                   imageRendering: 'pixelated',
                   filter: 'drop-shadow(0 0 6px rgba(200,150,50,0.6))',
                 }}
