@@ -340,6 +340,33 @@
     var CATEGORIES = ["All","Pop","Rock","News","Electro"];
     var activeCat = "All";
 
+    // ── Self-healing storage (prefix rs_lite_ to avoid collision with React app) ─
+    var LIMIT_PER_CATEGORY = 20;
+    var KEY_ERRORS = "rs_lite_errors_";
+    var KEY_BANNED = "rs_lite_banned_stations";
+    var MAX_STRIKES = 3;
+    function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+    function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+    function getBanned() {
+      try { var raw = lsGet(KEY_BANNED); var a = raw ? JSON.parse(raw) : []; return Array.isArray(a) ? a : []; }
+      catch (e) { return []; }
+    }
+    function addBanned(name) {
+      var list = getBanned();
+      if (list.indexOf(name) === -1) { list.push(name); lsSet(KEY_BANNED, JSON.stringify(list)); }
+    }
+    function getStrikes(name) { var v = parseInt(lsGet(KEY_ERRORS + name) || "0", 10); return isNaN(v) ? 0 : v; }
+    function bumpStrikes(name) { var n = getStrikes(name) + 1; lsSet(KEY_ERRORS + name, String(n)); return n; }
+    function resetStrikes(name) { lsDel(KEY_ERRORS + name); }
+    function handleStreamFailure(s) {
+      if (!s || !s.n) return;
+      var n = bumpStrikes(s.n);
+      if (n >= MAX_STRIKES) addBanned(s.n);
+      try { if (window.umami && typeof window.umami.track === "function") window.umami.track("stream-dead-lite", { station: s.n }); } catch (e) {}
+      try { render(search ? search.value : ""); } catch (e) {}
+    }
+
     var grid = document.getElementById("grid");
     var emptyEl = document.getElementById("empty");
     var search = document.getElementById("search");
@@ -371,8 +398,11 @@
       var q = (filter || "").trim().toLowerCase();
       grid.innerHTML = "";
       var n = 0;
+      var banned = getBanned();
       for (var i = 0; i < STATIONS.length; i++) {
+        if (n >= LIMIT_PER_CATEGORY) break;
         var s = STATIONS[i];
+        if (banned.indexOf(s.n) !== -1) continue;
         if (activeCat !== "All" && s.cat !== activeCat) continue;
         if (q && (s.n + " " + s.g + " " + s.cat).toLowerCase().indexOf(q) === -1) continue;
         var card = document.createElement("button");
@@ -428,10 +458,13 @@
             pSub.innerHTML = '<span style="color:#ef4444">Stream unavailable. Try another station.</span>';
             pBtn.classList.remove("pulse");
             setIcon(false);
+            // NotAllowedError = autoplay block (user gesture missing), not a dead stream.
+            if (err && err.name !== "NotAllowedError" && current) handleStreamFailure(current);
           });
         }
       } catch (e) {
         console.error("[lite] play() threw:", e);
+        if (current) handleStreamFailure(current);
       }
     }
 
@@ -488,11 +521,16 @@
       if ("mediaSession" in navigator) try { navigator.mediaSession.playbackState = "paused"; } catch (e) {}
     });
     audioPlayer.addEventListener("ended", function () { setIcon(false); pBtn.classList.remove("pulse"); });
+    audioPlayer.addEventListener("playing", function () {
+      // Real playback started — clear any prior strikes for this station.
+      if (current && current.n) resetStrikes(current.n);
+    });
     audioPlayer.addEventListener("error", function () {
       console.error("[lite] audio element error", audioPlayer.error);
       setIcon(false);
       pBtn.classList.remove("pulse");
       pSub.innerHTML = '<span style="color:#ef4444">Stream unavailable. Try another station.</span>';
+      if (current) handleStreamFailure(current);
     });
 
     // MediaSession action handlers — keep playback alive on lock screen,
