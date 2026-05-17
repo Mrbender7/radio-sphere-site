@@ -365,7 +365,7 @@
       for (var i = 0; i < STATIONS.length; i++) {
         var s = STATIONS[i];
         if (activeCat !== "All" && s.cat !== activeCat) continue;
-        if (q && (s.n + " " + s.g + " " + s.c + " " + s.cat).toLowerCase().indexOf(q) === -1) continue;
+        if (q && (s.n + " " + s.g + " " + s.cat).toLowerCase().indexOf(q) === -1) continue;
         var card = document.createElement("button");
         card.type = "button";
         card.className = "card" + (current && current.n === s.n ? " active" : "");
