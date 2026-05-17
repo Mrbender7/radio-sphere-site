@@ -521,11 +521,16 @@
       if ("mediaSession" in navigator) try { navigator.mediaSession.playbackState = "paused"; } catch (e) {}
     });
     audioPlayer.addEventListener("ended", function () { setIcon(false); pBtn.classList.remove("pulse"); });
+    audioPlayer.addEventListener("playing", function () {
+      // Real playback started — clear any prior strikes for this station.
+      if (current && current.n) resetStrikes(current.n);
+    });
     audioPlayer.addEventListener("error", function () {
       console.error("[lite] audio element error", audioPlayer.error);
       setIcon(false);
       pBtn.classList.remove("pulse");
       pSub.innerHTML = '<span style="color:#ef4444">Stream unavailable. Try another station.</span>';
+      if (current) handleStreamFailure(current);
     });
 
     // MediaSession action handlers — keep playback alive on lock screen,
