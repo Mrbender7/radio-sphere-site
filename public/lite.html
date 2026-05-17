@@ -343,7 +343,14 @@
     var grid = document.getElementById("grid");
     var emptyEl = document.getElementById("empty");
     var search = document.getElementById("search");
-    var audio = document.getElementById("audio");
+    // ── Audio engine ─────────────────────────────────────────────────────
+    // Single in-memory Audio() — lighter than <audio> in DOM for WebViews,
+    // and keeps a stable reference across renders. preload="none" avoids
+    // buffering streams the user never picked.
+    var audioPlayer = new Audio();
+    audioPlayer.preload = "none";
+    audioPlayer.crossOrigin = "anonymous";
+    var audio = audioPlayer; // backward-compat alias for existing listeners
     var pName = document.getElementById("p-name");
     var pSub = document.getElementById("p-sub");
     var pBtn = document.getElementById("p-btn");
@@ -354,7 +361,7 @@
     var ICON_PAUSE = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
 
     var current = null;
-    audio.volume = 0.8;
+    audioPlayer.volume = 0.8;
 
     function setIcon(playing) { pIcon.innerHTML = playing ? ICON_PAUSE : ICON_PLAY; }
 
