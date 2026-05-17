@@ -1,3 +1,4 @@
+import { Heart } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 
 const COPYRIGHT_YEAR = 2026;
@@ -30,6 +31,21 @@ export function AboutFooter() {
           </a>
           {t("footer.poweredBySuffix")}
         </p>
+      </div>
+
+      {/* Social links */}
+      {/* Tipeee support button */}
+      <div className="flex justify-center mb-3">
+        <a
+          href="https://fr.tipeee.com/radiosphere/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-[hsl(348,83%,52%)] to-[hsl(8,90%,58%)] shadow-lg shadow-[hsl(348,83%,52%)]/30 hover:shadow-xl hover:shadow-[hsl(348,83%,52%)]/40 transition-shadow"
+          aria-label="Support us on Tipeee"
+        >
+          <Heart className="w-3.5 h-3.5 fill-current" />
+          {t("sidebar.tipeee")}
+        </a>
       </div>
 
       {/* Social links */}
