@@ -305,11 +305,19 @@ export function TimebackMachine({ onClose, onRecordingResult }: TimebackMachineP
               style={{ width: `${cursorPct}%` }}
             />
 
-            {/* Cursor thumb */}
+            {/* Cursor thumb — Shiba mascot */}
             {totalBuffer > 1 && (
-              <div
-                className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[hsl(35,80%,55%)] border-2 border-[hsl(35,90%,70%)] shadow-[0_0_10px_rgba(200,150,50,0.6)] transition-all duration-300 ${isDragging ? 'scale-125' : ''}`}
-                style={{ left: `calc(${cursorPct}% - 10px)` }}
+              <img
+                src="/shiba-cursor.gif"
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className={`absolute top-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none transition-transform duration-300 ${isDragging ? 'scale-125' : ''}`}
+                style={{
+                  left: `calc(${cursorPct}% - 16px)`,
+                  imageRendering: 'pixelated',
+                  filter: 'drop-shadow(0 0 6px rgba(200,150,50,0.6))',
+                }}
               />
             )}
           </div>
