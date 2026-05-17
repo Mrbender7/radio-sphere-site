@@ -398,8 +398,11 @@
       var q = (filter || "").trim().toLowerCase();
       grid.innerHTML = "";
       var n = 0;
+      var banned = getBanned();
       for (var i = 0; i < STATIONS.length; i++) {
+        if (n >= LIMIT_PER_CATEGORY) break;
         var s = STATIONS[i];
+        if (banned.indexOf(s.n) !== -1) continue;
         if (activeCat !== "All" && s.cat !== activeCat) continue;
         if (q && (s.n + " " + s.g + " " + s.cat).toLowerCase().indexOf(q) === -1) continue;
         var card = document.createElement("button");
