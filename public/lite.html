@@ -458,10 +458,13 @@
             pSub.innerHTML = '<span style="color:#ef4444">Stream unavailable. Try another station.</span>';
             pBtn.classList.remove("pulse");
             setIcon(false);
+            // NotAllowedError = autoplay block (user gesture missing), not a dead stream.
+            if (err && err.name !== "NotAllowedError" && current) handleStreamFailure(current);
           });
         }
       } catch (e) {
         console.error("[lite] play() threw:", e);
+        if (current) handleStreamFailure(current);
       }
     }
 
