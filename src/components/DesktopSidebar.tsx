@@ -302,7 +302,7 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
               aria-label="Support us on Tipeee"
             >
               <Heart className="w-3.5 h-3.5 fill-current" />
-              Support us on Tipeee
+              {t("sidebar.tipeee")}
             </a>
             <div className="flex items-center justify-center gap-3 px-4 pt-1">
               <a
