@@ -340,6 +340,33 @@
     var CATEGORIES = ["All","Pop","Rock","News","Electro"];
     var activeCat = "All";
 
+    // ── Self-healing storage (prefix rs_lite_ to avoid collision with React app) ─
+    var LIMIT_PER_CATEGORY = 20;
+    var KEY_ERRORS = "rs_lite_errors_";
+    var KEY_BANNED = "rs_lite_banned_stations";
+    var MAX_STRIKES = 3;
+    function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+    function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+    function getBanned() {
+      try { var raw = lsGet(KEY_BANNED); var a = raw ? JSON.parse(raw) : []; return Array.isArray(a) ? a : []; }
+      catch (e) { return []; }
+    }
+    function addBanned(name) {
+      var list = getBanned();
+      if (list.indexOf(name) === -1) { list.push(name); lsSet(KEY_BANNED, JSON.stringify(list)); }
+    }
+    function getStrikes(name) { var v = parseInt(lsGet(KEY_ERRORS + name) || "0", 10); return isNaN(v) ? 0 : v; }
+    function bumpStrikes(name) { var n = getStrikes(name) + 1; lsSet(KEY_ERRORS + name, String(n)); return n; }
+    function resetStrikes(name) { lsDel(KEY_ERRORS + name); }
+    function handleStreamFailure(s) {
+      if (!s || !s.n) return;
+      var n = bumpStrikes(s.n);
+      if (n >= MAX_STRIKES) addBanned(s.n);
+      try { if (window.umami && typeof window.umami.track === "function") window.umami.track("stream-dead-lite", { station: s.n }); } catch (e) {}
+      try { render(search ? search.value : ""); } catch (e) {}
+    }
+
     var grid = document.getElementById("grid");
     var emptyEl = document.getElementById("empty");
     var search = document.getElementById("search");
