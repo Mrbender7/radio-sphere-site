@@ -1,3 +1,4 @@
+import { Heart } from "lucide-react";
 import { useTranslation } from "@/contexts/LanguageContext";
 
 const COPYRIGHT_YEAR = 2026;
