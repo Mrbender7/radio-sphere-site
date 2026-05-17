@@ -343,7 +343,14 @@
     var grid = document.getElementById("grid");
     var emptyEl = document.getElementById("empty");
     var search = document.getElementById("search");
-    var audio = document.getElementById("audio");
+    // ── Audio engine ─────────────────────────────────────────────────────
+    // Single in-memory Audio() — lighter than <audio> in DOM for WebViews,
+    // and keeps a stable reference across renders. preload="none" avoids
+    // buffering streams the user never picked.
+    var audioPlayer = new Audio();
+    audioPlayer.preload = "none";
+    audioPlayer.crossOrigin = "anonymous";
+    var audio = audioPlayer; // backward-compat alias for existing listeners
     var pName = document.getElementById("p-name");
     var pSub = document.getElementById("p-sub");
     var pBtn = document.getElementById("p-btn");
@@ -354,7 +361,7 @@
     var ICON_PAUSE = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
 
     var current = null;
-    audio.volume = 0.8;
+    audioPlayer.volume = 0.8;
 
     function setIcon(playing) { pIcon.innerHTML = playing ? ICON_PAUSE : ICON_PLAY; }
 
@@ -409,43 +416,95 @@
       });
     }
 
+    function safePlay() {
+      try {
+        var p = audioPlayer.play();
+        if (p && typeof p.catch === "function") {
+          p.catch(function (err) {
+            // Dead stream, autoplay gesture, or CORS — degrade gracefully.
+            console.error("[lite] play() rejected:", err && err.name, err && err.message);
+            pSub.innerHTML = '<span style="color:#ef4444">Stream unavailable. Try another station.</span>';
+            pBtn.classList.remove("pulse");
+            setIcon(false);
+          });
+        }
+      } catch (e) {
+        console.error("[lite] play() threw:", e);
+      }
+    }
+
+    function updateMediaSession(s) {
+      if (!("mediaSession" in navigator)) return;
+      try {
+        navigator.mediaSession.metadata = new window.MediaMetadata({
+          title: s.n,
+          artist: "RadioSphere Lite",
+          album: s.cat || "Radio",
+          artwork: [
+            { src: location.origin + "/lite-logo.png", sizes: "192x192", type: "image/png" },
+            { src: location.origin + "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+          ]
+        });
+        navigator.mediaSession.playbackState = "playing";
+      } catch (e) { /* old WebViews — ignore */ }
+    }
+
     function onPick(e) {
       var idx = Number(e.currentTarget.getAttribute("data-i"));
       var s = STATIONS[idx];
       if (!s) return;
-      if (current && current.n === s.n && !audio.paused) {
-        audio.pause();
+      if (current && current.n === s.n && !audioPlayer.paused) {
+        audioPlayer.pause();
         return;
       }
       current = s;
       pName.textContent = s.n;
       pSub.textContent = s.g + " · " + s.cat;
       pBtn.disabled = false;
-      audio.src = s.u;
-      var p = audio.play();
-      if (p && p.catch) p.catch(function () { /* user gesture issues etc. */ });
+      // Mixed-content guard: HTTPS pages can't load HTTP streams.
+      var url = String(s.u || "");
+      if (url.indexOf("http://") === 0) url = "https://" + url.slice(7);
+      audioPlayer.src = url;
+      safePlay();
+      updateMediaSession(s);
       track("lite-play");
       render(search.value);
     }
 
     pBtn.addEventListener("click", function () {
       if (!current) return;
-      if (audio.paused) {
-        var p = audio.play();
-        if (p && p.catch) p.catch(function () {});
-      } else {
-        audio.pause();
-      }
+      if (audioPlayer.paused) safePlay();
+      else audioPlayer.pause();
     });
 
-    audio.addEventListener("play", function () { setIcon(true); pBtn.classList.add("pulse"); });
-    audio.addEventListener("pause", function () { setIcon(false); pBtn.classList.remove("pulse"); });
-    audio.addEventListener("ended", function () { setIcon(false); pBtn.classList.remove("pulse"); });
-    audio.addEventListener("error", function () {
+    audioPlayer.addEventListener("play", function () {
+      setIcon(true); pBtn.classList.add("pulse");
+      if ("mediaSession" in navigator) try { navigator.mediaSession.playbackState = "playing"; } catch (e) {}
+    });
+    audioPlayer.addEventListener("pause", function () {
+      setIcon(false); pBtn.classList.remove("pulse");
+      if ("mediaSession" in navigator) try { navigator.mediaSession.playbackState = "paused"; } catch (e) {}
+    });
+    audioPlayer.addEventListener("ended", function () { setIcon(false); pBtn.classList.remove("pulse"); });
+    audioPlayer.addEventListener("error", function () {
+      console.error("[lite] audio element error", audioPlayer.error);
       setIcon(false);
       pBtn.classList.remove("pulse");
       pSub.innerHTML = '<span style="color:#ef4444">Stream unavailable. Try another station.</span>';
     });
+
+    // MediaSession action handlers — keep playback alive on lock screen,
+    // notification shade, headset buttons, and tab-switches.
+    if ("mediaSession" in navigator) {
+      try {
+        navigator.mediaSession.setActionHandler("play", function () { if (current) safePlay(); });
+        navigator.mediaSession.setActionHandler("pause", function () { audioPlayer.pause(); });
+        navigator.mediaSession.setActionHandler("stop", function () {
+          audioPlayer.pause();
+          try { audioPlayer.currentTime = 0; } catch (e) {}
+        });
+      } catch (e) { /* unsupported actions — ignore */ }
+    }
 
     pVol.addEventListener("input", function () { audio.volume = Number(pVol.value) / 100; });
 
