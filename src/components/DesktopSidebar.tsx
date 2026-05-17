@@ -294,6 +294,16 @@ export function DesktopSidebar({ activeTab, onTabChange }: DesktopSidebarProps) 
               <Mail className="w-4 h-4" />
               info@radiosphere.be
             </a>
+            <a
+              href="https://fr.tipeee.com/radiosphere/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-4 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-[hsl(348,83%,52%)] to-[hsl(8,90%,58%)] hover:shadow-[0_0_14px_-2px_hsl(348,83%,52%,0.7)] transition-shadow"
+              aria-label="Support us on Tipeee"
+            >
+              <Heart className="w-3.5 h-3.5 fill-current" />
+              Support us on Tipeee
+            </a>
             <div className="flex items-center justify-center gap-3 px-4 pt-1">
               <a
                 href="https://www.facebook.com/profile.php?id=61575475057830"
