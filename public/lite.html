@@ -349,7 +349,9 @@
     // buffering streams the user never picked.
     var audioPlayer = new Audio();
     audioPlayer.preload = "none";
-    audioPlayer.crossOrigin = "anonymous";
+    // NOTE: pas de crossOrigin — sinon les flux sans en-têtes CORS
+    // (RTBF, nombreuses radios publiques) sont bloqués par le navigateur.
+    // On n'utilise pas Web Audio API ici, donc CORS n'est pas requis.
     var audio = audioPlayer; // backward-compat alias for existing listeners
     var pName = document.getElementById("p-name");
     var pSub = document.getElementById("p-sub");
