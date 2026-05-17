@@ -299,12 +299,14 @@
       var n = 0;
       for (var i = 0; i < STATIONS.length; i++) {
         var s = STATIONS[i];
-        if (q && (s.n + " " + s.g + " " + s.c).toLowerCase().indexOf(q) === -1) continue;
+        if (activeCat !== "All" && s.cat !== activeCat) continue;
+        if (q && (s.n + " " + s.g + " " + s.c + " " + s.cat).toLowerCase().indexOf(q) === -1) continue;
         var card = document.createElement("button");
         card.type = "button";
         card.className = "card" + (current && current.n === s.n ? " active" : "");
         card.setAttribute("role", "listitem");
         card.setAttribute("data-i", String(i));
+        card.setAttribute("data-category", s.cat);
         card.innerHTML =
           '<div class="card-name">' + escape(s.n) + '</div>' +
           '<div class="card-meta"><span class="card-genre">' + escape(s.g) + '</span><span>' + escape(s.c) + '</span></div>';
@@ -313,6 +315,27 @@
         n++;
       }
       emptyEl.hidden = n > 0;
+    }
+
+    function renderPills() {
+      var wrap = document.getElementById("pills");
+      wrap.innerHTML = "";
+      for (var i = 0; i < CATEGORIES.length; i++) {
+        var cat = CATEGORIES[i];
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "pill" + (cat === activeCat ? " active" : "");
+        b.setAttribute("data-cat", cat);
+        b.setAttribute("role", "tab");
+        b.textContent = cat;
+        b.addEventListener("click", function (ev) {
+          activeCat = ev.currentTarget.getAttribute("data-cat");
+          renderPills();
+          render(search.value);
+          track("lite-filter", { category: activeCat });
+        });
+        wrap.appendChild(b);
+      }
     }
 
     function escape(s) {
